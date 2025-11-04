@@ -8,7 +8,7 @@
 #
 [Unit]
 Description=Element Web Matrix Client
-After=network-online.target synapse.service
+After=network-online.target postgresql.service synapse.service
 Wants=synapse.service
 
 [Service]

@@ -8,7 +8,7 @@
 #
 [Unit]
 Description=Dex OpenID Connect Provider
-After=network-online.target
+After=network-online.target postgresql.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n

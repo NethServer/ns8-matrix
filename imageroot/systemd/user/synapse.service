@@ -8,7 +8,7 @@
 #
 [Unit]
 Description=Synapse Matrix Homeserver
-After=network-online.target dex.service
+After=network-online.target postgresql.service dex.service
 Wants=dex.service
 
 [Service]

@@ -8,8 +8,8 @@
 #
 [Unit]
 Description=Matrix chat service coordinator
-After=dex.service synapse.service element-web.service
-Wants=dex.service synapse.service element-web.service
+After=postgresql.service dex.service synapse.service element-web.service
+Wants=postgresql.service dex.service synapse.service element-web.service
 
 [Service]
 Type=oneshot
