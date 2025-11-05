@@ -39,6 +39,21 @@
               :invalid-message="error.element_domain_name"
               ref="element_domain_name"
             ></cv-text-input>
+            <NsComboBox
+              v-model.trim="ldap_domain"
+              :autoFilter="true"
+              :autoHighlight="true"
+              :title="$t('settings.ldap_domain')"
+              :label="$t('settings.choose_ldap_domain')"
+              :options="domains_list"
+              :acceptUserInput="false"
+              :showItemType="true"
+              :invalid-message="$t(error.ldap_domain)"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              tooltipAlignment="start"
+              tooltipDirection="top"
+              ref="ldap_domain"
+            >
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -94,6 +109,8 @@ export default {
       urlCheckInterval: null,
       synapse_domain_name: "",
       element_domain_name: "",
+      domains_list: [],
+      ldap_domain: "",
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -103,6 +120,7 @@ export default {
         configureModule: "",
         synapse_domain_name: "",
         element_domain_name: "",
+        ldap_domain: "",
       },
     };
   },
@@ -172,6 +190,12 @@ export default {
       // Set configuration fields
       this.synapse_domain_name = config.synapse_domain_name || "";
       this.element_domain_name = config.element_domain_name || "";
+      this.domains_list = config.domains_list;
+
+      // force to reload value after dom update
+      this.$nextTick(() => {
+        this.ldap_domain = config.ldap_domain;
+      });
 
       // Focus first configuration field
       this.focusElement("synapse_domain_name");
@@ -194,6 +218,16 @@ export default {
         this.error.element_domain_name = this.$t("common.required");
         if (isValidationOk) {
           this.focusElement("element_domain_name");
+          isValidationOk = false;
+        }
+      }
+
+      // Validate ldap domain
+      if (!this.ldap_domain) {
+        this.error.ldap_domain = this.$t("settings.required");
+
+        if (isValidationOk) {
+          this.focusElement("ldap_domain");
           isValidationOk = false;
         }
       }
@@ -252,6 +286,7 @@ export default {
           data: {
             synapse_domain_name: this.synapse_domain_name,
             element_domain_name: this.element_domain_name,
+            ldap_domain: this.ldap_domain,
           },
           extra: {
             title: this.$t("settings.configure_instance", {
