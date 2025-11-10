@@ -40,20 +40,24 @@
               ref="element_domain_name"
             ></cv-text-input>
             <NsComboBox
-              v-model.trim="ldap_domain"
+              v-model.trim="dex_ldap_domain"
               :autoFilter="true"
               :autoHighlight="true"
-              :title="$t('settings.ldap_domain')"
-              :label="$t('settings.choose_ldap_domain')"
+              :title="$t('settings.dex_ldap_domain')"
+              :label="$t('settings.choose_dex_ldap_domain')"
               :options="domains_list"
               :acceptUserInput="false"
               :showItemType="true"
-              :invalid-message="$t(error.ldap_domain)"
+              :invalid-message="$t(error.dex_ldap_domain)"
               :disabled="loading.getConfiguration || loading.configureModule"
               tooltipAlignment="start"
               tooltipDirection="top"
-              ref="ldap_domain"
+              ref="dex_ldap_domain"
             >
+              <template slot="tooltip">
+                {{ $t("settings.choose_the_dex_ldap_domain_to_use") }}
+              </template>
+            </NsComboBox>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -69,8 +73,8 @@
               :icon="Save20"
               :loading="loading.configureModule"
               :disabled="loading.getConfiguration || loading.configureModule"
-              >{{ $t("settings.save") }}</NsButton>
-            >
+              >{{ $t("settings.save") }}
+            </NsButton>
           </cv-form>
         </cv-tile>
       </cv-column>
@@ -110,7 +114,7 @@ export default {
       synapse_domain_name: "",
       element_domain_name: "",
       domains_list: [],
-      ldap_domain: "",
+      dex_ldap_domain: "",
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -120,7 +124,7 @@ export default {
         configureModule: "",
         synapse_domain_name: "",
         element_domain_name: "",
-        ldap_domain: "",
+        dex_ldap_domain: "",
       },
     };
   },
@@ -194,7 +198,7 @@ export default {
 
       // force to reload value after dom update
       this.$nextTick(() => {
-        this.ldap_domain = config.ldap_domain;
+        this.dex_ldap_domain = config.dex_ldap_domain;
       });
 
       // Focus first configuration field
@@ -223,14 +227,14 @@ export default {
       }
 
       // Validate ldap domain
-      if (!this.ldap_domain) {
-        this.error.ldap_domain = this.$t("settings.required");
+      //if (!this.dex_ldap_domain) {
+      //  this.error.dex_ldap_domain = this.$t("settings.required");
 
-        if (isValidationOk) {
-          this.focusElement("ldap_domain");
-          isValidationOk = false;
-        }
-      }
+        //if (isValidationOk) {
+          //this.focusElement("dex_ldap_domain");
+          //isValidationOk = false;
+        //}
+      //}
 
       return isValidationOk;
     },
@@ -286,7 +290,7 @@ export default {
           data: {
             synapse_domain_name: this.synapse_domain_name,
             element_domain_name: this.element_domain_name,
-            ldap_domain: this.ldap_domain,
+            dex_ldap_domain: this.dex_ldap_domain,
           },
           extra: {
             title: this.$t("settings.configure_instance", {
