@@ -1,0 +1,19 @@
+{
+  "defaultHomeserver": 0,
+  "homeserverList": [
+    "https://${SYNAPSE_DOMAIN_NAME}"
+  ],
+  "allowCustomHomeservers": true,
+  "featuredCommunities": {
+    "openAsDefault": false,
+    "spaces": [
+    ],
+    "rooms": [
+    ],
+    "servers": []
+  },
+  "hashRouter": {
+    "enabled": false,
+    "basename": "/"
+  }
+}

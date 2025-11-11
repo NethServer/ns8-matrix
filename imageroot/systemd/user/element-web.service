@@ -8,8 +8,9 @@
 #
 [Unit]
 Description=Element Web Matrix Client
-After=network-online.target postgresql.service synapse.service
-Wants=synapse.service
+#BindsTo=matrix.service
+#After=matrix.service postgresql.service synapse.service
+#Wants=synapse.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -24,8 +25,9 @@ ExecStart=/usr/bin/podman run \
     --conmon-pidfile=%t/element-web.pid \
     --cidfile=%t/element-web.ctr-id \
     --cgroups=no-conmon \
+    --pod-id-file %t/matrix.pod-id \
     --replace --name=element-web \
-    --network=host \
+#    --network=host \
     --volume=%S/state/element-config:/app/config:Z \
     --env-file=config.env \
     ${ELEMENT_WEB_IMAGE}

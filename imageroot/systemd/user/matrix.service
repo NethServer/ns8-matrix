@@ -8,15 +8,27 @@
 #
 [Unit]
 Description=Matrix chat service coordinator
-After=postgresql.service dex.service synapse.service element-web.service
-Wants=postgresql.service dex.service synapse.service element-web.service
+#Requires=postgresql.service dex.service synapse.service element-web.service
+#Before=postgresql.service dex.service synapse.service element-web.service
 
 [Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/bin/true
-ExecReload=/bin/true
-ExecStop=/bin/true
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=-%S/state/environment
+EnvironmentFile=-%S/state/config.env
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/matrix.pid %t/matrix.pod-id
+ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/matrix.pid \
+    --pod-id-file %t/matrix.pod-id \
+    --name matrix \
+    --publish 127.0.0.1:${TCP_PORT}:80 \
+    --publish 127.0.0.1:${ELEMENT_WEB_PORT}:80 \
+    --replace
+ExecStart=/usr/bin/podman pod start --pod-id-file %t/matrix.pod-id
+ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/matrix.pod-id -t 10
+ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file %t/matrix.pod-id
+PIDFile=%t/matrix.pid
+Type=forking
 
 [Install]
 WantedBy=default.target

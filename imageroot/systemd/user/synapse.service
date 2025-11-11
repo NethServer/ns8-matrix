@@ -8,8 +8,9 @@
 #
 [Unit]
 Description=Synapse Matrix Homeserver
-After=network-online.target postgresql.service dex.service
-Wants=dex.service
+#After=matrix.service postgresql.service dex.service
+#Wants=dex.service
+#BindsTo=matrix.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -29,13 +30,15 @@ ExecStart=/usr/bin/podman run \
     --conmon-pidfile=%t/synapse.pid \
     --cidfile=%t/synapse.ctr-id \
     --cgroups=no-conmon \
+    --pod-id-file %t/matrix.pod-id \
     --replace --name=synapse \
-    --network=host \
+#    --network=host \
     --volume=synapse-data:/data:z \
     --volume=%S/state/synapse-config:/data/config:z \
     --env=SYNAPSE_SERVER_NAME=${SYNAPSE_DOMAIN_NAME} \
     --env=SYNAPSE_REPORT_STATS=no \
     --env=SYNAPSE_CONFIG_PATH=/data/config/homeserver.yaml \
+    --env=DEX_PORT=${DEX_PORT} \
     --env-file=smarthost.env \
     ${SYNAPSE_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/synapse.ctr-id -t 10

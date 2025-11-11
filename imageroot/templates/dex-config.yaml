@@ -8,6 +8,8 @@ storage:
     database: dex
     user: postgres
     password: Nethesis,1234
+    ssl:
+      mode: disable
 
 web:
   http: 0.0.0.0:${DEX_PORT}

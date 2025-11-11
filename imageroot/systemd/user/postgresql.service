@@ -5,7 +5,8 @@
 
 [Unit]
 Description=Podman postgresql.service
-After=network-online.target
+#After=matrix.service
+#BindsTo=matrix.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -17,17 +18,19 @@ ExecStartPre=/bin/rm -f %t/postgresql.pid %t/postgresql.ctr-id
 ExecStartPre=/bin/mkdir -p %S/state/restore/
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/postgresql.pid \
     --cidfile %t/postgresql.ctr-id --cgroups=no-conmon \
-    --pod-id-file %t/matrix.pod-id --replace -d --name postgresql \
+    --pod-id-file %t/matrix.pod-id \
+    --replace -d --name postgresql \
     --env-file=%S/state/environment \
     --volume postgres-data:/var/lib/postgresql/data:Z \
     --volume %S/state/restore/:/docker-entrypoint-initdb.d/:Z \
-    --env POSTGRES_USER=postgres \
-    --env POSTGRES_PASSWORD=Nethesis,1234 \
-    --env POSTGRES_DB=matrix \
-    --env POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
-    --env TZ=UTC \
+    --env=POSTGRES_USER=postgres \
+    --env=POSTGRES_PASSWORD=Nethesis,1234 \
+    --env=POSTGRES_DB=synapse \
+    --env=POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C" \
+    --env=TZ=UTC \
     ${POSTGRES_IMAGE}
-ExecStartPost=/usr/bin/bash -c "while ! podman  exec postgresql psql -U postgres -d matrix ;  do sleep 5 ; done"
+ExecStartPost=/usr/bin/bash -c "while ! podman  exec postgresql psql -U postgres -d synapse ;  do sleep 5 ; done"
+ExecStartPost=/usr/bin/bash -c "podman exec postgresql psql -U postgres -c 'CREATE DATABASE dex;'"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/postgresql.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/postgresql.ctr-id
 ExecReload=/usr/bin/podman kill -s HUP postgresql

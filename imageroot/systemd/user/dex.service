@@ -8,7 +8,8 @@
 #
 [Unit]
 Description=Dex OpenID Connect Provider
-After=network-online.target postgresql.service
+#BindsTo=matrix.service
+#After=matrix.service postgresql.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -24,8 +25,9 @@ ExecStart=/usr/bin/podman run \
     --conmon-pidfile=%t/dex.pid \
     --cidfile=%t/dex.ctr-id \
     --cgroups=no-conmon \
+    --pod-id-file %t/matrix.pod-id \
     --replace --name=dex \
-    --network=host \
+#    --network=host \
     --volume=dex-data:/var/lib/dex:Z \
     --volume=%S/state/dex-config:/etc/dex:Z \
     ${DEX_IMAGE} \
