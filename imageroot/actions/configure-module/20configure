@@ -41,7 +41,8 @@ tcp_ports = os.environ.get('TCP_PORTS', '20001').split(',')
 # Assign ports to services
 env_vars['DEX_PORT'] = tcp_ports[0]
 env_vars['SYNAPSE_PORT'] = tcp_ports[1]
-env_vars['ELEMENT_WEB_PORT'] = tcp_ports[2]
+#env_vars['ELEMENT_WEB_PORT'] = tcp_ports[2]
+env_vars['ELEMENT_WEB_PORT'] = '8080'
 env_vars['SYGNAL_PORT'] = tcp_ports[3] # For future use
 
 # Write updated configuration
@@ -82,7 +83,7 @@ response = agent.tasks.run(
     action='set-route',
     data={
         'instance': os.environ['MODULE_ID'] + '-element',
-        'url': 'http://127.0.0.1:' + env_vars['ELEMENT_WEB_PORT'],
+        'url': 'http://127.0.0.1:' + os.environ["TCP_PORT"],
         'host': element_domain_name,
         'http2https': True,
         'lets_encrypt': lets_encrypt,

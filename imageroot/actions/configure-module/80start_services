@@ -13,15 +13,15 @@ touch smarthost.env
 touch config.env
 
 # Enable Matrix services
+systemctl --user enable matrix.service
 systemctl --user enable postgresql.service
 systemctl --user enable dex.service
-systemctl --user enable synapse.service  
+systemctl --user enable synapse.service
 systemctl --user enable element-web.service
-systemctl --user enable matrix.service
 
 # Restart Matrix services
+systemctl --user restart matrix.service
 systemctl --user restart postgresql.service
 systemctl --user restart dex.service
-systemctl --user restart synapse.service  
+systemctl --user restart synapse.service
 systemctl --user restart element-web.service
-systemctl --user restart matrix.service
