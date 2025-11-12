@@ -30,7 +30,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/postgresql.pid \
     --env=TZ=UTC \
     ${POSTGRES_IMAGE}
 ExecStartPost=/usr/bin/bash -c "while ! podman  exec postgresql psql -U postgres -d synapse ;  do sleep 5 ; done"
-ExecStartPost=/usr/bin/bash -c "podman exec postgresql psql -U postgres -c 'CREATE DATABASE dex;'"
+ExecStartPost=-/usr/bin/bash -c "podman exec postgresql psql -U postgres -c 'CREATE DATABASE dex;'"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/postgresql.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/postgresql.ctr-id
 ExecReload=/usr/bin/podman kill -s HUP postgresql
