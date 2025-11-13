@@ -1,9 +1,15 @@
 issuer: https://${SYNAPSE_DOMAIN_NAME}/dex
 
 storage:
-  type: sqlite3
+  type: postgres
   config:
-    file: /var/lib/dex/dex.db
+    host: 127.0.0.1
+    port: 25432
+    database: dex
+    user: postgres
+    password: Nethesis,1234
+    ssl:
+      mode: disable
 
 web:
   http: 0.0.0.0:${DEX_PORT}
@@ -42,4 +48,3 @@ connectors:
 
 oauth2:
   skipApprovalScreen: true
-  

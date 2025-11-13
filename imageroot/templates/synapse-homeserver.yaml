@@ -14,9 +14,16 @@ listeners:
       - names: [client]
 
 database:
-  name: sqlite3
+  name: psycopg2
+  txn_limit: 10000
   args:
-    database: /data/homeserver.db
+    user: postgres
+    password: Nethesis,1234
+    database: synapse
+    host: 127.0.0.1
+    port: 25432
+    cp_min: 5
+    cp_max: 10
 
 log_config: "/data/config/log.config"
 
