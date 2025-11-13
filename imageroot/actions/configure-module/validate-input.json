@@ -38,8 +38,7 @@
         "dex_ldap_domain": {
             "type": "string",
             "description": "LDAP domain name for Dex authentication (optional)",
-            "format": "domain-name",
-            "minLength": 1
+            "format": "domain-name"
         }
     }
 }
