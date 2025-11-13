@@ -39,13 +39,37 @@ except:
 
 tmpfile = "ldap.env." + str(os.getpid())
 
-with open(tmpfile, "w") as denv:
-    print('DEX_LDAP_PORT=' + str(odom['port']), file=denv)
-    print('DEX_LDAP_BIND_DN=' + odom['bind_dn'], file=denv)
-    print('DEX_LDAP_HOST=' + odom['host'], file=denv)
-    print('DEX_LDAP_BIND_PASSWORD=' + odom['bind_password'], file=denv)
-    print('DEX_LDAP_SCHEMA=' + odom['schema'], file=denv)
-    print('DEX_LDAP_BASE_DN=' + odom['base_dn'], file=denv)
-    print('DEX_LDAP_USER_FILTER=(objectClass=inetOrgPerson)', file=denv)
+if odom['schema'] == "rfc2307":
+    with open(tmpfile, "w") as denv:
+        print('DEX_LDAP_ID=ldap', file=denv)
+        print('DEX_LDAP_NAME=LDAP', file=denv)
+        print('DEX_LDAP_PORT=' + str(odom['port']), file=denv)
+        print('DEX_LDAP_BIND_DN=' + odom['bind_dn'], file=denv)
+        print('DEX_LDAP_HOST=' + odom['host'], file=denv)
+        print('DEX_LDAP_BIND_PASSWORD=' + odom['bind_password'], file=denv)
+        print('DEX_LDAP_SCHEMA=' + odom['schema'], file=denv)
+        print('DEX_LDAP_BASE_DN=' + odom['base_dn'], file=denv)
+        print('DEX_LDAP_USER_FILTER=(objectClass=inetOrgPerson)', file=denv)
+        print('DEX_LDAP_USERNAME=uid', file=denv)
+        print('DEX_LDAP_ID_ATTR=uid', file=denv)
+        print('DEX_LDAP_EMAIL_ATTR=mail', file=denv)
+        print('DEX_LDAP_NAME_ATTR=cn', file=denv)
+        print('DEX_LDAP_GROUP_FILTER=(objectClass=groupOfNames)', file=denv)
+elif odom['schema'] == "ad":
+    with open(tmpfile, "w") as denv:
+        print('DEX_LDAP_ID=ad', file=denv)
+        print('DEX_LDAP_NAME=ActiveDirectory', file=denv)
+        print('DEX_LDAP_PORT=' + str(odom['port']), file=denv)
+        print('DEX_LDAP_BIND_DN=' + odom['bind_dn'], file=denv)
+        print('DEX_LDAP_HOST=' + odom['host'], file=denv)
+        print('DEX_LDAP_BIND_PASSWORD=' + odom['bind_password'], file=denv)
+        print('DEX_LDAP_SCHEMA=' + odom['schema'], file=denv)
+        print('DEX_LDAP_BASE_DN=' + odom['base_dn'], file=denv)
+        print('DEX_LDAP_USER_FILTER=(objectClass=person)', file=denv)
+        print('DEX_LDAP_USERNAME=cn', file=denv)
+        print('DEX_LDAP_ID_ATTR=cn', file=denv)
+        print('DEX_LDAP_EMAIL_ATTR=mail', file=denv)
+        print('DEX_LDAP_NAME_ATTR=cn', file=denv)
+        print('DEX_LDAP_GROUP_FILTER=(objectClass=group)', file=denv)
 
 os.replace(tmpfile, "ldap.env")
