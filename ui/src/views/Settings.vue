@@ -39,6 +39,49 @@
               :invalid-message="error.element_domain_name"
               ref="element_domain_name"
             ></cv-text-input>
+            <NsComboBox
+              v-model.trim="dex_ldap_domain"
+              :autoFilter="true"
+              :autoHighlight="true"
+              :title="$t('settings.dex_ldap_domain')"
+              :label="$t('settings.choose_dex_ldap_domain')"
+              :options="domains_list"
+              :acceptUserInput="false"
+              :showItemType="true"
+              :invalid-message="$t(error.dex_ldap_domain)"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              tooltipAlignment="start"
+              tooltipDirection="top"
+              ref="dex_ldap_domain"
+            >
+              <template slot="tooltip">
+                {{ $t("settings.choose_the_dex_ldap_domain_to_use") }}
+              </template>
+            </NsComboBox>
+            <NsToggle
+              value="letsEncrypt"
+              :label="core.$t('apps_lets_encrypt.request_https_certificate')"
+              v-model="isLetsEncryptEnabled"
+              :disabled="stillLoading"
+              class="mg-bottom"
+            >
+              <template #tooltip>
+                <div class="mg-bottom-sm">
+                  {{ core.$t("apps_lets_encrypt.lets_encrypt_tips") }}
+                </div>
+                <div class="mg-bottom-sm">
+                  <cv-link @click="goToCertificates">
+                    {{ core.$t("apps_lets_encrypt.go_to_tls_certificates") }}
+                  </cv-link>
+                </div>
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -54,8 +97,8 @@
               :icon="Save20"
               :loading="loading.configureModule"
               :disabled="loading.getConfiguration || loading.configureModule"
-              >{{ $t("settings.save") }}</NsButton>
-            >
+              >{{ $t("settings.save") }}
+            </NsButton>
           </cv-form>
         </cv-tile>
       </cv-column>
@@ -94,6 +137,9 @@ export default {
       urlCheckInterval: null,
       synapse_domain_name: "",
       element_domain_name: "",
+      domains_list: [],
+      dex_ldap_domain: "",
+      isLetsEncryptEnabled: false,
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -103,6 +149,8 @@ export default {
         configureModule: "",
         synapse_domain_name: "",
         element_domain_name: "",
+        dex_ldap_domain: "",
+        lets_encrypt: "",
       },
     };
   },
@@ -123,6 +171,9 @@ export default {
     this.getConfiguration();
   },
   methods: {
+    goToCertificates() {
+      this.core.$router.push("/settings/tls-certificates");
+    },
     async getConfiguration() {
       this.loading.getConfiguration = true;
       this.error.getConfiguration = "";
@@ -172,6 +223,13 @@ export default {
       // Set configuration fields
       this.synapse_domain_name = config.synapse_domain_name || "";
       this.element_domain_name = config.element_domain_name || "";
+      this.domains_list = config.domains_list;
+      this.isLetsEncryptEnabled = config.lets_encrypt;
+
+      // force to reload value after dom update
+      this.$nextTick(() => {
+        this.dex_ldap_domain = config.dex_ldap_domain;
+      });
 
       // Focus first configuration field
       this.focusElement("synapse_domain_name");
@@ -197,6 +255,16 @@ export default {
           isValidationOk = false;
         }
       }
+
+      // Validate ldap domain
+      //if (!this.dex_ldap_domain) {
+      //  this.error.dex_ldap_domain = this.$t("settings.required");
+
+        //if (isValidationOk) {
+          //this.focusElement("dex_ldap_domain");
+          //isValidationOk = false;
+        //}
+      //}
 
       return isValidationOk;
     },
@@ -252,6 +320,8 @@ export default {
           data: {
             synapse_domain_name: this.synapse_domain_name,
             element_domain_name: this.element_domain_name,
+            dex_ldap_domain: this.dex_ldap_domain,
+            lets_encrypt: this.isLetsEncryptEnabled,
           },
           extra: {
             title: this.$t("settings.configure_instance", {
