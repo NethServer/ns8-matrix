@@ -50,6 +50,7 @@ env_vars.update(smarthost_env)
 os.makedirs('dex-config', exist_ok=True)
 os.makedirs('synapse-config', exist_ok=True)
 os.makedirs('element-config', exist_ok=True)
+os.makedirs('cinny-config', exist_ok=True)
 
 # Template directory
 template_dir = '../templates'
@@ -81,3 +82,10 @@ with open(f'{template_dir}/element-config.json', 'r') as f:
 
 with open('element-config/config.json', 'w') as f:
     f.write(element_config)
+
+# Process Cinny configuration
+with open(f'{template_dir}/cinny-config.json', 'r') as f:
+    cinny_config = substitute_env_vars(f.read(), env_vars)
+
+with open('cinny-config/config.json', 'w') as f:
+    f.write(cinny_config)
