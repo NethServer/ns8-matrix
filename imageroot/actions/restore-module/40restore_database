@@ -1,0 +1,65 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+set -e -o pipefail
+exec 1>&2 # Redirect any output to the journal (stderr)
+
+# Restore dex
+
+mkdir -vp restore
+cat - >restore/matrix_restore.sh <<'EOS'
+# Read dump file from standard input:
+pg_restore --no-owner --no-privileges -U postgres -d dex
+ec=$?
+docker_temp_server_stop
+exit $ec
+EOS
+
+# Override the image /docker-entrypoint-initdb.d contents, to restore the
+# DB dump file. The container will be stopped at the end
+
+podman run \
+    --rm \
+    --interactive \
+    --network=none \
+    --volume=./restore:/docker-entrypoint-initdb.d/:Z \
+    --volume=postgres-data:/var/lib/postgresql/data:Z \
+    --replace --name=restore_db \
+    --env POSTGRES_USER=postgres \
+    --env POSTGRES_PASSWORD=Nethesis,1234 \
+    --env POSTGRES_DB=dex \
+    --env TZ=UTC \
+    "${POSTGRES_IMAGE}" < dex.pg_dump
+
+rm -rfv restore/matrix_restore.sh dex.pg_dump
+
+# Restore synapse
+
+cat - >restore/matrix_restore.sh <<'EOS'
+# Read dump file from standard input:
+pg_restore --no-owner --no-privileges -U postgres -d synapse
+ec=$?
+docker_temp_server_stop
+exit $ec
+EOS
+
+podman run \
+    --rm \
+    --interactive \
+    --network=none \
+    --volume=./restore:/docker-entrypoint-initdb.d/:Z \
+    --volume=postgres-data:/var/lib/postgresql/data:Z \
+    --replace --name=restore_db \
+    --env POSTGRES_USER=postgres \
+    --env POSTGRES_PASSWORD=Nethesis,1234 \
+    --env POSTGRES_DB=synapse \
+    --env TZ=UTC \
+    "${POSTGRES_IMAGE}" < synapse.pg_dump
+
+
+# If the restore is successful, clean up:
+rm -rfv restore/ synapse.pg_dump
