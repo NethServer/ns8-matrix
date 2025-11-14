@@ -4,7 +4,7 @@
 #
 
 #
-# This systemd unit starts Element Web client using Podman.
+# This systemd unit starts Cinny client using Podman.
 #
 [Unit]
 Description=Cinny Matrix Client
@@ -25,7 +25,7 @@ ExecStart=/usr/bin/podman run \
     --cidfile=%t/cinny.ctr-id \
     --cgroups=no-conmon \
     --replace --name=cinny \
-    --publish ${ELEMENT_WEB_PORT}:80 \
+    --publish ${CINNY_PORT}:80 \
     --volume=%S/state/cinny-config/config.json:/app/config.json:z \
     ${CINNY_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/cinny.ctr-id -t 10

@@ -30,6 +30,7 @@ if os.path.exists("config.env"):
     # Extract configuration values
     config['synapse_domain_name'] = env_vars.get('SYNAPSE_DOMAIN_NAME', '')
     config['element_domain_name'] = env_vars.get('ELEMENT_DOMAIN_NAME', '')
+    config['cinny_domain_name'] = env_vars.get('CINNY_DOMAIN_NAME', '')
     config['dex_ldap_domain'] = env_vars.get('DEX_LDAP_DOMAIN', '')
     config['lets_encrypt'] = env_vars.get('LETS_ENCRYPT', '0') == '1'
     config['domains_list'] = domains
@@ -37,6 +38,7 @@ else:
     # No configuration file found, return empty configuration
     config['synapse_domain_name'] = ''
     config['element_domain_name'] = ''
+    config['cinny_domain_name'] = ''
     config['dex_ldap_domain'] = ''
     config['lets_encrypt'] = False
     config['domains_list'] = ''

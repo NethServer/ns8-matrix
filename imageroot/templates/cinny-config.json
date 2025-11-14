@@ -1,21 +1,19 @@
 {
   "defaultHomeserver": 0,
   "homeserverList": [
-    "synapse.gs.nethserver.net"           
-  ],                
+    "${SYNAPSE_DOMAIN_NAME}"
+  ],
   "allowCustomHomeservers": true,
-                                 
-  "featuredCommunities": {       
-    "openAsDefault": false,      
-    "spaces": [                  
-    ],                               
-    "rooms": [                       
-    ],                               
+  "featuredCommunities": {
+    "openAsDefault": false,
+    "spaces": [
+    ],
+    "rooms": [
+    ],
     "servers": []
-  },                                                                     
-                                                                         
-  "hashRouter": {                                                        
-    "enabled": false,                                                    
-    "basename": "/"  
-  }                  
+  },
+  "hashRouter": {
+    "enabled": false,
+    "basename": "/"
+  }
 }

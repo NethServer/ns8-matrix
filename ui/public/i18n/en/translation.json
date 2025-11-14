@@ -28,6 +28,8 @@
         "synapse_domain_placeholder": "e.g. matrix.example.com",
         "element_domain_name": "Element web client domain", 
         "element_domain_placeholder": "e.g. chat.example.com",
+        "cinny_domain_name": "Cinny client domain", 
+        "cinny_domain_placeholder": "e.g. cinny.example.com",
         "dex_ldap_domain": "Dex LDAP domain",
         "choose_dex_ldap_domain": "Choose the Dex LDAP domain",
         "choose_the_dex_ldap_domain_to_use": "Choose the LDAP domain to use for Dex",
