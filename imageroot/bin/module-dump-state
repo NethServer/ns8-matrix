@@ -8,5 +8,5 @@
 set -e
 
 echo "Dumping Matrix postgres databases"
-podman exec postgresql-app pg_dump -U postgres --format=c  dex > dex.pg_dump
-podman exec postgresql-app pg_dump -U postgres --format=c  synapse > synapse.pg_dump
+podman exec postgresql pg_dump -p 25432 -U postgres --format=c  dex > dex.pg_dump
+podman exec postgresql pg_dump -p 25432 -U postgres --format=c  synapse > synapse.pg_dump
