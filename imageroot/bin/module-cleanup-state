@@ -5,4 +5,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-rm -vf dex.pg_dump synapse.pg_dump
+rm -vf postgresql.pg_dump
