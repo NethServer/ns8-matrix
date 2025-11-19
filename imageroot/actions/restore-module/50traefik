@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2023 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import sys
+import json
+import agent
+import os
+
+request = json.load(sys.stdin)
+renv = request['config.env']
+
+configure_retval = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data={
+    "synapse_domain_name": renv["SYNAPSE_DOMAIN_NAME"],
+    "element_domain_name": renv["ELEMENT_DOMAIN_NAME"],
+    "cinny_domain_name": renv["CINNY_DOMAIN_NAME"],
+    "dex_ldap_domain": renv["DEX_LDAP_DOMAIN"],
+    "lets_encrypt": renv["LETS_ENCRYPT"] == '1',
+    "enable_element": renv["ENABLE_ELEMENT"] == '1',
+    "enable_cinny": renv["ENABLE_CINNY"] == '1',
+})
+agent.assert_exp(configure_retval['exit_code'] == 0, "The configure-module subtask failed!")
