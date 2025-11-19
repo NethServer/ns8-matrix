@@ -11,7 +11,7 @@ exec 1>&2 # Redirect any output to the journal (stderr)
 mkdir -vp restore
 cat - >restore/postgresql_restore.sh <<'EOS'
 # Read dump file from standard input and restore all databases:
-psql -p 25432 -U postgres -f /tmp/postgresql.pg_dump
+psql -U postgres -f /tmp/postgresql.pg_dump
 ec=$?
 docker_temp_server_stop
 exit $ec
@@ -31,7 +31,8 @@ podman run \
     --env POSTGRES_USER=postgres \
     --env POSTGRES_PASSWORD=Nethesis,1234 \
     --env TZ=UTC \
-    "${POSTGRES_IMAGE}" -p 25432
+	--env POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C" \
+    "${POSTGRES_IMAGE}"
 
 # If the restore is successful, clean up:
 rm -rfv restore/ postgresql.pg_dump
