@@ -33,6 +33,8 @@
         "dex_ldap_domain": "Dex LDAP domain",
         "choose_dex_ldap_domain": "Choose the Dex LDAP domain",
         "choose_the_dex_ldap_domain_to_use": "Choose the LDAP domain to use for Dex",
+        "enableElement": "Enable Element web client",
+        "enableCinny": "Enable Cinny client",
         "enabled": "Enabled",
         "disabled": "Disabled"
     },

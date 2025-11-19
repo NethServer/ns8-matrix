@@ -6,7 +6,12 @@
     "examples": [
         {
             "synapse_domain_name": "matrix.example.com",
-            "element_domain_name": "chat.example.com"
+            "element_domain_name": "chat.example.com",
+            "cinny_domain_name": "cinny.example.com",
+            "lets_encrypt": true,
+            "dex_ldap_domain": "users.example.com",
+            "enable_element": true,
+            "enable_cinny": false
         }
     ],
     "type": "object",
@@ -18,6 +23,29 @@
         "element_domain_name": {
             "type": "string",
             "description": "Fully qualified domain name for the Element web client"
+        },
+	    "cinny_domain_name": {
+            "type": "string",
+            "description": "Fully qualified domain name for the Cinny client",
+            "format": "hostname",
+            "minLength": 1
+        },
+        "lets_encrypt": {
+            "type": "boolean",
+            "description": "Enable Let's Encrypt certificate management"
+        },
+        "dex_ldap_domain": {
+            "type": "string",
+            "description": "LDAP domain name for Dex authentication (optional)",
+            "format": "domain-name"
+        },
+	    "enable_element": {
+            "type": "boolean",
+            "description": "Enable Element web client"
+        },
+	    "enable_cinny": {
+            "type": "boolean",
+            "description": "Enable Cinny client"
         }
     }
 }

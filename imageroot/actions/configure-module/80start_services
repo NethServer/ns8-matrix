@@ -12,18 +12,46 @@ touch ldap.env
 touch smarthost.env
 touch config.env
 
+source config.env
+
 # Enable Matrix services
 systemctl --user enable postgresql.service
 systemctl --user enable dex.service
 systemctl --user enable synapse.service
-systemctl --user enable element-web.service
-systemctl --user enable cinny.service
+
+# Enable element web client when enabled in UI
+if [ ${ENABLE_ELEMENT} = "1" ]; then
+  systemctl --user enable element-web.service
+else
+  systemctl --user disable element-web.service
+fi
+
+# Enable cinny client when enabled in UI
+if [ ${ENABLE_CINNY} = "1" ]; then
+  systemctl --user enable cinny.service
+else
+  systemctl --user disable cinny.service
+fi
+
 systemctl --user enable matrix.service
 
 # Restart Matrix services
 systemctl --user restart postgresql.service
 systemctl --user restart dex.service
 systemctl --user restart synapse.service
-systemctl --user restart element-web.service
-systemctl --user restart cinny.service
-systemctl --user restart matrix.service
+
+# Restart element web client when enabled in UI, else stop it
+if [ ${ENABLE_ELEMENT} = "1" ]; then
+  systemctl --user restart element-web.service
+else
+  systemctl --user stop element-web.service
+fi
+
+# Restart cinny client when enabled in UI, else stop it
+if [ ${ENABLE_CINNY} = "1" ]; then
+  systemctl --user restart cinny.service
+else
+  systemctl --user stop cinny.service
+fi
+
+#systemctl --user restart matrix.service

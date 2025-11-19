@@ -70,7 +70,7 @@
               value="letsEncrypt"
               :label="core.$t('apps_lets_encrypt.request_https_certificate')"
               v-model="isLetsEncryptEnabled"
-              :disabled="stillLoading"
+              :disabled="loading.getConfiguration || loading.configureModule"
               class="mg-bottom"
             >
               <template #tooltip>
@@ -90,6 +90,34 @@
                 $t("settings.enabled")
               }}</template>
             </NsToggle>
+			<cv-toggle
+              value="enableElement"
+              :label="$t('settings.enableElement')"
+              v-model="enableElement"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </cv-toggle>
+			<cv-toggle
+              value="enableCinny"
+              :label="$t('settings.enableCinny')"
+              v-model="enableCinny"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </cv-toggle>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -149,6 +177,8 @@ export default {
       domains_list: [],
       dex_ldap_domain: "",
       isLetsEncryptEnabled: false,
+	  enableElement: false,
+	  enableCinny: false,
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -161,6 +191,8 @@ export default {
         cinny_domain_name: "",
         dex_ldap_domain: "",
         lets_encrypt: "",
+		enableElement: "",
+		enableCinny: "",
       },
     };
   },
@@ -236,6 +268,8 @@ export default {
       this.cinny_domain_name = config.cinny_domain_name || "";
       this.domains_list = config.domains_list;
       this.isLetsEncryptEnabled = config.lets_encrypt;
+	  this.enableElement = config.enable_element;
+	  this.enableCinny = config.enable_cinny;
 
       // force to reload value after dom update
       this.$nextTick(() => {
@@ -343,6 +377,8 @@ export default {
             cinny_domain_name: this.cinny_domain_name,
             dex_ldap_domain: this.dex_ldap_domain,
             lets_encrypt: this.isLetsEncryptEnabled,
+			enable_element: this.enableElement,
+			enable_cinny: this.enableCinny,
           },
           extra: {
             title: this.$t("settings.configure_instance", {
