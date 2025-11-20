@@ -45,6 +45,6 @@ else:
     config['lets_encrypt'] = False
     config['enable_element'] = False
     config['enable_cinny'] = False
-    config['domains_list'] = ''
+    config['domains_list'] = domains
 
 json.dump(config, fp=sys.stdout)
