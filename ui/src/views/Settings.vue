@@ -66,6 +66,14 @@
                 {{ $t("settings.choose_the_dex_ldap_domain_to_use") }}
               </template>
             </NsComboBox>
+            <cv-text-input
+              :label="$t('settings.mail_from')"
+              v-model="mail_from"
+              :placeholder="$t('settings.mail_from_placeholder')"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              :invalid-message="error.mail_from"
+              ref="mail_from"
+            ></cv-text-input>
             <NsToggle
               value="letsEncrypt"
               :label="core.$t('apps_lets_encrypt.request_https_certificate')"
