@@ -5,19 +5,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+import os
 import sys
 import json
-import agent
-import os
+import agent.tasks
 
-#request = json.load(sys.stdin)
-#renv = request['config.env']
+config = {}
 
-# Read current configuration
-if os.path.exists("config.env"):
-    env_vars = agent.read_envfile("config.env")
-else:
-    env_vars = {}
+# Read current configuration from config file
+with open('config.json', 'r') as cf:
+    config = json.loads(cf.read())
 
-configure_retval = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data=env_vars)
-agent.assert_exp(configure_retval['exit_code'] == 0, "The configure-module subtask failed!")
+agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data=config)
