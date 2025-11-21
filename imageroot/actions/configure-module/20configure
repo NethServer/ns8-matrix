@@ -19,6 +19,7 @@ element_domain_name = request.get('element_domain_name', '')
 cinny_domain_name = request.get('cinny_domain_name', '')
 lets_encrypt = request.get('lets_encrypt', False)
 dex_ldap_domain = request.get('dex_ldap_domain', '')
+mail_from = request.get('mail_from', '')
 enable_element = request.get('enable_element', False)
 enable_cinny = request.get('enable_cinny', False)
 
@@ -37,6 +38,7 @@ env_vars['SYNAPSE_DOMAIN_NAME'] = synapse_domain_name
 env_vars['ELEMENT_DOMAIN_NAME'] = element_domain_name
 env_vars['CINNY_DOMAIN_NAME'] = cinny_domain_name
 env_vars['DEX_LDAP_DOMAIN'] = dex_ldap_domain
+env_vars['MAIL_FROM'] = mail_from
 env_vars['LETS_ENCRYPT'] = '1' if lets_encrypt else '0'
 env_vars['ENABLE_ELEMENT'] = '1' if enable_element else '0'
 env_vars['ENABLE_CINNY'] = '1' if enable_cinny else '0'

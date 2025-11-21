@@ -184,6 +184,7 @@ export default {
       cinny_domain_name: "",
       domains_list: [],
       dex_ldap_domain: "",
+      mail_from: "",
       isLetsEncryptEnabled: false,
 	  enableElement: false,
 	  enableCinny: false,
@@ -198,6 +199,7 @@ export default {
         element_domain_name: "",
         cinny_domain_name: "",
         dex_ldap_domain: "",
+        mail_from: "",
         lets_encrypt: "",
 		enableElement: "",
 		enableCinny: "",
@@ -275,6 +277,7 @@ export default {
       this.element_domain_name = config.element_domain_name || "";
       this.cinny_domain_name = config.cinny_domain_name || "";
       this.domains_list = config.domains_list;
+      this.mail_from = config.mail_from || "";
       this.isLetsEncryptEnabled = config.lets_encrypt;
 	  this.enableElement = config.enable_element;
 	  this.enableCinny = config.enable_cinny;
@@ -384,6 +387,7 @@ export default {
             element_domain_name: this.element_domain_name,
             cinny_domain_name: this.cinny_domain_name,
             dex_ldap_domain: this.dex_ldap_domain,
+            mail_from: this.mail_from,
             lets_encrypt: this.isLetsEncryptEnabled,
 			enable_element: this.enableElement,
 			enable_cinny: this.enableCinny,

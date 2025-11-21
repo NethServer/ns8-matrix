@@ -32,6 +32,7 @@ if os.path.exists("config.env"):
     config['element_domain_name'] = env_vars.get('ELEMENT_DOMAIN_NAME', '')
     config['cinny_domain_name'] = env_vars.get('CINNY_DOMAIN_NAME', '')
     config['dex_ldap_domain'] = env_vars.get('DEX_LDAP_DOMAIN', '')
+    config['mail_from'] = env_vars.get('MAIL_FROM', '')
     config['lets_encrypt'] = env_vars.get('LETS_ENCRYPT', '0') == '1'
     config['enable_element'] = env_vars.get('ENABLE_ELEMENT', '0') == '1'
     config['enable_cinny'] = env_vars.get('ENABLE_CINNY', '0') == '1'
@@ -42,6 +43,7 @@ else:
     config['element_domain_name'] = ''
     config['cinny_domain_name'] = ''
     config['dex_ldap_domain'] = ''
+    config['mail_from'] = ''
     config['lets_encrypt'] = False
     config['enable_element'] = False
     config['enable_cinny'] = False
