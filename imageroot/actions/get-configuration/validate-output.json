@@ -10,6 +10,7 @@
             "cinny_domain_name": "cinny.example.com",
             "lets_encrypt": true,
             "dex_ldap_domain": "users.example.com",
+            "mail_from": "noreply@example.com",
             "enable_element": true,
             "enable_cinny": false
         }
@@ -20,28 +21,42 @@
             "type": "string",
             "description": "Fully qualified domain name for the Matrix homeserver"
         },
-	"element_domain_name": {
+        "element_domain_name": {
             "type": "string",
             "description": "Fully qualified domain name for the Element web client"
         },
-	"cinny_domain_name": {
+        "cinny_domain_name": {
             "type": "string",
             "description": "Fully qualified domain name for the Cinny client"
         },
-	"lets_encrypt": {
+        "lets_encrypt": {
             "type": "boolean",
             "description": "Enable Let's Encrypt certificate management"
         },
-	"dex_ldap_domain": {
+        "dex_ldap_domain": {
             "type": "string",
             "description": "LDAP domain name for Dex authentication (optional)",
             "format": "domain-name"
         },
-	"enable_element": {
+        "mail_from": {
+            "title": "Email from address",
+            "type": "string",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "email"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
+        },
+        "enable_element": {
             "type": "boolean",
             "description": "Enable Element web client"
         },
-	"enable_cinny": {
+        "enable_cinny": {
             "type": "boolean",
             "description": "Enable Cinny client"
         }

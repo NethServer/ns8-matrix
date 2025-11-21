@@ -35,6 +35,7 @@
         "choose_the_dex_ldap_domain_to_use": "Choose the LDAP domain to use for Dex",
         "mail_from": "Notifications mail from address",
         "mail_from_placeholder": "e.g. noreply@example.com",
+        "mail_from_format": "Must be a valid mail address",
         "enableElement": "Enable Element web client",
         "enableCinny": "Enable Cinny client",
         "enabled": "Enabled",
