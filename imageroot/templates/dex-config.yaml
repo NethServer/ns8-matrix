@@ -1,5 +1,9 @@
 issuer: https://${SYNAPSE_DOMAIN_NAME}/dex
 
+frontend:
+  dir: /srv/dex/web
+  issuer: NethServer Matrix
+
 storage:
   type: postgres
   config:
