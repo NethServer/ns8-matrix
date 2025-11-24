@@ -19,7 +19,7 @@ staticClients:
     redirectURIs:
       - 'https://${SYNAPSE_DOMAIN_NAME}/_synapse/client/oidc/callback'
     name: 'Synapse'
-    secret: synapse-secret
+    secret: ${SYNAPSE_SECRET}
 
 connectors:
   - type: ldap

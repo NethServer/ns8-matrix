@@ -67,7 +67,7 @@ oidc_providers:
     skip_verification: true # This is needed as Dex is served on an insecure endpoint
     issuer: "https://${SYNAPSE_DOMAIN_NAME}/dex"
     client_id: "synapse"
-    client_secret: "synapse-secret"
+    client_secret: "${SYNAPSE_SECRET}"
     scopes: ["openid", "profile", "email"]
     authorization_endpoint: "https://${SYNAPSE_DOMAIN_NAME}/dex/auth"
     token_endpoint: "https://${SYNAPSE_DOMAIN_NAME}/dex/token"

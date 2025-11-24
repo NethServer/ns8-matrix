@@ -34,7 +34,8 @@ if not os.path.exists(secrets_file):
     secrets_env = {
         "REGISTRATION_SECRET": generate_secret(),
         "MACAROON_SECRET": generate_secret(),
-        "FORM_SECRET": generate_secret()
+        "FORM_SECRET": generate_secret(),
+        "SYNAPSE_SECRET": generate_secret()
     }
     agent.write_envfile(secrets_file, secrets_env)
 
