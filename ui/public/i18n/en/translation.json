@@ -38,6 +38,7 @@
         "mail_from_format": "Must be a valid mail address",
         "enableElement": "Enable Element web client",
         "enableCinny": "Enable Cinny client",
+        "enableSSO": "Enable SSO",
         "enabled": "Enabled",
         "disabled": "Disabled"
     },

@@ -23,7 +23,7 @@ for key in lp.get_domains_list():
 
 config = {}
 
-if os.path.exists("config.env"): 
+if os.path.exists("config.env"):
     # Read current configuration from config file
     env_vars = agent.read_envfile("config.env")
 
@@ -36,6 +36,7 @@ if os.path.exists("config.env"):
     config['lets_encrypt'] = env_vars.get('LETS_ENCRYPT', '0') == '1'
     config['enable_element'] = env_vars.get('ENABLE_ELEMENT', '0') == '1'
     config['enable_cinny'] = env_vars.get('ENABLE_CINNY', '0') == '1'
+    config['enable_sso'] = env_vars.get('ENABLE_SSO', '0') == '1'
     config['domains_list'] = domains
 else:
     # No configuration file found, return empty configuration
@@ -47,6 +48,7 @@ else:
     config['lets_encrypt'] = False
     config['enable_element'] = False
     config['enable_cinny'] = False
+    config['enable_sso'] = False
     config['domains_list'] = domains
 
 json.dump(config, fp=sys.stdout)

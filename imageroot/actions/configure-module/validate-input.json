@@ -12,7 +12,8 @@
             "dex_ldap_domain": "users.example.com",
             "mail_from": "noreply@example.com",
             "enable_element": true,
-            "enable_cinny": false
+            "enable_cinny": false,
+            "enable_sso": true
         }
     ],
     "type": "object",
@@ -23,7 +24,8 @@
         "lets_encrypt",
         "dex_ldap_domain",
         "enable_element",
-        "enable_cinny"
+        "enable_cinny",
+        "enable_sso"
     ],
     "properties": {
         "synapse_domain_name": {
@@ -74,6 +76,10 @@
         "enable_cinny": {
             "type": "boolean",
             "description": "Enable Cinny client"
+        },
+        "enable_sso": {
+            "type": "boolean",
+            "description": "Enable SSO"
         }
     }
 }

@@ -12,7 +12,8 @@
             "dex_ldap_domain": "users.example.com",
             "mail_from": "noreply@example.com",
             "enable_element": true,
-            "enable_cinny": false
+            "enable_cinny": false,
+            "enable_sso": false
         }
     ],
     "type": "object",
@@ -59,6 +60,10 @@
         "enable_cinny": {
             "type": "boolean",
             "description": "Enable Cinny client"
+        },
+        "enable_sso": {
+            "type": "boolean",
+            "description": "Enable SSO"
         }
     }
 }
