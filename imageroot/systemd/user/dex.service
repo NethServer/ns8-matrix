@@ -28,6 +28,7 @@ ExecStart=/usr/bin/podman run \
     --network=host \
     --volume=dex-data:/var/lib/dex:Z \
     --volume=%S/state/dex-config:/etc/dex:Z \
+    --volume=%S/web:/srv/dex/web:z \
     ${DEX_IMAGE} \
     dex serve /etc/dex/config.yaml
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/dex.ctr-id -t 10

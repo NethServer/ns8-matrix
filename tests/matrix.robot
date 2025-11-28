@@ -1,5 +1,6 @@
 *** Settings ***
 Library    SSHLibrary
+Resource    api.resource
 
 *** Test Cases ***
 Check if matrix is installed correctly
@@ -25,6 +26,18 @@ Check if matrix services are running
     ${rc} =    Execute Command    systemctl --user is-active matrix1-element-web
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
+
+Retrieve element backend URL
+    # Assuming the test is running on a single node cluster
+    ${response} =    Run task     module/traefik1/get-route    {"instance":"${module_id}-element"}
+    Set Suite Variable    ${backend_url}    ${response['url']}
+
+Check if element works as expected
+    Retry test    Backend URL is reachable
+
+Verify element frontend title
+    ${output} =    Execute Command    curl -s ${backend_url}
+    Should Contain    ${output}    <title>Element</title>
 
 Check if matrix is removed correctly
     ${rc} =    Execute Command    remove-module --no-preserve ${module_id}

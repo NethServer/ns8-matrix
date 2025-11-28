@@ -10,6 +10,7 @@ This module provides a complete Matrix chat solution including:
 - **Dex** (OpenID Connect Provider) - Connects to NethServer LDAP for user authentication
 - **Synapse** (Matrix Homeserver) - Core Matrix server with OIDC authentication
 - **Element Web** (Web Client) - Web interface for Matrix chat
+- **Cinny** (Web Client) - Alternative web interface for Matrix chat
 
 ## Features
 
@@ -19,6 +20,7 @@ This module provides a complete Matrix chat solution including:
 - Automatic SSL/TLS certificate management via Traefik
 - Matrix Federation support
 - Persistent data storage
+- Postgresql database backend
 
 ## Install
 
@@ -38,22 +40,28 @@ Let's assume that the matrix instance is named `matrix1`.
 Launch `configure-module`, by setting the following parameters:
 - `synapse_domain_name`: The fully qualified domain name for the Matrix server (e.g., `matrix.example.com`)
 - `element_domain_name`: The fully qualified domain name for the Element web client (e.g., `chat.example.com`)
+- `cinny_domain_name`: The fully qualified domain name for the Cinny client (e.g., `cinny.example.com`)
 - `lets_encrypt`: Set to `true` to enable automatic SSL certificate generation via Let's Encrypt for both domains.
 - `dex_ldap_domain`: The LDAP domain name to be used by Dex for authentication. If not provided, the default LDAP domain will be used.
+- `mail_from`: The mail sender address for notification mails
+- `enable_element`: Set to `true` to enable Element web client
+- `enable_cinny`: Set to `true` to enable Cinny client
+- `enable_sso`: Set to `true` to enable operator SSO
 
 Example:
 
-    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "lets_encrypt": true, "dex_ldap_domain": "users.example.com"}'
+    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "dex_ldap_domain": "users.example.com", "mail_from": "noreply@example.com", "enable_element": true, "enable_cinny": true, "enable_sso": true}'
 
 The above command will:
-- Configure Dex as OpenID Connect provider with LDAP backend
+- Configure Dex as OpenID Connect provider with LDAP/AD backend
 - Start and configure the Synapse Matrix homeserver with OIDC authentication
-- Deploy Element Web client configured to connect to the local Synapse instance
+- Deploy Element Web client and Cinny client configured to connect to the local Synapse instance
 - Set up Traefik routes for both domains with automatic SSL certificates
 
 Access your Matrix installation:
 - Matrix server: `https://matrix.example.com`
 - Element web client: `https://chat.example.com`
+- Cinny client: `https://
 
 ## LDAP Integration
 
@@ -113,26 +121,9 @@ Alternative stacks:
 
 If the current stack will be used, the following must be made.
 
-Element web:
-- do not display the registration option
-- force [SSO login](https://github.com/element-hq/element-web/blob/develop/docs/config.md#sso-setup)
-- disable matrix.org as default server, set the local Synapse server as default
-- customize the UI with branding (logo, colors, etc.)
-
 Dex:
-- implement secure secret keys, do not use hardcoded ones like current `synapse-secret`
-- customize the UI with branding (logo, colors, etc.)
 - export preferred user name from LDAP to synapse (currently Dex exports only email and username)
 - add support for LDAP groups (currently Dex exports only users)
-- add support for Active Directory
-- switch from Sqlite to Postgres
-
-Synapse:
-- switch from Sqlite to Postgres 
-
-NethServer module:
-- UI: allow to configure the connected User Domain
-- UI: add Let's Encrypt option
 
 NethVoice CTI integration:
 - test current available client integrations
