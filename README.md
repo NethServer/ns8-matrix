@@ -61,7 +61,55 @@ The above command will:
 Access your Matrix installation:
 - Matrix server: `https://matrix.example.com`
 - Element web client: `https://chat.example.com`
-- Cinny client: `https://
+- Cinny client: `https://cinny.example.com`
+
+## Web clients
+
+Two web clients are available, Element web and Cinny. They can be enabled in the UI or by using the `enable_element` or `enable_cinny` flag.
+
+### Element web client
+
+The Element client supports customized themes, examples are added to the configuration file in `config-element.json`.
+
+```
+"custom_themes": [
+            {
+                "name": "NethServer1",
+                "is_dark": false,
+                "fonts": {
+                    "faces": [
+                        {
+                            "font-family": "Inter",
+                            "src": [{"url": "/fonts/Inter.ttf", "format": "ttf"}]
+                        }
+                    ],
+                    "general": "Inter, sans",
+                    "monospace": "'Courier New'"
+                },
+                "colors": {
+                    "accent-color": "#3596fc",
+                    "primary-color": "#368bd6",
+                    "warning-color": "#ff4b55",
+                    "sidebar-color": "#27303a",
+                    "roomlist-background-color": "#f3f8fd",
+                    "roomlist-text-color": "#2e2f32",
+                    "roomlist-text-secondary-color": "#61708b",
+                    "roomlist-highlights-color": "#ffffff",
+                    "roomlist-separator-color": "#e3e8f0",
+                    "timeline-background-color": "#ffffff",
+                    "timeline-text-color": "#2e2f32",
+                    "timeline-text-secondary-color": "#61708b",
+                    "timeline-highlights-color": "#f3f8fd"
+                },
+                "compound": {
+                    "--cpd-color-icon-accent-tertiary": "var(--cpd-color-blue-800)",
+                    "--cpd-color-text-action-accent": "var(--cpd-color-blue-900)"
+                }
+            }
+]
+```
+
+### Cinny Client
 
 ## LDAP Integration
 
@@ -80,6 +128,14 @@ If LDAP settings change while the module is running, the event handler
 The module supports Matrix federation by configuring the necessary server delegation 
 and federation settings. The Synapse server is configured with the proper server name
 and federation endpoints are exposed through Traefik.
+
+## External SSO
+
+External SSO can be enabled in the UI or by the `sso_enabled` flag. This way it can be used with external identity providers like Authentik.
+
+## Rotate/recreate secrets
+
+The used secrets are stored in `matrix-secrets.env`. To rotate or recreate those secrets, you can remove the file, it will be recreated with new secrets after reconfiguration of the app.
 
 ## Uninstall
 
