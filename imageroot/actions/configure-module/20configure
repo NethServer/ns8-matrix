@@ -52,7 +52,6 @@ tcp_ports = os.environ.get('TCP_PORTS', '20001').split(',')
 env_vars['DEX_PORT'] = tcp_ports[0]
 env_vars['SYNAPSE_PORT'] = tcp_ports[1]
 env_vars['ELEMENT_WEB_PORT'] = tcp_ports[2]
-#env_vars['SYGNAL_PORT'] = tcp_ports[3] # For future use
 env_vars['CINNY_PORT'] = tcp_ports[3]
 
 # Write updated configuration
