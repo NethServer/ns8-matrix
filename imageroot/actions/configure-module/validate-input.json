@@ -10,22 +10,14 @@
             "cinny_domain_name": "cinny.example.com",
             "lets_encrypt": true,
             "dex_ldap_domain": "users.example.com",
-            "mail_from": "noreply@example.com",
-            "enable_element": true,
-            "enable_cinny": false,
-            "enable_sso": true
+            "mail_from": "noreply@example.com"
         }
     ],
     "type": "object",
     "required": [
         "synapse_domain_name",
-        "element_domain_name",
-        "cinny_domain_name",
         "lets_encrypt",
-        "dex_ldap_domain",
-        "enable_element",
-        "enable_cinny",
-        "enable_sso"
+        "dex_ldap_domain"
     ],
     "properties": {
         "synapse_domain_name": {
@@ -68,18 +60,6 @@
                     "maxLength": 0
                 }
             ]
-	},
-        "enable_element": {
-            "type": "boolean",
-            "description": "Enable Element web client"
-        },
-        "enable_cinny": {
-            "type": "boolean",
-            "description": "Enable Cinny client"
-        },
-        "enable_sso": {
-            "type": "boolean",
-            "description": "Enable SSO"
         }
     }
 }

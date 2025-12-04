@@ -98,48 +98,6 @@
                 $t("settings.enabled")
               }}</template>
             </NsToggle>
-			      <cv-toggle
-              value="enableElement"
-              :label="$t('settings.enableElement')"
-              v-model="enableElement"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </cv-toggle>
-			      <cv-toggle
-              value="enableCinny"
-              :label="$t('settings.enableCinny')"
-              v-model="enableCinny"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </cv-toggle>
-            <cv-toggle
-              value="enableSSO"
-              :label="$t('settings.enableSSO')"
-              v-model="enableSSO"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </cv-toggle>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -200,9 +158,6 @@ export default {
       dex_ldap_domain: "",
       mail_from: "",
       isLetsEncryptEnabled: false,
-	    enableElement: false,
-	    enableCinny: false,
-      enableSSO: false,
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -216,9 +171,6 @@ export default {
         dex_ldap_domain: "",
         mail_from: "",
         lets_encrypt: "",
-		    enableElement: "",
-		    enableCinny: "",
-        enableSSO: "",
       },
     };
   },
@@ -295,9 +247,6 @@ export default {
       this.domains_list = config.domains_list;
       this.mail_from = config.mail_from || "";
       this.isLetsEncryptEnabled = config.lets_encrypt;
-	    this.enableElement = config.enable_element;
-	    this.enableCinny = config.enable_cinny;
-      this.enableSSO = config.enable_sso;
 
       // force to reload value after dom update
       this.$nextTick(() => {
@@ -406,9 +355,6 @@ export default {
             dex_ldap_domain: this.dex_ldap_domain,
             mail_from: this.mail_from,
             lets_encrypt: this.isLetsEncryptEnabled,
-			      enable_element: this.enableElement,
-			      enable_cinny: this.enableCinny,
-            enable_sso: this.enableSSO,
           },
           extra: {
             title: this.$t("settings.configure_instance", {

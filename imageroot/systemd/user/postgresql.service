@@ -7,6 +7,7 @@
 Description=Podman postgresql.service
 #After=matrix.service
 #BindsTo=matrix.service
+Before=synapse.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
