@@ -27,17 +27,29 @@
             "minLength": 1
         },
         "element_domain_name": {
-            "type": "string",
-            "description": "Fully qualified domain name for the Element web client",
-            "format": "hostname",
-            "minLength": 1
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "hostname"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
         },
         "cinny_domain_name": {
-            "type": "string",
-            "description": "Fully qualified domain name for the Cinny client",
-            "format": "hostname",
-            "minLength": 1
-        },
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "hostname"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
+	},
         "lets_encrypt": {
             "type": "boolean",
             "description": "Enable Let's Encrypt certificate management"

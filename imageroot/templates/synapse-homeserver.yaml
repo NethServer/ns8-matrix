@@ -17,10 +17,10 @@ database:
   txn_limit: 10000
   args:
     user: postgres
-    password: Nethesis,1234
+    password: ${POSTGRES_PASSWORD}
     database: synapse
     host: 127.0.0.1
-    port: 25432
+    port: ${POSTGRES_PORT}
     cp_min: 5
     cp_max: 10
 

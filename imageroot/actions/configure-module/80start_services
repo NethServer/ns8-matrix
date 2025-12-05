@@ -20,14 +20,14 @@ systemctl --user enable dex.service
 systemctl --user enable synapse.service
 
 # Enable element web client when enabled in UI
-if [ ${ENABLE_ELEMENT} = "1" ]; then
+if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
   systemctl --user enable element-web.service
 else
   systemctl --user disable element-web.service
 fi
 
 # Enable cinny client when enabled in UI
-if [ ${ENABLE_CINNY} = "1" ]; then
+if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
   systemctl --user enable cinny.service
 else
   systemctl --user disable cinny.service
@@ -41,14 +41,14 @@ systemctl --user restart dex.service
 systemctl --user restart synapse.service
 
 # Restart element web client when enabled in UI, else stop it
-if [ ${ENABLE_ELEMENT} = "1" ]; then
+if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
   systemctl --user restart element-web.service
 else
   systemctl --user stop element-web.service
 fi
 
 # Restart cinny client when enabled in UI, else stop it
-if [ ${ENABLE_CINNY} = "1" ]; then
+if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
   systemctl --user restart cinny.service
 else
   systemctl --user stop cinny.service

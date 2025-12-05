@@ -28,6 +28,18 @@ env_vars = agent.read_envfile("config.env")
 ldap_env = agent.read_envfile("ldap.env")
 env_vars.update(ldap_env)
 
+# Generate postgres secrets if they don't exist
+secrets_file = 'database.env'
+if not os.path.exists(secrets_file):
+    secrets_env = {
+        "POSTGRES_PASSWORD": generate_secret()
+    }
+    agent.write_envfile(secrets_file, secrets_env)
+
+# Read postgres environment if available
+database_env = agent.read_envfile("database.env")
+env_vars.update(database_env)
+
 # Generate secrets if they don't exist
 secrets_file = 'matrix-secrets.env'
 if not os.path.exists(secrets_file):

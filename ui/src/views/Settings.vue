@@ -269,24 +269,6 @@ export default {
         }
       }
 
-      // Validate element domain name
-      if (!this.element_domain_name) {
-        this.error.element_domain_name = this.$t("common.required");
-        if (isValidationOk) {
-          this.focusElement("element_domain_name");
-          isValidationOk = false;
-        }
-      }
-
-      // Validate cinny domain name
-      if (!this.cinny_domain_name) {
-        this.error.cinny_domain_name = this.$t("common.required");
-        if (isValidationOk) {
-          this.focusElement("cinny_domain_name");
-          isValidationOk = false;
-        }
-      }
-
       // Validate ldap domain
       if (!this.dex_ldap_domain) {
         this.error.dex_ldap_domain = this.$t("settings.required");

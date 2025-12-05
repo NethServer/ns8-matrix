@@ -21,8 +21,8 @@ lets_encrypt = request.get('lets_encrypt', False)
 dex_ldap_domain = request.get('dex_ldap_domain', '')
 mail_from = request.get('mail_from', '')
 
-if not synapse_domain_name or not element_domain_name or not cinny_domain_name:
-    print("ERROR: Synapse_domain_name, element_domain_name and cinny_domain_name are required", file=sys.stderr)
+if not synapse_domain_name:
+    print("ERROR: Synapse_domain_name is required", file=sys.stderr)
     sys.exit(1)
 
 # Read current configuration
@@ -86,33 +86,50 @@ response = agent.tasks.run(
 agent.assert_exp(response['exit_code'] == 0)
 
 # Configure Traefik routes for Element Web client
-response = agent.tasks.run(
-    agent_id=agent.resolve_agent_id('traefik@node'),
-    action='set-route',
-    data={
-        'instance': os.environ['MODULE_ID'] + '-element',
-        'url': 'http://127.0.0.1:' + env_vars['ELEMENT_WEB_PORT'],
-        'host': element_domain_name,
-        'http2https': True,
-        'lets_encrypt': lets_encrypt,
-    },
-)
-agent.assert_exp(response['exit_code'] == 0)
+if element_domain_name:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='set-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-element',
+            'url': 'http://127.0.0.1:' + env_vars['ELEMENT_WEB_PORT'],
+            'host': element_domain_name,
+            'http2https': True,
+            'lets_encrypt': lets_encrypt,
+        },
+    )
+    agent.assert_exp(response['exit_code'] == 0)
+else:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='delete-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-element'
+        },
+    )
 
 # Configure Traefik routes for Cinny client
-response = agent.tasks.run(
-    agent_id=agent.resolve_agent_id('traefik@node'),
-    action='set-route',
-    data={
-        'instance': os.environ['MODULE_ID'] + '-cinny',
-        'url': 'http://127.0.0.1:' + env_vars['CINNY_PORT'],
-        'host': cinny_domain_name,
-        'http2https': True,
-        'lets_encrypt': lets_encrypt,
-    },
-)
-agent.assert_exp(response['exit_code'] == 0)
-
+if cinny_domain_name:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='set-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-cinny',
+            'url': 'http://127.0.0.1:' + env_vars['CINNY_PORT'],
+            'host': cinny_domain_name,
+            'http2https': True,
+            'lets_encrypt': lets_encrypt,
+        },
+    )
+    agent.assert_exp(response['exit_code'] == 0)
+else:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='delete-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-cinny'
+        },
+    )
 
 # Bind the new domain, overriding previous values (unbind)
 agent.bind_user_domains([dex_ldap_domain])

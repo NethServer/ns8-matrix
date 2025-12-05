@@ -8,10 +8,10 @@ storage:
   type: postgres
   config:
     host: 127.0.0.1
-    port: 25432
+    port: ${POSTGRES_PORT}
     database: dex
     user: postgres
-    password: Nethesis,1234
+    password: ${POSTGRES_PASSWORD}
     ssl:
       mode: disable
 
