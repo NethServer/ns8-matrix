@@ -16,11 +16,13 @@ request = json.load(sys.stdin)
 # Get configuration parameters
 synapse_domain_name = request.get('synapse_domain_name', '')
 element_domain_name = request.get('element_domain_name', '')
+cinny_domain_name = request.get('cinny_domain_name', '')
 lets_encrypt = request.get('lets_encrypt', False)
 dex_ldap_domain = request.get('dex_ldap_domain', '')
+mail_from = request.get('mail_from', '')
 
-if not synapse_domain_name or not element_domain_name:
-    print("ERROR: Both synapse_domain_name and element_domain_name are required", file=sys.stderr)
+if not synapse_domain_name:
+    print("ERROR: Synapse_domain_name is required", file=sys.stderr)
     sys.exit(1)
 
 # Read current configuration
@@ -32,7 +34,9 @@ else:
 # Update environment with new configuration
 env_vars['SYNAPSE_DOMAIN_NAME'] = synapse_domain_name
 env_vars['ELEMENT_DOMAIN_NAME'] = element_domain_name
+env_vars['CINNY_DOMAIN_NAME'] = cinny_domain_name
 env_vars['DEX_LDAP_DOMAIN'] = dex_ldap_domain
+env_vars['MAIL_FROM'] = mail_from
 env_vars['LETS_ENCRYPT'] = '1' if lets_encrypt else '0'
 
 # Get allocated TCP ports from environment - NS8 allocates sequential ports
@@ -42,10 +46,15 @@ tcp_ports = os.environ.get('TCP_PORTS', '20001').split(',')
 env_vars['DEX_PORT'] = tcp_ports[0]
 env_vars['SYNAPSE_PORT'] = tcp_ports[1]
 env_vars['ELEMENT_WEB_PORT'] = tcp_ports[2]
-env_vars['SYGNAL_PORT'] = tcp_ports[3] # For future use
+env_vars['CINNY_PORT'] = tcp_ports[3]
+env_vars['POSTGRES_PORT'] = tcp_ports[4]
 
 # Write updated configuration
 agent.write_envfile("config.env", env_vars)
+
+# For later use and backup
+with open('config.json', 'w') as cfp:
+    cfp.write(json.dumps(request))
 
 # Configure Traefik routes for Synapse Matrix server
 response = agent.tasks.run(
@@ -77,18 +86,50 @@ response = agent.tasks.run(
 agent.assert_exp(response['exit_code'] == 0)
 
 # Configure Traefik routes for Element Web client
-response = agent.tasks.run(
-    agent_id=agent.resolve_agent_id('traefik@node'),
-    action='set-route',
-    data={
-        'instance': os.environ['MODULE_ID'] + '-element',
-        'url': 'http://127.0.0.1:' + env_vars['ELEMENT_WEB_PORT'],
-        'host': element_domain_name,
-        'http2https': True,
-        'lets_encrypt': lets_encrypt,
-    },
-)
-agent.assert_exp(response['exit_code'] == 0)
+if element_domain_name:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='set-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-element',
+            'url': 'http://127.0.0.1:' + env_vars['ELEMENT_WEB_PORT'],
+            'host': element_domain_name,
+            'http2https': True,
+            'lets_encrypt': lets_encrypt,
+        },
+    )
+    agent.assert_exp(response['exit_code'] == 0)
+else:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='delete-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-element'
+        },
+    )
+
+# Configure Traefik routes for Cinny client
+if cinny_domain_name:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='set-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-cinny',
+            'url': 'http://127.0.0.1:' + env_vars['CINNY_PORT'],
+            'host': cinny_domain_name,
+            'http2https': True,
+            'lets_encrypt': lets_encrypt,
+        },
+    )
+    agent.assert_exp(response['exit_code'] == 0)
+else:
+    response = agent.tasks.run(
+        agent_id=agent.resolve_agent_id('traefik@node'),
+        action='delete-route',
+        data={
+            'instance': os.environ['MODULE_ID'] + '-cinny'
+        },
+    )
 
 # Bind the new domain, overriding previous values (unbind)
 agent.bind_user_domains([dex_ldap_domain])
