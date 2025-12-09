@@ -69,7 +69,7 @@ Two web clients are available, Element web and Cinny. They can be enabled in the
 
 ### Element web client
 
-The Element client supports customized themes, examples are added to the configuration file in `config-element.json`.
+The Element client supports customized themes, examples are added to the configuration file in `element-config/config.json`.
 
 ```
 "custom_themes": [
