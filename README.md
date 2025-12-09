@@ -44,9 +44,6 @@ Launch `configure-module`, by setting the following parameters:
 - `lets_encrypt`: Set to `true` to enable automatic SSL certificate generation via Let's Encrypt for both domains.
 - `dex_ldap_domain`: The LDAP domain name to be used by Dex for authentication. If not provided, the default LDAP domain will be used.
 - `mail_from`: The mail sender address for notification mails
-- `enable_element`: Set to `true` to enable Element web client
-- `enable_cinny`: Set to `true` to enable Cinny client
-- `enable_sso`: Set to `true` to enable operator SSO
 
 Example:
 
