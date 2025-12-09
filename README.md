@@ -127,10 +127,6 @@ The module supports Matrix federation by configuring the necessary server delega
 and federation settings. The Synapse server is configured with the proper server name
 and federation endpoints are exposed through Traefik.
 
-## External SSO
-
-External SSO can be enabled in the UI or by the `sso_enabled` flag. This way it can be used with external identity providers like Authentik.
-
 ## Rotate/recreate secrets
 
 The used secrets are stored in `matrix-secrets.env`. To rotate or recreate those secrets, you can remove the file, it will be recreated with new secrets after reconfiguration of the app.
