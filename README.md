@@ -111,6 +111,7 @@ The Element client supports customized themes, examples are added to the configu
 
 ### Cinny Client
 
+Cinny is an alternative web client for Matrix chat, included in this module to provide users with a modern, lightweight interface. It can be accessed via a web browser and supports essential Matrix features such as messaging, rooms, and user authentication via OpenID Connect. Cinny is pre-configured to work with the Synapse server and Dex for seamless integration with NethServer 8 LDAP.
 ## LDAP Integration
 
 The module automatically discovers LDAP settings from the NethServer 8 configuration. 
