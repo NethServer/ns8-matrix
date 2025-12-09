@@ -53,5 +53,3 @@ if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
 else
   systemctl --user stop cinny.service
 fi
-
-#systemctl --user restart matrix.service
