@@ -47,7 +47,7 @@ Launch `configure-module`, by setting the following parameters:
 
 Example:
 
-    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "dex_ldap_domain": "users.example.com", "mail_from": "noreply@example.com", "enable_element": true, "enable_cinny": true, "enable_sso": true}'
+    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "dex_ldap_domain": "users.example.com", "mail_from": "noreply@example.com"}'
 
 The above command will:
 - Configure Dex as OpenID Connect provider with LDAP/AD backend
