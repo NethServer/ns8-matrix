@@ -271,7 +271,7 @@ export default {
 
       // Validate ldap domain
       if (!this.dex_ldap_domain) {
-        this.error.dex_ldap_domain = this.$t("settings.required");
+        this.error.dex_ldap_domain = this.$t("common.required");
 
         if (isValidationOk) {
           this.focusElement("dex_ldap_domain");
