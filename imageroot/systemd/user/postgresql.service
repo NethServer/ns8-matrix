@@ -22,7 +22,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/postgresql.pid \
     --env-file=%S/state/environment \
     --env-file=%S/state/database.env \
     --volume postgres-data:/var/lib/postgresql/data:Z \
-    --volume %S/state/restore/:/docker-entrypoint-initdb.d/:Z \
+    --volume %S/postgresql-initdb.d/:/docker-entrypoint-initdb.d/:Z \
     --env=POSTGRES_USER=postgres \
     --env=POSTGRES_DB=synapse \
     --env=POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C" \
