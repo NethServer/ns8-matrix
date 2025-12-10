@@ -27,7 +27,17 @@
         "synapse_domain_name": "Matrix server domain",
         "synapse_domain_placeholder": "e.g. matrix.example.com",
         "element_domain_name": "Element web client domain", 
-        "element_domain_placeholder": "e.g. chat.example.com"
+        "element_domain_placeholder": "e.g. chat.example.com",
+        "cinny_domain_name": "Cinny client domain", 
+        "cinny_domain_placeholder": "e.g. cinny.example.com",
+        "dex_ldap_domain": "Dex LDAP domain",
+        "choose_dex_ldap_domain": "Choose the Dex LDAP domain",
+        "choose_the_dex_ldap_domain_to_use": "Choose the LDAP domain to use for Dex",
+        "mail_from": "Notifications mail from address",
+        "mail_from_placeholder": "e.g. noreply@example.com",
+        "mail_from_format": "Must be a valid mail address",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
     },
     "about": {
         "title": "About"

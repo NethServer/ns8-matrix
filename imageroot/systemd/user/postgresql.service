@@ -1,0 +1,42 @@
+#
+# Copyright (C) 2025 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+[Unit]
+Description=Podman postgresql.service
+Before=synapse.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+EnvironmentFile=%S/state/config.env
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/postgresql.pid %t/postgresql.ctr-id
+ExecStartPre=/bin/mkdir -p %S/state/restore/
+ExecStartPre=-runagent configure-matrix
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/postgresql.pid \
+    --cidfile %t/postgresql.ctr-id --cgroups=no-conmon \
+    --replace -d --name postgresql \
+    --env-file=%S/state/environment \
+    --env-file=%S/state/database.env \
+    --volume postgres-data:/var/lib/postgresql/data:Z \
+    --volume %S/postgresql-initdb.d/:/docker-entrypoint-initdb.d/:Z \
+    --env=POSTGRES_USER=postgres \
+    --env=POSTGRES_DB=synapse \
+    --env=POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C" \
+    --env=TZ=UTC \
+    --publish ${POSTGRES_PORT}:5432 \
+    ${POSTGRES_IMAGE}
+ExecStartPost=/usr/bin/bash -c "while ! podman  exec postgresql psql -U postgres -d synapse ;  do sleep 5 ; done"
+ExecStartPost=-/usr/bin/bash -c "podman exec postgresql psql -U postgres -c 'CREATE DATABASE dex;'"
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/postgresql.ctr-id -t 10
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/postgresql.ctr-id
+ExecReload=/usr/bin/podman kill -s HUP postgresql
+SyslogIdentifier=%u
+PIDFile=%t/postgresql.pid
+Type=forking
+
+[Install]
+WantedBy=default.target

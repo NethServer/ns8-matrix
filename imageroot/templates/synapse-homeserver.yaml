@@ -1,8 +1,6 @@
 server_name: ${SYNAPSE_DOMAIN_NAME}
 pid_file: /data/homeserver.pid
-web_client_location: https://${ELEMENT_DOMAIN_NAME}/
 public_baseurl: https://${SYNAPSE_DOMAIN_NAME}/
-default_identity_server: https://${SYNAPSE_DOMAIN_NAME}/dex
 
 listeners:
   - port: ${SYNAPSE_PORT}
@@ -14,9 +12,16 @@ listeners:
       - names: [client]
 
 database:
-  name: sqlite3
+  name: psycopg2
+  txn_limit: 10000
   args:
-    database: /data/homeserver.db
+    user: postgres
+    password: ${POSTGRES_PASSWORD}
+    database: synapse
+    host: 127.0.0.1
+    port: ${POSTGRES_PORT}
+    cp_min: 5
+    cp_max: 10
 
 log_config: "/data/config/log.config"
 
@@ -60,7 +65,7 @@ oidc_providers:
     skip_verification: true # This is needed as Dex is served on an insecure endpoint
     issuer: "https://${SYNAPSE_DOMAIN_NAME}/dex"
     client_id: "synapse"
-    client_secret: "synapse-secret"
+    client_secret: "${SYNAPSE_SECRET}"
     scopes: ["openid", "profile", "email"]
     authorization_endpoint: "https://${SYNAPSE_DOMAIN_NAME}/dex/auth"
     token_endpoint: "https://${SYNAPSE_DOMAIN_NAME}/dex/token"

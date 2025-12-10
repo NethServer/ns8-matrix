@@ -39,6 +39,65 @@
               :invalid-message="error.element_domain_name"
               ref="element_domain_name"
             ></cv-text-input>
+            <cv-text-input
+              :label="$t('settings.cinny_domain_name')"
+              v-model="cinny_domain_name"
+              :placeholder="$t('settings.cinny_domain_placeholder')"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              :invalid-message="error.cinny_domain_name"
+              ref="cinny_domain_name"
+            ></cv-text-input>
+            <NsComboBox
+              v-model.trim="dex_ldap_domain"
+              :autoFilter="true"
+              :autoHighlight="true"
+              :title="$t('settings.dex_ldap_domain')"
+              :label="$t('settings.choose_dex_ldap_domain')"
+              :options="domains_list"
+              :acceptUserInput="false"
+              :showItemType="true"
+              :invalid-message="$t(error.dex_ldap_domain)"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              tooltipAlignment="start"
+              tooltipDirection="top"
+              ref="dex_ldap_domain"
+            >
+              <template slot="tooltip">
+                {{ $t("settings.choose_the_dex_ldap_domain_to_use") }}
+              </template>
+            </NsComboBox>
+            <cv-text-input
+              :label="$t('settings.mail_from')"
+              v-model="mail_from"
+              :placeholder="$t('settings.mail_from_placeholder')"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              :invalid-message="error.mail_from"
+              ref="mail_from"
+            ></cv-text-input>
+            <NsToggle
+              value="letsEncrypt"
+              :label="core.$t('apps_lets_encrypt.request_https_certificate')"
+              v-model="isLetsEncryptEnabled"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <template #tooltip>
+                <div class="mg-bottom-sm">
+                  {{ core.$t("apps_lets_encrypt.lets_encrypt_tips") }}
+                </div>
+                <div class="mg-bottom-sm">
+                  <cv-link @click="goToCertificates">
+                    {{ core.$t("apps_lets_encrypt.go_to_tls_certificates") }}
+                  </cv-link>
+                </div>
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -54,8 +113,8 @@
               :icon="Save20"
               :loading="loading.configureModule"
               :disabled="loading.getConfiguration || loading.configureModule"
-              >{{ $t("settings.save") }}</NsButton>
-            >
+              >{{ $t("settings.save") }}
+            </NsButton>
           </cv-form>
         </cv-tile>
       </cv-column>
@@ -94,6 +153,11 @@ export default {
       urlCheckInterval: null,
       synapse_domain_name: "",
       element_domain_name: "",
+      cinny_domain_name: "",
+      domains_list: [],
+      dex_ldap_domain: "",
+      mail_from: "",
+      isLetsEncryptEnabled: false,
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -103,6 +167,10 @@ export default {
         configureModule: "",
         synapse_domain_name: "",
         element_domain_name: "",
+        cinny_domain_name: "",
+        dex_ldap_domain: "",
+        mail_from: "",
+        lets_encrypt: "",
       },
     };
   },
@@ -123,6 +191,9 @@ export default {
     this.getConfiguration();
   },
   methods: {
+    goToCertificates() {
+      this.core.$router.push("/settings/tls-certificates");
+    },
     async getConfiguration() {
       this.loading.getConfiguration = true;
       this.error.getConfiguration = "";
@@ -172,6 +243,15 @@ export default {
       // Set configuration fields
       this.synapse_domain_name = config.synapse_domain_name || "";
       this.element_domain_name = config.element_domain_name || "";
+      this.cinny_domain_name = config.cinny_domain_name || "";
+      this.domains_list = config.domains_list;
+      this.mail_from = config.mail_from || "";
+      this.isLetsEncryptEnabled = config.lets_encrypt;
+
+      // force to reload value after dom update
+      this.$nextTick(() => {
+        this.dex_ldap_domain = config.dex_ldap_domain;
+      });
 
       // Focus first configuration field
       this.focusElement("synapse_domain_name");
@@ -189,11 +269,12 @@ export default {
         }
       }
 
-      // Validate element domain name
-      if (!this.element_domain_name) {
-        this.error.element_domain_name = this.$t("common.required");
+      // Validate ldap domain
+      if (!this.dex_ldap_domain) {
+        this.error.dex_ldap_domain = this.$t("common.required");
+
         if (isValidationOk) {
-          this.focusElement("element_domain_name");
+          this.focusElement("dex_ldap_domain");
           isValidationOk = false;
         }
       }
@@ -252,6 +333,10 @@ export default {
           data: {
             synapse_domain_name: this.synapse_domain_name,
             element_domain_name: this.element_domain_name,
+            cinny_domain_name: this.cinny_domain_name,
+            dex_ldap_domain: this.dex_ldap_domain,
+            mail_from: this.mail_from,
+            lets_encrypt: this.isLetsEncryptEnabled,
           },
           extra: {
             title: this.$t("settings.configure_instance", {

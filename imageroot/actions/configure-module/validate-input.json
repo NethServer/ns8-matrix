@@ -7,14 +7,15 @@
         {
             "synapse_domain_name": "matrix.example.com",
             "element_domain_name": "chat.example.com",
+            "cinny_domain_name": "cinny.example.com",
             "lets_encrypt": true,
-            "dex_ldap_domain": "users.example.com"
+            "dex_ldap_domain": "users.example.com",
+            "mail_from": "noreply@example.com"
         }
     ],
     "type": "object",
     "required": [
         "synapse_domain_name",
-        "element_domain_name",
         "lets_encrypt",
         "dex_ldap_domain"
     ],
@@ -26,11 +27,29 @@
             "minLength": 1
         },
         "element_domain_name": {
-            "type": "string", 
-            "description": "Fully qualified domain name for the Element web client",
-            "format": "hostname",
-            "minLength": 1
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "hostname"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
         },
+        "cinny_domain_name": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "hostname"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
+    },
         "lets_encrypt": {
             "type": "boolean",
             "description": "Enable Let's Encrypt certificate management"
@@ -38,8 +57,21 @@
         "dex_ldap_domain": {
             "type": "string",
             "description": "LDAP domain name for Dex authentication (optional)",
-            "format": "domain-name",
-            "minLength": 1
+            "format": "domain-name"
+        },
+        "mail_from": {
+            "title": "Email from address",
+            "type": "string",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "email"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
         }
     }
 }

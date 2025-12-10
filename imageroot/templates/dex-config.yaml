@@ -1,9 +1,19 @@
 issuer: https://${SYNAPSE_DOMAIN_NAME}/dex
 
+frontend:
+  dir: /srv/dex/web
+  issuer: NethServer Matrix
+
 storage:
-  type: sqlite3
+  type: postgres
   config:
-    file: /var/lib/dex/dex.db
+    host: 127.0.0.1
+    port: ${POSTGRES_PORT}
+    database: dex
+    user: postgres
+    password: ${POSTGRES_PASSWORD}
+    ssl:
+      mode: disable
 
 web:
   http: 0.0.0.0:${DEX_PORT}
@@ -13,12 +23,12 @@ staticClients:
     redirectURIs:
       - 'https://${SYNAPSE_DOMAIN_NAME}/_synapse/client/oidc/callback'
     name: 'Synapse'
-    secret: synapse-secret
+    secret: ${SYNAPSE_SECRET}
 
 connectors:
   - type: ldap
-    id: ldap
-    name: LDAP
+    id: ${DEX_LDAP_ID}
+    name: ${DEX_LDAP_NAME}
     config:
       host: ${DEX_LDAP_HOST}:${DEX_LDAP_PORT}
       insecureNoSSL: true
@@ -27,14 +37,14 @@ connectors:
       usernamePrompt: Username
       userSearch:
         baseDN: ${DEX_LDAP_BASE_DN}
-        filter: ${DEX_LDAP_USER_FILTER}
-        username: uid
-        idAttr: uid
-        emailAttr: mail
-        nameAttr: cn
+        filter: "${DEX_LDAP_USER_FILTER}"
+        username: ${DEX_LDAP_USERNAME}
+        idAttr: ${DEX_LDAP_ID_ATTR}
+        emailAttr: ${DEX_LDAP_EMAIL_ATTR}
+        nameAttr: ${DEX_LDAP_NAME_ATTR}
       groupSearch:
         baseDN: ${DEX_LDAP_BASE_DN}
-        filter: "(objectClass=groupOfNames)"
+        filter: "${DEX_LDAP_GROUP_FILTER}"
         userMatchers:
           - userAttr: DN
             groupAttr: member
