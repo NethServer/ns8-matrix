@@ -8,4 +8,4 @@
 set -e
 
 echo "Dumping all PostgreSQL databases"
-podman exec postgresql pg_dumpall -p 25432 -U postgres > postgresql.pg_dump
+podman exec postgresql pg_dumpall -U postgres > postgresql.pg_dump
