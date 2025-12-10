@@ -1,6 +1,5 @@
 server_name: ${SYNAPSE_DOMAIN_NAME}
 pid_file: /data/homeserver.pid
-web_client_location: https://${ELEMENT_DOMAIN_NAME}/
 public_baseurl: https://${SYNAPSE_DOMAIN_NAME}/
 
 listeners:
