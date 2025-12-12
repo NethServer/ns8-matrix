@@ -81,10 +81,5 @@
                 }
             }
         ]
-    },
-    "sso_redirect_options": {
-      "immediate": true,
-      "on_welcome_page": true,
-      "on_login_page": true
     }
 }
