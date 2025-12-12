@@ -10,7 +10,8 @@
             "cinny_domain_name": "cinny.example.com",
             "lets_encrypt": true,
             "ldap_domain": "users.example.com",
-            "mail_from": "noreply@example.com"
+            "mail_from": "noreply@example.com",
+            "nethvoice_auth_url": "https://voice.nethserver.org/freepbx/rest/testextauth"
         }
     ],
     "type": "object",
@@ -66,6 +67,20 @@
                 {
                     "type": "string",
                     "format": "email"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
+        }
+        ,
+        "nethvoice_auth_url": {
+            "description": "NethVoice Authentication URL",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "uri"
                 },
                 {
                     "type": "string",

@@ -47,8 +47,11 @@ if not os.path.exists(secrets_file):
         "REGISTRATION_SECRET": generate_secret(),
         "MACAROON_SECRET": generate_secret(),
         "FORM_SECRET": generate_secret(),
-        "SYNAPSE_SECRET": generate_secret()
+        "SYNAPSE_SECRET": generate_secret(),
+        "M2A_AS_TOKEN": generate_secret(64),
+        "M2A_HS_TOKEN": generate_secret(64)
     }
+    secrets_env["MATRIX_AS_TOKEN"] = secrets_env['M2A_AS_TOKEN']
     agent.write_envfile(secrets_file, secrets_env)
 
 # Read generated secrets
@@ -73,6 +76,17 @@ with open(f'{template_dir}/synapse-homeserver.yaml', 'r') as f:
  
 with open('synapse-config/homeserver.yaml', 'w') as f:
     f.write(synapse_config)
+
+    # If NETHVOICE_AUTH_URL is set, append the appservice lines to the generated homeserver.yaml
+    if env_vars.get('NETHVOICE_AUTH_URL'):
+        f.write('\napp_service_config_files:\n   - /data/config/matrix2acrobits.yaml\n')
+
+# Expand matrix2acrobits.yaml into the synapse config directory
+with open(f'{template_dir}/matrix2acrobits.yaml', 'r') as f:
+    matrix_a2a = substitute_env_vars(f.read(), env_vars)
+
+with open('synapse-config/matrix2acrobits.yaml', 'w') as f:
+    f.write(matrix_a2a)
 
 # Copy log config
 with open(f'{template_dir}/synapse-log.config', 'r') as f:

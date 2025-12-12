@@ -51,3 +51,14 @@ if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
 else
   systemctl --user stop cinny.service
 fi
+
+# Manage matrix2acrobits service
+if [[ -n ${NETHVOICE_AUTH_URL} ]]; then
+  # Enable NethVoice Matrix Auth service
+  systemctl --user enable matrix2acrobits.service
+  # Restart NethVoice Matrix Auth service
+  systemctl --user restart matrix2acrobits.service
+else
+  # Disable and stop NethVoice Matrix Auth service
+  systemctl --user disable --now matrix2acrobits.service
+fi

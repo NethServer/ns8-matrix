@@ -1,0 +1,15 @@
+id: acrobits-proxy
+url: http://127.0.0.1:${M2A_PROXY_PORT}
+as_token: "${M2A_AS_TOKEN}"
+hs_token: "${M2A_HS_TOKEN}"
+sender_localpart: _acrobits_proxy
+namespaces:
+  users:
+    - exclusive: false
+      regex: '@.*'
+  aliases:
+    - exclusive: false
+      regex: '.*'
+  rooms:
+    - exclusive: false
+      regex: '.*'
