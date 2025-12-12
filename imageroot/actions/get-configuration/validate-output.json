@@ -50,5 +50,19 @@
                 }
             ]
         }
+        ,
+        "nethvoice_auth_url": {
+            "description": "NethVoice Authentication URL",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "uri"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
+        }
     }
 }

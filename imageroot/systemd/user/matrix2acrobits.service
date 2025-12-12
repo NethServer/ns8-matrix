@@ -1,0 +1,39 @@
+#
+# Copyright (C) 2025 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# This systemd unit starts matrix2acrobits client using Podman.
+#
+[Unit]
+Description=matrix2acrobits Matrix Client
+After=network-online.target synapse.service
+Wants=synapse.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+EnvironmentFile=%S/state/config.env
+WorkingDirectory=%S/state
+Restart=always
+ExecStartPre=/bin/rm -f %t/matrix2acrobits.pid %t/matrix2acrobits.ctr-id
+ExecStartPre=-runagent configure-matrix
+ExecStart=/usr/bin/podman run \
+    --detach \
+    --conmon-pidfile=%t/matrix2acrobits.pid \
+    --cidfile=%t/matrix2acrobits.ctr-id \
+    --cgroups=no-conmon \
+    --replace --name=matrix2acrobits \
+    --network=host \
+    --env-file=%S/state/matrix-secrets.env \
+    --env-file=%S/state/m2a.env \
+    --volume=matrix2acrobits-data:/tmp \
+    ${MATRIX2ACROBITS_IMAGE}
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/matrix2acrobits.ctr-id -t 10
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/matrix2acrobits.ctr-id
+PIDFile=%t/matrix2acrobits.pid
+Type=forking
+
+[Install]
+WantedBy=default.target

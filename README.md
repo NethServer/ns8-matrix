@@ -42,15 +42,17 @@ Launch `configure-module`, by setting the following parameters:
 - `lets_encrypt`: Set to `true` to enable automatic SSL certificate generation via Let's Encrypt for both domains.
 - `ldap_domain`: The LDAP domain name to be used for authentication.
 - `mail_from`: The mail sender address for notification mails
+- `nethvoice_auth_url`: The NethVoice authentication URL to enable NethVoice integration, if set the `matrix2acrobits` service will be configured and started.
 
 Example:
 
-    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "ldap_domain": "users.example.com", "mail_from": "noreply@example.com"}'
+    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "ldap_domain": "users.example.com", "mail_from": "noreply@example.com", "nethvoice_auth_url": "https://nethvoice.nethserver.org/freepbx/rest/testextauth"}'
 
 The above command will:
 - Start and configure the Synapse Matrix homeserver with LDAP authentication
 - Deploy Element Web client and Cinny client configured to connect to the local Synapse instance
 - Set up Traefik routes for both domains with automatic SSL certificates
+- Start Matrix2Acrobits Application Service
 
 Access your Matrix installation:
 - Matrix server: `https://matrix.example.com`

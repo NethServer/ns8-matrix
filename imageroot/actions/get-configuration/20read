@@ -35,6 +35,7 @@ if os.path.exists("config.env"):
     config['mail_from'] = env_vars.get('MAIL_FROM', '')
     config['lets_encrypt'] = env_vars.get('LETS_ENCRYPT', '0') == '1'
     config['domains_list'] = domains
+    config['nethvoice_auth_url'] = env_vars.get('NETHVOICE_AUTH_URL', '')
 else:
     # No configuration file found, return empty configuration
     config['synapse_domain_name'] = ''
@@ -44,5 +45,6 @@ else:
     config['mail_from'] = ''
     config['lets_encrypt'] = False
     config['domains_list'] = domains
+    config['nethvoice_auth_url'] = ''
 
 json.dump(config, fp=sys.stdout)
