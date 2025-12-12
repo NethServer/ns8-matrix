@@ -190,3 +190,4 @@ NethVoice CTI integration:
 - Add support for [VoIP and Video calls](https://element-hq.github.io/synapse/latest/usage/calls.html) with [Element Call](https://github.com/element-hq/element-call)
 - Add Whatsapp Bridge with [mautrix-whatsapp](https://github.com/mautrix/whatsapp)
 - Add Telegram Bridge with [mautrix-telegram](https://github.com/mautrix/telegram)
+- Considerations for Implementing consolidated Matrix Bridges, Image: [MAtrix Bridges Image ](https://github.com/nfrastack/container-matrix-bridges)
