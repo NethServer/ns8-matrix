@@ -9,7 +9,7 @@
             "element_domain_name": "chat.example.com",
             "cinny_domain_name": "cinny.example.com",
             "lets_encrypt": true,
-            "dex_ldap_domain": "users.example.com",
+            "ldap_domain": "users.example.com",
             "mail_from": "noreply@example.com"
         }
     ],
@@ -17,7 +17,7 @@
     "required": [
         "synapse_domain_name",
         "lets_encrypt",
-        "dex_ldap_domain"
+        "ldap_domain"
     ],
     "properties": {
         "synapse_domain_name": {
@@ -54,9 +54,9 @@
             "type": "boolean",
             "description": "Enable Let's Encrypt certificate management"
         },
-        "dex_ldap_domain": {
+        "ldap_domain": {
             "type": "string",
-            "description": "LDAP domain name for Dex authentication (optional)",
+            "description": "LDAP domain name",
             "format": "domain-name"
         },
         "mail_from": {

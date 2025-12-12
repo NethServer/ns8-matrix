@@ -37,10 +37,10 @@ buildah add "${container}" ui/dist /ui
 # Setup the entrypoint, ask to reserve three TCP ports and set a rootless container
 buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm cluster:accountconsumer" \
-    --label="org.nethserver.tcp-ports-demand=5" \
+    --label="org.nethserver.tcp-ports-demand=4" \
     --label="org.nethserver.rootfull=0" \
     --label="org.nethserver.max-per-node=1" \
-    --label="org.nethserver.images=ghcr.io/dexidp/dex:v2.44.0-alpine docker.io/postgres:14.19-alpine ghcr.io/element-hq/synapse:v1.138.2 ghcr.io/element-hq/element-web:v1.12.0 ghcr.io/cinnyapp/cinny:v4.10.2" \
+    --label="org.nethserver.images=docker.io/postgres:14.19-alpine ghcr.io/element-hq/synapse:v1.138.2 ghcr.io/element-hq/element-web:v1.12.0 ghcr.io/cinnyapp/cinny:v4.10.2" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"

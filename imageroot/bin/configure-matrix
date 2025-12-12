@@ -60,20 +60,12 @@ smarthost_env = agent.read_envfile("smarthost.env")
 env_vars.update(smarthost_env)
 
 # Create configuration directories
-os.makedirs('dex-config', exist_ok=True)
 os.makedirs('synapse-config', exist_ok=True)
 os.makedirs('element-config', exist_ok=True)
 os.makedirs('cinny-config', exist_ok=True)
 
 # Template directory
 template_dir = '../templates'
-
-# Process Dex configuration
-with open(f'{template_dir}/dex-config.yaml', 'r') as f:
-    dex_config = substitute_env_vars(f.read(), env_vars)
-
-with open('dex-config/config.yaml', 'w') as f:
-    f.write(dex_config)
 
 # Process Synapse configuration
 with open(f'{template_dir}/synapse-homeserver.yaml', 'r') as f:

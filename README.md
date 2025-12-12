@@ -7,7 +7,6 @@ This module is in early development and should be used for testing purposes only
 A NethServer 8 module for [Matrix](https://matrix.org/) chat service integration with LDAP authentication via OpenID Connect.
 
 This module provides a complete Matrix chat solution including:
-- **Dex** (OpenID Connect Provider) - Connects to NethServer LDAP for user authentication
 - **Synapse** (Matrix Homeserver) - Core Matrix server with OIDC authentication
 - **Element Web** (Web Client) - Web interface for Matrix chat
 - **Cinny** (Web Client) - Alternative web interface for Matrix chat
@@ -15,7 +14,6 @@ This module provides a complete Matrix chat solution including:
 ## Features
 
 - Seamless integration with NethServer 8 LDAP user directory
-- OpenID Connect authentication through Dex
 - Configurable domain names for both Matrix server and Element web client
 - Automatic SSL/TLS certificate management via Traefik
 - Matrix Federation support
@@ -42,16 +40,15 @@ Launch `configure-module`, by setting the following parameters:
 - `element_domain_name`: The fully qualified domain name for the Element web client (e.g., `chat.example.com`)
 - `cinny_domain_name`: The fully qualified domain name for the Cinny client (e.g., `cinny.example.com`)
 - `lets_encrypt`: Set to `true` to enable automatic SSL certificate generation via Let's Encrypt for both domains.
-- `dex_ldap_domain`: The LDAP domain name to be used by Dex for authentication. If not provided, the default LDAP domain will be used.
+- `ldap_domain`: The LDAP domain name to be used for authentication.
 - `mail_from`: The mail sender address for notification mails
 
 Example:
 
-    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "dex_ldap_domain": "users.example.com", "mail_from": "noreply@example.com"}'
+    api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "ldap_domain": "users.example.com", "mail_from": "noreply@example.com"}'
 
 The above command will:
-- Configure Dex as OpenID Connect provider with LDAP/AD backend
-- Start and configure the Synapse Matrix homeserver with OIDC authentication
+- Start and configure the Synapse Matrix homeserver with LDAP authentication
 - Deploy Element Web client and Cinny client configured to connect to the local Synapse instance
 - Set up Traefik routes for both domains with automatic SSL certificates
 
@@ -108,11 +105,11 @@ The Element client supports customized themes, examples are added to the configu
 
 ### Cinny Client
 
-Cinny is an alternative web client for Matrix chat, included in this module to provide users with a modern, lightweight interface. It can be accessed via a web browser and supports essential Matrix features such as messaging, rooms, and user authentication via OpenID Connect. Cinny is pre-configured to work with the Synapse server and Dex for seamless integration with NethServer 8 LDAP.
+Cinny is an alternative web client for Matrix chat, included in this module to provide users with a modern, lightweight interface. It can be accessed via a web browser and supports essential Matrix features such as messaging, rooms, and user authentication via OpenID Connect. Cinny is pre-configured to work with the Synapse server for seamless integration with NethServer 8 LDAP.
 ## LDAP Integration
 
 The module automatically discovers LDAP settings from the NethServer 8 configuration. 
-Dex is configured to connect to the NS8 LDAP proxy to authenticate users against 
+Synapse is configured to connect to the NS8 LDAP proxy to authenticate users against 
 the centralized user directory.
 
 The LDAP discovery happens every time the services start through the `bin/discover-ldap` 
@@ -159,21 +156,14 @@ To setup the translation process:
 
 Stack explanation:
 - [Synapse](https://element-hq.github.io/synapse/latest/setup/installation.html) is the standard de-fact Matrix homeserver implementation
-- Dex is used as OpenID Connect Provider to authenticate users against LDAP, it's not strictly required unless MAS (Matrix Authentication Service) is used (currently MAS is not implemented in this module)
 - Element web is the official Matrix web client, it can be replaced with other web client clients like [Cinny](https://cinny.in/)
 
 Alternative stacks:
-- Remove Dex, use old LDAP integration [matrix-synapse-ldap3](https://github.com/matrix-org/matrix-synapse-ldap3) (currently deprecated
-)
 - Use [MAS](https://element-hq.github.io/matrix-authentication-service/) to add more authentication methods (SAML, OIDC, LDAP, etc.) and integrate with [authentik](https://goauthentik.io/) [1](https://integrations.goauthentik.io/chat-communication-collaboration/matrix-synapse/) [2](https://element-hq.github.io/matrix-authentication-service/setup/sso.html#authentik)
 
 ### To be done
 
 If the current stack will be used, the following must be made.
-
-Dex:
-- export preferred user name from LDAP to synapse (currently Dex exports only email and username)
-- add support for LDAP groups (currently Dex exports only users)
 
 NethVoice CTI integration:
 - test current available client integrations
@@ -181,7 +171,7 @@ NethVoice CTI integration:
   - [Cactus](https://cactus.chat/)
   - Plain [Javascript SDK](https://github.com/matrix-org/matrix-js-sdk)
 - implement authentication, there 2 possible ways:
-  - add support for OIDC ID inside [CTI middleware](https://github.com/nethesis/nethcti-middleware): the user authenticate against the Oauth 2 provider (like Dex or authentik, if 2FA is required) and the middleware uses the ID token to authenticate against Synapse with the obtained token
+  - add support for OIDC ID inside [CTI middleware](https://github.com/nethesis/nethcti-middleware): the user authenticate against the Oauth 2 provider (like authentik, if 2FA is required) and the middleware uses the ID token to authenticate against Synapse with the obtained token
   - use normal LDAP auhtentication: the CTI middleware takes care also to authenticate against Synapse using LDAP credentials
 
 ### Future improvements
