@@ -37,7 +37,10 @@
         "mail_from_placeholder": "e.g. noreply@example.com",
         "mail_from_format": "Must be a valid mail address",
         "enabled": "Enabled",
-        "disabled": "Disabled"
+        "disabled": "Disabled",
+        "nethvoice_auth_url": "NethVoice authentication URL",
+        "nethvoice_auth_url_placeholder": "e.g. https://voice.nethserver.org/freepbx/rest/testextauth",
+        "nethvoice_auth_url_placeholder_tooltip": "The URL used to authenticate users against NethVoice. It should point to the FreePBX External Auth endpoint. If not set, NethVoice mobile app chat integration will be disabled."
     },
     "about": {
         "title": "About"
