@@ -74,6 +74,18 @@
               :invalid-message="error.mail_from"
               ref="mail_from"
             ></cv-text-input>
+            <cv-text-input
+              :label="$t('settings.nethvoice_auth_url')"
+              v-model="nethvoice_auth_url"
+              :placeholder="$t('settings.nethvoice_auth_url_placeholder')"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              :invalid-message="error.nethvoice_auth_url"
+              ref="nethvoice_auth_url"
+            >
+              <template slot="tooltip">
+                {{ $t("settings.nethvoice_auth_url_placeholder_tooltip") }}
+              </template>
+            </cv-text-input>
             <NsToggle
               value="letsEncrypt"
               :label="core.$t('apps_lets_encrypt.request_https_certificate')"
@@ -157,6 +169,7 @@ export default {
       domains_list: [],
       ldap_domain: "",
       mail_from: "",
+      nethvoice_auth_url: "",
       isLetsEncryptEnabled: false,
       loading: {
         getConfiguration: false,
@@ -170,6 +183,7 @@ export default {
         cinny_domain_name: "",
         ldap_domain: "",
         mail_from: "",
+        nethvoice_auth_url: "",
         lets_encrypt: "",
       },
     };
@@ -246,6 +260,7 @@ export default {
       this.cinny_domain_name = config.cinny_domain_name || "";
       this.domains_list = config.domains_list;
       this.mail_from = config.mail_from || "";
+      this.nethvoice_auth_url = config.nethvoice_auth_url || "";
       this.isLetsEncryptEnabled = config.lets_encrypt;
 
       // force to reload value after dom update
@@ -336,6 +351,7 @@ export default {
             cinny_domain_name: this.cinny_domain_name,
             ldap_domain: this.ldap_domain,
             mail_from: this.mail_from,
+            nethvoice_auth_url: this.nethvoice_auth_url,
             lets_encrypt: this.isLetsEncryptEnabled,
           },
           extra: {
