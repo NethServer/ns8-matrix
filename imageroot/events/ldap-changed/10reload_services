@@ -9,8 +9,5 @@
 
 set -e
 
-# Restart Dex service to pick up new LDAP configuration
-systemctl --user restart dex.service || true
-
-# Note: Synapse doesn't need restart as it connects to Dex, not directly to LDAP
-# Element Web doesn't need restart as it's a static web client
+# Restart Synapse service to pick up new LDAP configuration
+systemctl --user restart synapse.service || true

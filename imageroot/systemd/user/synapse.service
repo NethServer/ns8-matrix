@@ -8,8 +8,7 @@
 #
 [Unit]
 Description=Synapse Matrix Homeserver
-After=network-online.target dex.service
-Wants=dex.service
+After=network-online.target
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -19,6 +18,7 @@ EnvironmentFile=%S/state/smarthost.env
 WorkingDirectory=%S/state
 Restart=always
 ExecStartPre=/bin/rm -f %t/synapse.pid %t/synapse.ctr-id
+ExecStartPre=-runagent discover-ldap
 ExecStartPre=-runagent discover-smarthost
 ExecStartPre=-runagent configure-matrix
 ExecStartPre=podman run --rm -e SYNAPSE_SERVER_NAME=${SYNAPSE_DOMAIN_NAME}\

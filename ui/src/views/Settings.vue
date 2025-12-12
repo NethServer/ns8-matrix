@@ -48,22 +48,22 @@
               ref="cinny_domain_name"
             ></cv-text-input>
             <NsComboBox
-              v-model.trim="dex_ldap_domain"
+              v-model.trim="ldap_domain"
               :autoFilter="true"
               :autoHighlight="true"
-              :title="$t('settings.dex_ldap_domain')"
-              :label="$t('settings.choose_dex_ldap_domain')"
+              :title="$t('settings.ldap_domain')"
+              :label="$t('settings.choose_ldap_domain')"
               :options="domains_list"
               :acceptUserInput="false"
               :showItemType="true"
-              :invalid-message="$t(error.dex_ldap_domain)"
+              :invalid-message="$t(error.ldap_domain)"
               :disabled="loading.getConfiguration || loading.configureModule"
               tooltipAlignment="start"
               tooltipDirection="top"
-              ref="dex_ldap_domain"
+              ref="ldap_domain"
             >
               <template slot="tooltip">
-                {{ $t("settings.choose_the_dex_ldap_domain_to_use") }}
+                {{ $t("settings.choose_the_ldap_domain_to_use") }}
               </template>
             </NsComboBox>
             <cv-text-input
@@ -155,7 +155,7 @@ export default {
       element_domain_name: "",
       cinny_domain_name: "",
       domains_list: [],
-      dex_ldap_domain: "",
+      ldap_domain: "",
       mail_from: "",
       isLetsEncryptEnabled: false,
       loading: {
@@ -168,7 +168,7 @@ export default {
         synapse_domain_name: "",
         element_domain_name: "",
         cinny_domain_name: "",
-        dex_ldap_domain: "",
+        ldap_domain: "",
         mail_from: "",
         lets_encrypt: "",
       },
@@ -250,7 +250,7 @@ export default {
 
       // force to reload value after dom update
       this.$nextTick(() => {
-        this.dex_ldap_domain = config.dex_ldap_domain;
+        this.ldap_domain = config.ldap_domain;
       });
 
       // Focus first configuration field
@@ -270,11 +270,11 @@ export default {
       }
 
       // Validate ldap domain
-      if (!this.dex_ldap_domain) {
-        this.error.dex_ldap_domain = this.$t("common.required");
+      if (!this.ldap_domain) {
+        this.error.ldap_domain = this.$t("common.required");
 
         if (isValidationOk) {
-          this.focusElement("dex_ldap_domain");
+          this.focusElement("ldap_domain");
           isValidationOk = false;
         }
       }
@@ -334,7 +334,7 @@ export default {
             synapse_domain_name: this.synapse_domain_name,
             element_domain_name: this.element_domain_name,
             cinny_domain_name: this.cinny_domain_name,
-            dex_ldap_domain: this.dex_ldap_domain,
+            ldap_domain: this.ldap_domain,
             mail_from: this.mail_from,
             lets_encrypt: this.isLetsEncryptEnabled,
           },

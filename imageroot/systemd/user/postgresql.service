@@ -22,7 +22,6 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/postgresql.pid \
     --env-file=%S/state/environment \
     --env-file=%S/state/database.env \
     --volume postgres-data:/var/lib/postgresql/data:Z \
-    --volume %S/postgresql-initdb.d/:/docker-entrypoint-initdb.d/:Z \
     --env=POSTGRES_USER=postgres \
     --env=POSTGRES_DB=synapse \
     --env=POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C" \
@@ -30,7 +29,6 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/postgresql.pid \
     --publish ${POSTGRES_PORT}:5432 \
     ${POSTGRES_IMAGE}
 ExecStartPost=/usr/bin/bash -c "while ! podman  exec postgresql psql -U postgres -d synapse ;  do sleep 5 ; done"
-ExecStartPost=-/usr/bin/bash -c "podman exec postgresql psql -U postgres -c 'CREATE DATABASE dex;'"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/postgresql.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/postgresql.ctr-id
 ExecReload=/usr/bin/podman kill -s HUP postgresql

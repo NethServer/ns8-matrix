@@ -36,16 +36,12 @@ dynamic_thumbnails: false
 url_preview_enabled: false
 
 enable_registration: false
-#registration_shared_secret: ${REGISTRATION_SECRET}
 
 report_stats: false
 
 macaroon_secret_key: ${MACAROON_SECRET}
 form_secret: ${FORM_SECRET}
 signing_key_path: "/data/${SYNAPSE_DOMAIN_NAME}.signing.key"
-
-#trusted_key_servers:
-#  - server_name: "matrix.org"
 
 # Email configuration for notifications
 email:
@@ -58,24 +54,18 @@ email:
   notif_from: "${SYNAPSE_SMTP_FROM}"
   app_name: "Matrix Chat"
 
-# OIDC configuration for Dex integration
-oidc_providers:
-  - idp_id: dex
-    idp_name: "NethServer LDAP"
-    skip_verification: true # This is needed as Dex is served on an insecure endpoint
-    issuer: "https://${SYNAPSE_DOMAIN_NAME}/dex"
-    client_id: "synapse"
-    client_secret: "${SYNAPSE_SECRET}"
-    scopes: ["openid", "profile", "email"]
-    authorization_endpoint: "https://${SYNAPSE_DOMAIN_NAME}/dex/auth"
-    token_endpoint: "https://${SYNAPSE_DOMAIN_NAME}/dex/token"
-    userinfo_endpoint: "https://${SYNAPSE_DOMAIN_NAME}/dex/userinfo"
-    jwks_uri: "https://${SYNAPSE_DOMAIN_NAME}/dex/keys"
-    discover: false
-    user_mapping_provider:
-      config:
-        localpart_template: "{{ user.name }}"
-        display_name_template: "{{ user.name|capitalize }}"
-        email_template: "{{ user.email }}"
+# LDAP auth configuration using matrix-synapse-ldap3
+# This listener will allow authentication against an LDAP server.
+modules:
+  - module: "ldap_auth_provider.LdapAuthProviderModule"
+    config:
+      enabled: true
+      uri: "ldap://${LDAP_HOST}:${LDAP_PORT}"
+      start_tls: false
+      base: "${LDAP_BASE_DN}"
+      attributes:
+        uid: "${LDAP_USERNAME}"
+        mail: "${LDAP_EMAIL_ATTR}"
+        name: "${LDAP_NAME_ATTR}"
 
 suppress_key_server_warning: true
