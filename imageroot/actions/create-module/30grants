@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2025 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+set -e    # exit immediately if an error occurs
+exec 1>&2 # ensure any output is sent to stderr
+
+#
+# Allow other modules to configure Matrix and read the
+# module configuration
+#
+redis-exec SADD "${AGENT_ID}/roles/matrixadm" "configure-module" "get-*"
+
+#
+# Allow the instance itself to run some subtasks during restore and clone actions
+#
+redis-exec SADD "${AGENT_ID}/roles/selfadm" \
+    "configure-module"
