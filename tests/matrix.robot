@@ -28,23 +28,35 @@ Check if matrix can be configured
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
 
-Check if matrix services are running
-    Sleep    30s    # Wait for services to start
-    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active postgresql
-    ...    return_rc=True  return_stdout=False
+Check if postgresql service is loaded correctly
+    ${output}  ${rc} =    Execute Command    runagent -m ${MID} systemctl --user show --property=LoadState postgresql
+    ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active synapse
-    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Strings    ${output}    LoadState=loaded
+
+Check if synapse service is loaded correctly
+    ${output}  ${rc} =    Execute Command    runagent -m ${MID} systemctl --user show --property=LoadState synapse
+    ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active element-web
-    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Strings    ${output}    LoadState=loaded
+
+Check if element service is loaded correctly
+    ${output}  ${rc} =    Execute Command    runagent -m ${MID} systemctl --user show --property=LoadState element-web
+    ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active cinny
-    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Strings    ${output}    LoadState=loaded
+
+Check if cinny service is loaded correctly
+    ${output}  ${rc} =    Execute Command    runagent -m ${MID} systemctl --user show --property=LoadState cinny
+    ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active matrix2acrobits
-    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Strings    ${output}    LoadState=loaded
+
+Check if matrix2acrobits service is loaded correctly
+    ${output}  ${rc} =    Execute Command    runagent -m ${MID} systemctl --user show --property=LoadState matrix2acrobits
+    ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0
+    Should Be Equal As Strings    ${output}    LoadState=loaded
 
 Retrieve element backend URL
     # Assuming the test is running on a single node cluster
