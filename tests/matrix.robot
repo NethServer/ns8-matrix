@@ -2,6 +2,19 @@
 Library    SSHLibrary
 Resource    api.resource
 
+*** Variables ***
+${MID}            matrix1
+
+*** Keywords ***
+Retry test
+    [Arguments]    ${keyword}
+    Wait Until Keyword Succeeds    60 seconds    1 second    ${keyword}
+
+Backend URL is reachable
+    ${rc} =    Execute Command    curl -f ${backend_url}
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+
 *** Test Cases ***
 Check if matrix is installed correctly
     ${output}  ${rc} =    Execute Command    add-module ${IMAGE_URL} 1
@@ -17,19 +30,19 @@ Check if matrix can be configured
 
 Check if matrix services are running
     Sleep    30s    # Wait for services to start
-    ${rc} =    Execute Command    systemctl --user is-active postgresql
+    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active postgresql
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    systemctl --user is-active synapse
+    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active synapse
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    systemctl --user is-active element-web
+    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active element-web
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    systemctl --user is-active cinny
+    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active cinny
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    systemctl --user is-active matrix2acrobits
+    ${rc} =    Execute Command    runagent -m ${MID} systemctl --user is-active matrix2acrobits
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
 
