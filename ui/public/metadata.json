@@ -1,17 +1,21 @@
 {
-  "name": "matrix",
+  "name": "Matrix",
   "description": {
-    "en": "My matrix module"
+    "en": "A complete Matrix chat solution - BETA"
   },
-  "categories": [],
+  "categories": ["collaboration"],
   "authors": [
     {
-      "name": "Name Surname",
-      "email": "author@yourmail.org"
+      "name": "Giacomo Sanchietti",
+      "email": "giacomo.sanchietti@nethesis.it"
+    },
+    {
+      "name": "Markus Neuberger",
+      "email": "dev@markusneuberger.at"
     }
   ],
   "docs": {
-    "documentation_url": "https://docs.matrix.com/",
+    "documentation_url": "https://matrix.org/docs/",
     "bug_url": "https://github.com/NethServer/dev",
     "code_url": "https://github.com/author/ns8-matrix"
   },
