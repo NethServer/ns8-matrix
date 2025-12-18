@@ -4,10 +4,10 @@
 The goal is to provide a chat engine for NethVoice and NethCTI modules in the future: see https://github.com/NethServer/dev/issues/7648.
 This module is in early development and should be used for testing purposes only. Do not use in production environments. :warning:
 
-A NethServer 8 module for [Matrix](https://matrix.org/) chat service integration with LDAP authentication via OpenID Connect.
+A NethServer 8 module for [Matrix](https://matrix.org/) chat service integration with LDAP authentication.
 
 This module provides a complete Matrix chat solution including:
-- **Synapse** (Matrix Homeserver) - Core Matrix server with OIDC authentication
+- **Synapse** (Matrix Homeserver) - Core Matrix server
 - **Element Web** (Web Client) - Web interface for Matrix chat
 - **Cinny** (Web Client) - Alternative web interface for Matrix chat
 
