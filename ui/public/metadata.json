@@ -1,13 +1,17 @@
 {
-  "name": "matrix",
+  "name": "Matrix",
   "description": {
-    "en": "My matrix module"
+    "en": "A complete Matrix chat solution - BETA"
   },
-  "categories": [],
+  "categories": ["collaboration"],
   "authors": [
     {
-      "name": "Name Surname",
-      "email": "author@yourmail.org"
+      "name": "Giacomo Sanchietti",
+      "email": "giacomo.sanchietti@nethesis.it"
+    },
+    {
+      "name": "Markus Neuberger",
+      "email": "dev@markusneuberger.at"
     }
   ],
   "docs": {
