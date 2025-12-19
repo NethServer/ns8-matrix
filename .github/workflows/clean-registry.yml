@@ -15,5 +15,5 @@ jobs:
     steps:
       - uses: NethServer/ns8-github-actions/.github/actions/delete-image@v1
         with:
-          images: "kickstart"
+          images: "matrix"
           delete_image_token: ${{ secrets.IMAGES_CLEANUP_TOKEN }}
