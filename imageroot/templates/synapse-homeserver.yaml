@@ -48,11 +48,12 @@ email:
   enable_notifs: ${SYNAPSE_SMTP_ENABLED}
   smtp_host: "${SYNAPSE_SMTP_HOST}"
   smtp_port: ${SYNAPSE_SMTP_PORT}
-  smtp_user: "${SYNAPSE_SMTP_USERNAME}"
-  smtp_pass: "${SYNAPSE_SMTP_PASSWORD}"
+  smtp_user: ${SYNAPSE_SMTP_USERNAME}
+  smtp_pass: ${SYNAPSE_SMTP_PASSWORD}
   require_transport_security: ${SYNAPSE_SMTP_REQUIRE_TRANSPORT_SECURITY}
-  notif_from: "${SYNAPSE_SMTP_FROM}"
+  notif_from: ${SYNAPSE_SMTP_FROM}
   app_name: "Matrix Chat"
+  enable_tls: ${SYNAPSE_SMTP_REQUIRE_TRANSPORT_SECURITY}
 
 # LDAP auth configuration using matrix-synapse-ldap3
 # This listener will allow authentication against an LDAP server.
