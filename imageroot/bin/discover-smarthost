@@ -7,6 +7,15 @@
 
 import agent
 import os
+import socket
+
+# Get FQDN
+fqdn = socket.getfqdn()
+
+if os.path.exists("config.env"):
+    # Read current configuration from config file
+    env_vars = agent.read_envfile("config.env")
+    mail_from = env_vars.get('MAIL_FROM', '')
 
 # Connect the local Redis replica. This is necessary to consistently start
 # the service if the leader node is not reachable:
@@ -25,8 +34,16 @@ with open(envfile + ".tmp", "w") as efp:
         print(f"SYNAPSE_SMTP_PORT={smtp_settings['port']}", file=efp)
         print(f"SYNAPSE_SMTP_USERNAME={smtp_settings['username']}", file=efp)
         print(f"SYNAPSE_SMTP_PASSWORD={smtp_settings['password']}", file=efp)
-        print(f"SYNAPSE_SMTP_REQUIRE_TRANSPORT_SECURITY={'true' if smtp_settings['encrypt_smtp'] else 'false'}", file=efp)
-        print(f"SYNAPSE_SMTP_FROM=no-reply@{smtp_settings.get('host', 'localhost')}", file=efp)
+        if smtp_settings.get('username'):
+            if not mail_from:
+                mail_from = "noreply@" + smtp_settings.get('host', 'localhost')
+            print(f"SYNAPSE_SMTP_FROM={mail_from}", file=efp)
+            print(f"SYNAPSE_SMTP_REQUIRE_TRANSPORT_SECURITY=true", file=efp)
+        else:
+            if not mail_from:
+                mail_from = "noreply@" + fqdn
+            print(f"SYNAPSE_SMTP_FROM={mail_from}", file=efp)
+            print(f"SYNAPSE_SMTP_REQUIRE_TRANSPORT_SECURITY=false", file=efp)
     else:
         # No SMTP configuration found: disable email notifications
         print("SYNAPSE_SMTP_ENABLED=false", file=efp)
@@ -39,4 +56,3 @@ with open(envfile + ".tmp", "w") as efp:
 
 # Commit changes by replacing the existing envfile:
 os.replace(envfile + ".tmp", envfile)
-
