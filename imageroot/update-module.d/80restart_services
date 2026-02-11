@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+exec 1>&2
+
+systemctl --user try-restart \
+    postgresql.service \
+	element-web.service \
+	cinny.service \
+	synapse.service
