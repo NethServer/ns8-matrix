@@ -7,6 +7,10 @@
 
 exec 1>&2
 
+# Ensure config.env exists and get the env variables
+touch config.env
+source config.env
+
 # Restart Postgresql and Matrix service
 systemctl --user try-restart postgresql.service
 systemctl --user try-restart synapse.service
