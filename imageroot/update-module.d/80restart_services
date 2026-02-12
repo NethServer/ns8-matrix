@@ -11,7 +11,7 @@ exec 1>&2
 touch config.env
 source config.env
 
-# Restart Postgresql and Matrix service
+# Restart Postgresql and Synapse service
 systemctl --user try-restart postgresql.service
 systemctl --user try-restart synapse.service
 
