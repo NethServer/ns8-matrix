@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+exec 1>&2
+
+# Ensure config.env exists and get the env variables
+touch config.env
+source config.env
+
+# Restart Postgresql and Synapse service
+systemctl --user try-restart postgresql.service
+systemctl --user try-restart synapse.service
+
+# Restart element web client when enabled
+if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
+  systemctl --user try-restart element-web.service
+fi
+
+# Restart cinny client when enabled
+if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
+  systemctl --user try-restart cinny.service
+fi
+
+# Restart Matrix2acrobits service when enabled
+if [[ -n ${NETHVOICE_AUTH_URL} ]]; then
+  systemctl --user try-restart matrix2acrobits.service
+fi
