@@ -1039,9 +1039,9 @@
     glob-to-regexp "^0.3.0"
 
 "@nethserver/ns8-ui-lib@^1.3.2":
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/@nethserver/ns8-ui-lib/-/ns8-ui-lib-1.12.0.tgz#29e07b1980ba926f4f2c25b94ac6cf80d14c4bc4"
-  integrity sha512-vV9wE390bJxKO/38EZCV4ZRxYj9Zkp3RnvJQSEV/o0VUbWH04OWCvUXZtzQ6K2NJ/pW93alcyxeukIZ6Xx2M4A==
+  version "1.12.2"
+  resolved "https://registry.yarnpkg.com/@nethserver/ns8-ui-lib/-/ns8-ui-lib-1.12.2.tgz#f702872146ea88e94e3eabf69b49ee1cdfc70204"
+  integrity sha512-hjY+qCT3k8GrPzbpuz9549prR1Y3e9JtRMiVoEvOAcwyeoxKH1KJmvSU4q5AelyR0sVVL5Er4y/CC6N0/+l/1w==
   dependencies:
     "@rollup/plugin-json" "^4.1.0"
     core-js "^3.15.2"
