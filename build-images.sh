@@ -40,7 +40,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.tcp-ports-demand=5" \
     --label="org.nethserver.rootfull=0" \
     --label="org.nethserver.max-per-node=1" \
-    --label="org.nethserver.images=docker.io/postgres:14.22-alpine ghcr.io/element-hq/synapse:v1.149.1 ghcr.io/element-hq/element-web:v1.12.12 ghcr.io/cinnyapp/cinny:v4.11.1 ghcr.io/nethesis/matrix2acrobits:0.0.4" \
+    --label="org.nethserver.images=docker.io/postgres:14.22-alpine ghcr.io/element-hq/synapse:v1.149.1 ghcr.io/element-hq/element-web:v1.12.17 ghcr.io/cinnyapp/cinny:v4.11.1 ghcr.io/nethesis/matrix2acrobits:0.0.4" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"
