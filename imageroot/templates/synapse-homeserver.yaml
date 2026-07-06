@@ -46,7 +46,7 @@ signing_key_path: "/data/${SYNAPSE_DOMAIN_NAME}.signing.key"
 # Email configuration for notifications
 email:
   enable_notifs: ${SYNAPSE_SMTP_ENABLED}
-  smtp_host: "${SYNAPSE_SMTP_HOST}"
+  smtp_host: ${SYNAPSE_SMTP_HOST}
   smtp_port: ${SYNAPSE_SMTP_PORT}
   smtp_user: ${SYNAPSE_SMTP_USERNAME}
   smtp_pass: ${SYNAPSE_SMTP_PASSWORD}
