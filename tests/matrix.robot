@@ -1,6 +1,5 @@
 *** Settings ***
 Library    SSHLibrary
-Library    Browser
 Resource    api.resource
 
 *** Variables ***
@@ -36,6 +35,7 @@ Check if matrix is installed correctly
 
 Take screenshots
     [Tags]    ui
+    Import Library    Browser
     New Browser    chromium    headless=True
     New Context    ignoreHTTPSErrors=True
     Login to cluster-admin
