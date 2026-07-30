@@ -1450,9 +1450,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nethserver/ns8-ui-lib@npm:^1.3.2":
-  version: 1.12.2
-  resolution: "@nethserver/ns8-ui-lib@npm:1.12.2"
+"@nethserver/ns8-ui-lib@npm:^2.0.0":
+  version: 2.0.1
+  resolution: "@nethserver/ns8-ui-lib@npm:2.0.1"
   dependencies:
     "@rollup/plugin-json": "npm:^4.1.0"
     core-js: "npm:^3.15.2"
@@ -1461,7 +1461,7 @@ __metadata:
     vue-date-fns: "npm:^2.0.1"
   peerDependencies:
     vue: ^2.6.12
-  checksum: 10c0/128f3e025451153629f2902e4686cbd5c3bf2e8c48331d50709fe1d0fdeddded1b75abb29e0f81a2bee5b2de05a5dbb88ccb9ae9e9b3886b512a60a39b80ee97
+  checksum: 10c0/0a7e19b2ed067c1e6baf6921a901822a4aa14b2936dc3444694b10da8900cf740fa5d7b937b151c67223955c4397c3f37d6a2c69534b4ac76a8eeb6df9da9639
   languageName: node
   linkType: hard
 
@@ -2104,7 +2104,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/cli-plugin-babel@npm:~4.5.0":
+"@vue/cli-plugin-babel@npm:~4.5.18":
   version: 4.5.19
   resolution: "@vue/cli-plugin-babel@npm:4.5.19"
   dependencies:
@@ -2121,7 +2121,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/cli-plugin-eslint@npm:~4.5.0":
+"@vue/cli-plugin-eslint@npm:~4.5.18":
   version: 4.5.19
   resolution: "@vue/cli-plugin-eslint@npm:4.5.19"
   dependencies:
@@ -2138,7 +2138,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/cli-plugin-router@npm:^4.5.19, @vue/cli-plugin-router@npm:~4.5.0":
+"@vue/cli-plugin-router@npm:^4.5.19, @vue/cli-plugin-router@npm:~4.5.18":
   version: 4.5.19
   resolution: "@vue/cli-plugin-router@npm:4.5.19"
   dependencies:
@@ -2149,7 +2149,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/cli-plugin-vuex@npm:^4.5.19, @vue/cli-plugin-vuex@npm:~4.5.0":
+"@vue/cli-plugin-vuex@npm:^4.5.19, @vue/cli-plugin-vuex@npm:~4.5.18":
   version: 4.5.19
   resolution: "@vue/cli-plugin-vuex@npm:4.5.19"
   peerDependencies:
@@ -2158,7 +2158,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/cli-service@npm:~4.5.0":
+"@vue/cli-service@npm:~4.5.18":
   version: 4.5.19
   resolution: "@vue/cli-service@npm:4.5.19"
   dependencies:
@@ -3003,15 +3003,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.11.0":
-  version: 1.18.1
-  resolution: "axios@npm:1.18.1"
+"axios@npm:^1.19.0":
+  version: 1.19.0
+  resolution: "axios@npm:1.19.0"
   dependencies:
     follow-redirects: "npm:^1.16.0"
-    form-data: "npm:^4.0.5"
+    form-data: "npm:^4.0.6"
     https-proxy-agent: "npm:^5.0.1"
     proxy-from-env: "npm:^2.1.0"
-  checksum: 10c0/9d9378a3af0d0ad730a52ad9d15ec7201f3926ad6e7e8bbffc5ae21ca2835ad11d1d9598698f5dd9718917486039f55ea1d7dc23d8e44fa827a55cc3262c02fc
+  checksum: 10c0/559fe7d51291787def61566a3db78b87510c8faf9c8a8c006d9d8b933808628ff0d8eca7756b40ae25e07da96d946c68c1ffba3da9075ed0b5d3661801d76869
   languageName: node
   linkType: hard
 
@@ -4565,13 +4565,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"de-indent@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "de-indent@npm:1.0.2"
-  checksum: 10c0/7058ce58abd6dfc123dd204e36be3797abd419b59482a634605420f47ae97639d0c183ec5d1b904f308a01033f473673897afc2bd59bc620ebf1658763ef4291
-  languageName: node
-  linkType: hard
-
 "debug@npm:2.6.9, debug@npm:^2.2.0, debug@npm:^2.3.3":
   version: 2.6.9
   resolution: "debug@npm:2.6.9"
@@ -5972,16 +5965,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:^4.0.5":
-  version: 4.0.5
-  resolution: "form-data@npm:4.0.5"
+"form-data@npm:^4.0.6":
+  version: 4.0.6
+  resolution: "form-data@npm:4.0.6"
   dependencies:
     asynckit: "npm:^0.4.0"
     combined-stream: "npm:^1.0.8"
     es-set-tostringtag: "npm:^2.1.0"
-    hasown: "npm:^2.0.2"
-    mime-types: "npm:^2.1.12"
-  checksum: 10c0/dd6b767ee0bbd6d84039db12a0fa5a2028160ffbfaba1800695713b46ae974a5f6e08b3356c3195137f8530dcd9dfcb5d5ae1eeff53d0db1e5aad863b619ce3b
+    hasown: "npm:^2.0.4"
+    mime-types: "npm:^2.1.35"
+  checksum: 10c0/43947a77bf0ff45c6ceed789778982d47a3f3e720a74b71721174ebf3310a5f1a8be1d6b38a3ee3688e8a18a2c4273073ec0844cd37efda3eaf46d41c9c318ff
   languageName: node
   linkType: hard
 
@@ -6513,7 +6506,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"he@npm:1.2.x, he@npm:^1.1.0":
+"hasown@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "hasown@npm:2.0.4"
+  dependencies:
+    function-bind: "npm:^1.1.2"
+  checksum: 10c0/2d8de939e270b70618f8cebb69746620db10617dbb495bc66ddad326955ea24d3ca4af133aff3eb7c1853e0218f867bc2b050ec26fe02e3aea58f880ffc5e506
+  languageName: node
+  linkType: hard
+
+"he@npm:1.2.x":
   version: 1.2.0
   resolution: "he@npm:1.2.0"
   bin:
@@ -8081,7 +8083,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime-types@npm:^2.1.12":
+"mime-types@npm:^2.1.12, mime-types@npm:^2.1.35":
   version: 2.1.35
   resolution: "mime-types@npm:2.1.35"
   dependencies:
@@ -11616,15 +11618,15 @@ __metadata:
     "@babel/eslint-parser": "npm:^7.11.0"
     "@carbon/icons-vue": "npm:^10.37.0"
     "@carbon/vue": "npm:^2.40.0"
-    "@nethserver/ns8-ui-lib": "npm:^1.3.2"
-    "@vue/cli-plugin-babel": "npm:~4.5.0"
-    "@vue/cli-plugin-eslint": "npm:~4.5.0"
-    "@vue/cli-plugin-router": "npm:~4.5.0"
-    "@vue/cli-plugin-vuex": "npm:~4.5.0"
-    "@vue/cli-service": "npm:~4.5.0"
+    "@nethserver/ns8-ui-lib": "npm:^2.0.0"
+    "@vue/cli-plugin-babel": "npm:~4.5.18"
+    "@vue/cli-plugin-eslint": "npm:~4.5.18"
+    "@vue/cli-plugin-router": "npm:~4.5.18"
+    "@vue/cli-plugin-vuex": "npm:~4.5.18"
+    "@vue/cli-service": "npm:~4.5.18"
     "@vue/eslint-config-prettier": "npm:^6.0.0"
     await-to-js: "npm:^3.0.0"
-    axios: "npm:^1.11.0"
+    axios: "npm:^1.19.0"
     carbon-components: "npm:^10.41.0"
     core-js: "npm:^3.6.5"
     eslint: "npm:^6.7.2"
@@ -11634,13 +11636,13 @@ __metadata:
     prettier: "npm:^2.2.1"
     sass: "npm:^1.34.1"
     sass-loader: "npm:^10.1.1"
-    vue: "npm:^2.6.11"
+    vue: "npm:^2.7.0"
     vue-axios: "npm:^3.2.4"
     vue-date-fns: "npm:^2.0.2"
     vue-debounce: "npm:^4.0.0"
     vue-i18n: "npm:^8.24.4"
+    vue-loader: "npm:^15.10.0"
     vue-router: "npm:^3.2.0"
-    vue-template-compiler: "npm:^2.6.11"
     vuex: "npm:^3.4.0"
   languageName: unknown
   linkType: soft
@@ -12056,9 +12058,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-loader@npm:^15.9.2":
-  version: 15.9.7
-  resolution: "vue-loader@npm:15.9.7"
+"vue-loader@npm:^15.10.0, vue-loader@npm:^15.9.2":
+  version: 15.11.1
+  resolution: "vue-loader@npm:15.11.1"
   dependencies:
     "@vue/component-compiler-utils": "npm:^3.1.0"
     hash-sum: "npm:^1.0.2"
@@ -12071,9 +12073,11 @@ __metadata:
   peerDependenciesMeta:
     cache-loader:
       optional: true
+    prettier:
+      optional: true
     vue-template-compiler:
       optional: true
-  checksum: 10c0/71a517e6a1c726886f6c0937d2641ba7fd3e4a269805e5d17c302cc3cc4391bd5c12f70122e8a004271b6ae76c519c6cfd2661b9809ab70d5f02c382204edd3e
+  checksum: 10c0/22491414f3743d485cf8d966837314706abf35d330bf055e356d55f16df8d4ab21fb712c7168509f7492d62cdf799aedf8d31df36d89bd5a4479b9f90fa094c1
   languageName: node
   linkType: hard
 
@@ -12094,16 +12098,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-template-compiler@npm:^2.6.11":
-  version: 2.6.14
-  resolution: "vue-template-compiler@npm:2.6.14"
-  dependencies:
-    de-indent: "npm:^1.0.2"
-    he: "npm:^1.1.0"
-  checksum: 10c0/59ec9eded8b5d3ff97fac8e22bd208d6b3ca52f5eceacd47bf8b686c12f43d2bfa9f64514e7ec83bb76733a1872c28cab2d8502d8f2f9e728093e11249f0d62d
-  languageName: node
-  linkType: hard
-
 "vue-template-es2015-compiler@npm:^1.9.0":
   version: 1.9.1
   resolution: "vue-template-es2015-compiler@npm:1.9.1"
@@ -12111,14 +12105,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue@npm:^2.6.11":
-  version: 2.6.14
-  resolution: "vue@npm:2.6.14"
-  checksum: 10c0/efbe26ccc7c1bd025b88e464ebc81217b92350a77b98049122a46ac2242e249719f930d3914e2efdeaaa521a51e6e6b1cb9ffbf95b4835ed94dc92efb481040f
-  languageName: node
-  linkType: hard
-
-"vue@npm:^2.7.10":
+"vue@npm:^2.7.0, vue@npm:^2.7.10":
   version: 2.7.16
   resolution: "vue@npm:2.7.16"
   dependencies:

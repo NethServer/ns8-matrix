@@ -14,8 +14,6 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "octref.vetur",
-        "shenjiaolong.vue-helper",
-        "waderyan.gitblame",
         "streetsidesoftware.code-spell-checker"
       ]
     }
