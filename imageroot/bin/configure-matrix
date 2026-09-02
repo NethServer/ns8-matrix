@@ -6,19 +6,45 @@
 #
 
 import os
+import json
 import secrets
 import string
 import agent
+
+# Environment variables substituted into synapse-homeserver.yaml as string
+# scalars. Their values are user supplied (SMTP smarthost credentials and
+# sender address) and may contain characters that are reserved in YAML when
+# they appear at the start of a value ('@', '*', '&', '!', '%', quotes ...) or
+# special sequences (':', '#', '\'). They must therefore be emitted as
+# properly quoted and escaped YAML strings. Keys NOT listed here (ports,
+# booleans) are substituted verbatim so they keep their native YAML type.
+SYNAPSE_QUOTED_KEYS = (
+    "SYNAPSE_SMTP_HOST",
+    "SYNAPSE_SMTP_USERNAME",
+    "SYNAPSE_SMTP_PASSWORD",
+    "SYNAPSE_SMTP_FROM",
+)
 
 def generate_secret(length=32):
     """Generate a random secret string"""
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-def substitute_env_vars(content, env_vars):
-    """Replace ${VAR} patterns with environment variable values"""
+def substitute_env_vars(content, env_vars, quoted_keys=()):
+    """Replace ${VAR} patterns with environment variable values.
+
+    Values whose key is listed in quoted_keys are rendered as a double quoted,
+    fully escaped string scalar via json.dumps(). A JSON string literal is also
+    a valid YAML double quoted scalar, so this protects the generated document
+    from values containing YAML reserved characters. All other values are
+    substituted verbatim, preserving numeric and boolean YAML types.
+    """
     for key, value in env_vars.items():
-        content = content.replace(f'${{{key}}}', str(value))
+        if key in quoted_keys:
+            replacement = json.dumps(str(value), ensure_ascii=False)
+        else:
+            replacement = str(value)
+        content = content.replace(f'${{{key}}}', replacement)
     return content
 
 # Read environment variables from config
@@ -72,7 +98,7 @@ template_dir = '../templates'
 
 # Process Synapse configuration
 with open(f'{template_dir}/synapse-homeserver.yaml', 'r') as f:
-    synapse_config = substitute_env_vars(f.read(), env_vars)
+    synapse_config = substitute_env_vars(f.read(), env_vars, SYNAPSE_QUOTED_KEYS)
  
 with open('synapse-config/homeserver.yaml', 'w') as f:
     f.write(synapse_config)
