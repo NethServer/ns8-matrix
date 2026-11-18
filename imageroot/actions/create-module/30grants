@@ -12,7 +12,7 @@ exec 1>&2 # ensure any output is sent to stderr
 # Allow other modules to configure Matrix and read the
 # module configuration
 #
-redis-exec SADD "${AGENT_ID}/roles/matrixadm" "configure-module" "get-*"
+redis-exec SADD "${AGENT_ID}/roles/matrixadm" "configure-module" "get-*" "set-admin"
 
 #
 # Allow the instance itself to run some subtasks during restore and clone actions
