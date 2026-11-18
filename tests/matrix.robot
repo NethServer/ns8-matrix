@@ -244,15 +244,6 @@ Check the media settings
     ${media} =    Evaluate    json.loads($output)    modules=json
     Should Be Equal As Integers    ${media['m.upload.size']}    104857600
 
-Check set-admin grants the admin flag
-    ${code} =    HTTP status of    /_synapse/admin/v2/users?limit=1    token=${token1}
-    Should Be Equal    ${code}    403
-    Run task    module/${module_id}/set-admin    {"user":"user1","admin":true}    decode_json=${FALSE}
-    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
-    ${code} =    HTTP status of    /_synapse/admin/v2/users?limit=1    token=${token1}
-    Should Be Equal    ${code}    200
-    Run task    module/${module_id}/set-admin    {"user":"nobody","admin":true}    rc_expected=2    decode_json=${FALSE}
-
 Retrieve element backend URL
     # Assuming the test is running on a single node cluster
     ${response} =    Run task     module/traefik1/get-route    {"instance":"${module_id}-element"}

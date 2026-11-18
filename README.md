@@ -165,15 +165,6 @@ The secret is stored in `state/turn.env`, it is never returned by
 
 Group calls with Element Call use a different technology (LiveKit) and are not covered.
 
-## Server administrators
-
-LDAP users are not Synapse administrators. To grant or revoke the flag:
-
-    api-cli run module/matrix1/set-admin --data '{"user": "alice", "admin": true}'
-
-The user must have logged in at least once. The action restarts Synapse,
-because Synapse caches the flag.
-
 ## Rotate/recreate secrets
 
 The secrets are stored in `matrix-secrets.env`. To rotate them, remove the file and run `configure-module` again: it is recreated with new secrets.
