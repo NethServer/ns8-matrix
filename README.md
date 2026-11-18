@@ -161,7 +161,9 @@ Set `turn_uris` and `turn_shared_secret`, Synapse then gives short lived TURN
 credentials to the clients.
 
 The secret is stored in `state/turn.env`, it is never returned by
-`get-configuration` and it is included in the backup.
+`get-configuration` and it is included in the backup. Clearing `turn_uris`
+keeps the secret, send `"turn_clear_secret": true` (or use the "Remove stored
+secret" button) to delete it.
 
 Group calls with Element Call use a different technology (LiveKit) and are not covered.
 

@@ -25,6 +25,7 @@ federation = request.get('federation', False)
 federation_whitelist = request.get('federation_whitelist', [])
 turn_uris = request.get('turn_uris', [])
 turn_shared_secret = request.pop('turn_shared_secret', '')
+turn_clear_secret = request.pop('turn_clear_secret', False)
 max_upload_size_mb = request.get('max_upload_size_mb', 50)
 local_media_lifetime_days = request.get('local_media_lifetime_days', 0)
 remote_media_lifetime_days = request.get('remote_media_lifetime_days', 0)
@@ -35,7 +36,7 @@ if not synapse_domain_name:
     sys.exit(1)
 
 # Check it before writing anything, so a rejected request leaves the module untouched
-if turn_uris and not turn_shared_secret and not os.path.exists('turn.env'):
+if turn_uris and not turn_shared_secret and (turn_clear_secret or not os.path.exists('turn.env')):
     agent.set_status('validation-failed')
     json.dump([{'field': 'turn_shared_secret', 'parameter': 'turn_shared_secret', 'value': '', 'error': 'turn_shared_secret_required'}], fp=sys.stdout)
     sys.exit(2)
@@ -86,10 +87,13 @@ agent.write_envfile("config.env", env_vars)
 # An empty secret keeps the current one, so the UI never has to read it back.
 # Clearing the URIs keeps the secret too: it is not used without URIs, and it is there if they come back.
 if turn_shared_secret:
-    # Created with mode 600 from the start, the secret is never readable by others
     fd = os.open('turn.env', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    # os.open applies the mode only to a new file, an existing one keeps its own
+    os.fchmod(fd, 0o600)
     with os.fdopen(fd, 'w') as tfp:
         tfp.write('TURN_SHARED_SECRET=' + turn_shared_secret + '\n')
+elif turn_clear_secret and os.path.exists('turn.env'):
+    os.remove('turn.env')
 
 # For later use and backup. The TURN secret was popped from the request, turn.env is backed up instead
 with open('config.json', 'w') as cfp:

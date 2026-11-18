@@ -154,6 +154,10 @@
         "search_all_users": {
             "type": "boolean",
             "description": "Let users find every user who logged in at least once, not only people they share a room with"
+        },
+        "turn_clear_secret": {
+            "type": "boolean",
+            "description": "Remove the stored TURN shared secret. Ignored when a new turn_shared_secret is sent"
         }
     }
 }

@@ -215,6 +215,29 @@
                     autocomplete="new-password"
                     ref="turn_shared_secret"
                   />
+                  <div v-if="turn_shared_secret_set" class="mg-bottom">
+                    <NsInlineNotification
+                      v-if="turn_clear_secret"
+                      kind="warning"
+                      :title="$t('settings.turn_secret_will_be_removed')"
+                      :showCloseButton="false"
+                    />
+                    <NsButton
+                      kind="ghost"
+                      size="field"
+                      :icon="turn_clear_secret ? Undo16 : TrashCan16"
+                      :disabled="
+                        loading.getConfiguration || loading.configureModule
+                      "
+                      @click="turn_clear_secret = !turn_clear_secret"
+                    >
+                      {{
+                        turn_clear_secret
+                          ? $t("settings.keep_stored_turn_secret")
+                          : $t("settings.remove_stored_turn_secret")
+                      }}
+                    </NsButton>
+                  </div>
                   <NsTextInput
                     type="number"
                     min="1"
@@ -300,6 +323,8 @@ import {
   IconService,
   PageTitleService,
 } from "@nethserver/ns8-ui-lib";
+import TrashCan16 from "@carbon/icons-vue/es/trash-can/16";
+import Undo16 from "@carbon/icons-vue/es/undo/16";
 
 export default {
   name: "Settings",
@@ -332,6 +357,9 @@ export default {
       turn_uris: "",
       turn_shared_secret: "",
       turn_shared_secret_set: false,
+      turn_clear_secret: false,
+      TrashCan16,
+      Undo16,
       max_upload_size_mb: 50,
       local_media_lifetime_days: 0,
       remote_media_lifetime_days: 0,
@@ -465,6 +493,7 @@ export default {
       this.turn_uris = (config.turn_uris || []).join("\n");
       this.turn_shared_secret = "";
       this.turn_shared_secret_set = config.turn_shared_secret_set || false;
+      this.turn_clear_secret = false;
       this.max_upload_size_mb = config.max_upload_size_mb || 50;
       this.local_media_lifetime_days = config.local_media_lifetime_days || 0;
       this.remote_media_lifetime_days = config.remote_media_lifetime_days || 0;
@@ -474,7 +503,6 @@ export default {
         this.mail_from !== "" ||
         this.nethvoice_auth_url !== "" ||
         this.federation ||
-        !this.search_all_users ||
         this.turn_uris !== "" ||
         this.max_upload_size_mb !== 50 ||
         this.local_media_lifetime_days !== 0 ||
@@ -622,6 +650,7 @@ export default {
             federation_whitelist: this.splitLines(this.federation_whitelist),
             turn_uris: this.splitLines(this.turn_uris),
             turn_shared_secret: this.turn_shared_secret,
+            turn_clear_secret: this.turn_clear_secret,
             max_upload_size_mb: this.max_upload_size_mb,
             local_media_lifetime_days: this.local_media_lifetime_days,
             remote_media_lifetime_days: this.remote_media_lifetime_days,

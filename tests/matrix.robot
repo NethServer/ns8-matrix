@@ -232,7 +232,9 @@ Check the TURN server settings
     Dictionary Should Contain Key    ${response}    password
 
 Check the TURN secret is required
-    Configure matrix with    "turn_uris": []
+    Configure matrix with    "turn_uris": [], "turn_clear_secret": true
+    ${rc} =    Execute Command    runagent -m ${module_id} test -e turn.env    return_stdout=False    return_rc=True
+    Should Not Be Equal As Integers    ${rc}    0
     Run task    module/${module_id}/configure-module    {${base_config}, "turn_uris": ["turn:turn.example.org"]}    rc_expected=2    decode_json=${FALSE}
 
 Check the media settings
