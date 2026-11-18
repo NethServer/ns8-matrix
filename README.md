@@ -136,6 +136,12 @@ When the LDAP settings of the cluster change, the event handler
 new settings at startup. Any LDAP change in the cluster triggers it, not
 only changes to the domain used by Matrix.
 
+With an Active Directory domain, users log in with their `cn` attribute,
+which Synapse turns into the lowercase Matrix user ID. This works with the
+NethServer 8 Samba provider, where `cn` equals the account name. With an
+external Active Directory where `cn` holds the full name (for example
+"John Smith"), the login does not match a valid Matrix user ID.
+
 ## Matrix Federation
 
 Federation is disabled by default: users can only talk with accounts of this server.
