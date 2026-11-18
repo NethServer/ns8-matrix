@@ -64,6 +64,8 @@ modules:
       uri: "ldap://${LDAP_HOST}:${LDAP_PORT}"
       start_tls: false
       base: "${LDAP_BASE_DN}"
+      bind_dn: ${LDAP_BIND_DN}
+      bind_password: ${LDAP_BIND_PASSWORD}
       attributes:
         uid: "${LDAP_USERNAME}"
         mail: "${LDAP_EMAIL_ATTR}"

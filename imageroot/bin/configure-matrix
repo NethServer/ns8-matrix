@@ -23,6 +23,8 @@ SYNAPSE_QUOTED_KEYS = (
     "SYNAPSE_SMTP_USERNAME",
     "SYNAPSE_SMTP_PASSWORD",
     "SYNAPSE_SMTP_FROM",
+    "LDAP_BIND_DN",
+    "LDAP_BIND_PASSWORD",
 )
 
 def generate_secret(length=32):
