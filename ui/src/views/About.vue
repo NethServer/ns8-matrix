@@ -74,6 +74,15 @@
                 </span>
               </span>
             </div>
+            <!-- filled at build time by build-images.sh -->
+            <div
+              v-for="component in app.components || []"
+              :key="component.name"
+              class="key-value-setting"
+            >
+              <span class="label">{{ component.name }}</span>
+              <span class="value">{{ component.version }}</span>
+            </div>
             <div class="key-value-setting">
               <span class="label">{{
                 core.$tc("software_center.categories", app.categories.length)
