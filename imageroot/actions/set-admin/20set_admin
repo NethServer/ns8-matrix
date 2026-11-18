@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import json
+import subprocess
+import sys
+import agent
+
+request = json.load(sys.stdin)
+config = agent.read_envfile('config.env')
+user_id = '@' + request['user'] + ':' + config['SYNAPSE_DOMAIN_NAME']
+
+# psql variables keep the user id out of the SQL text, so no quoting issue is possible
+sql = "UPDATE users SET admin = :admin WHERE name = :'user_id' RETURNING name;\n"
+proc = subprocess.run(
+    ['podman', 'exec', '-i', 'postgresql', 'psql', '-U', 'postgres', '-d', 'synapse',
+     '-v', 'ON_ERROR_STOP=1', '-v', 'admin=' + ('1' if request['admin'] else '0'),
+     '-v', 'user_id=' + user_id, '-qtA'],
+    input=sql, capture_output=True, text=True,
+)
+if proc.returncode != 0:
+    print(proc.stderr, file=sys.stderr)
+    sys.exit(1)
+
+# Synapse creates the account at the first login, before that there is nothing to update
+if proc.stdout.strip() != user_id:
+    agent.set_status('validation-failed')
+    json.dump([{'field': 'user', 'parameter': 'user', 'value': request['user'], 'error': 'user_not_found'}], fp=sys.stdout)
+    sys.exit(2)
+
+# Synapse caches the admin flag and never rereads it from the database while running
+subprocess.run(['systemctl', '--user', 'try-restart', 'synapse.service'], check=True)
