@@ -110,6 +110,128 @@
                 $t("settings.enabled")
               }}</template>
             </NsToggle>
+            <NsToggle
+              value="federation"
+              :label="$t('settings.federation')"
+              v-model="federation"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+              ref="federation"
+            >
+              <template #tooltip>
+                {{ $t("settings.federation_tooltip") }}
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
+            <template v-if="federation">
+              <NsInlineNotification
+                v-if="!isLetsEncryptEnabled"
+                kind="warning"
+                :title="$t('settings.federation_certificate_title')"
+                :description="$t('settings.federation_certificate_description')"
+                :showCloseButton="false"
+              />
+              <cv-text-area
+                :label="$t('settings.federation_whitelist')"
+                v-model.trim="federation_whitelist"
+                :helper-text="$t('settings.federation_whitelist_helper')"
+                :placeholder="$t('settings.federation_whitelist_placeholder')"
+                :invalid-message="error.federation_whitelist"
+                :disabled="loading.getConfiguration || loading.configureModule"
+                class="mg-bottom"
+                ref="federation_whitelist"
+              ></cv-text-area>
+            </template>
+            <cv-accordion ref="accordion" class="mg-bottom">
+              <cv-accordion-item :open="isAdvancedOpen">
+                <template slot="title">{{ $t("settings.advanced") }}</template>
+                <template slot="content">
+                  <cv-text-area
+                    :label="$t('settings.turn_uris')"
+                    v-model.trim="turn_uris"
+                    :helper-text="$t('settings.turn_uris_helper')"
+                    :placeholder="$t('settings.turn_uris_placeholder')"
+                    :invalid-message="error.turn_uris"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    class="mg-bottom"
+                    ref="turn_uris"
+                  ></cv-text-area>
+                  <NsTextInput
+                    v-if="turn_uris"
+                    type="password"
+                    :label="$t('settings.turn_shared_secret')"
+                    v-model="turn_shared_secret"
+                    :placeholder="
+                      turn_shared_secret_set
+                        ? $t('settings.turn_shared_secret_unchanged')
+                        : ''
+                    "
+                    :helper-text="$t('settings.turn_shared_secret_helper')"
+                    :invalid-message="error.turn_shared_secret"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    autocomplete="new-password"
+                    ref="turn_shared_secret"
+                  />
+                  <NsTextInput
+                    type="number"
+                    min="1"
+                    max="2048"
+                    :label="$t('settings.max_upload_size_mb')"
+                    v-model.number="max_upload_size_mb"
+                    :invalid-message="error.max_upload_size_mb"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    ref="max_upload_size_mb"
+                  />
+                  <NsTextInput
+                    type="number"
+                    min="0"
+                    :label="$t('settings.local_media_lifetime_days')"
+                    v-model.number="local_media_lifetime_days"
+                    :helper-text="$t('settings.media_lifetime_helper')"
+                    :invalid-message="error.local_media_lifetime_days"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    ref="local_media_lifetime_days"
+                  />
+                  <NsTextInput
+                    v-if="federation"
+                    type="number"
+                    min="0"
+                    :label="$t('settings.remote_media_lifetime_days')"
+                    v-model.number="remote_media_lifetime_days"
+                    :helper-text="$t('settings.media_lifetime_helper')"
+                    :invalid-message="error.remote_media_lifetime_days"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    ref="remote_media_lifetime_days"
+                  />
+                  <NsComboBox
+                    v-model="log_level"
+                    :label="$t('settings.log_level')"
+                    :title="$t('settings.log_level')"
+                    :options="logLevelOptions"
+                    :invalid-message="error.log_level"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    ref="log_level"
+                  />
+                </template>
+              </cv-accordion-item>
+            </cv-accordion>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -171,6 +293,21 @@ export default {
       mail_from: "",
       nethvoice_auth_url: "",
       isLetsEncryptEnabled: false,
+      federation: false,
+      federation_whitelist: "",
+      turn_uris: "",
+      turn_shared_secret: "",
+      turn_shared_secret_set: false,
+      max_upload_size_mb: 50,
+      local_media_lifetime_days: 0,
+      remote_media_lifetime_days: 14,
+      log_level: "INFO",
+      isAdvancedOpen: false,
+      logLevelOptions: [
+        { name: "INFO", label: "INFO", value: "INFO" },
+        { name: "WARNING", label: "WARNING", value: "WARNING" },
+        { name: "DEBUG", label: "DEBUG", value: "DEBUG" },
+      ],
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -185,6 +322,13 @@ export default {
         mail_from: "",
         nethvoice_auth_url: "",
         lets_encrypt: "",
+        federation_whitelist: "",
+        turn_uris: "",
+        turn_shared_secret: "",
+        max_upload_size_mb: "",
+        local_media_lifetime_days: "",
+        remote_media_lifetime_days: "",
+        log_level: "",
       },
     };
   },
@@ -205,6 +349,12 @@ export default {
     this.getConfiguration();
   },
   methods: {
+    splitLines(text) {
+      return text
+        .split(/[\s,]+/)
+        .map((item) => item.trim())
+        .filter((item) => item);
+    },
     goToCertificates() {
       this.core.$router.push("/settings/tls-certificates");
     },
@@ -262,10 +412,28 @@ export default {
       this.mail_from = config.mail_from || "";
       this.nethvoice_auth_url = config.nethvoice_auth_url || "";
       this.isLetsEncryptEnabled = config.lets_encrypt;
+      this.federation = config.federation || false;
+      this.federation_whitelist = (config.federation_whitelist || []).join(
+        "\n"
+      );
+      this.turn_uris = (config.turn_uris || []).join("\n");
+      this.turn_shared_secret = "";
+      this.turn_shared_secret_set = config.turn_shared_secret_set || false;
+      this.max_upload_size_mb = config.max_upload_size_mb || 50;
+      this.local_media_lifetime_days = config.local_media_lifetime_days || 0;
+      this.remote_media_lifetime_days = config.remote_media_lifetime_days ?? 14;
+      // open the advanced section when it holds non default values
+      this.isAdvancedOpen =
+        this.turn_uris !== "" ||
+        this.max_upload_size_mb !== 50 ||
+        this.local_media_lifetime_days !== 0 ||
+        this.remote_media_lifetime_days !== 14 ||
+        (config.log_level || "INFO") !== "INFO";
 
       // force to reload value after dom update
       this.$nextTick(() => {
         this.ldap_domain = config.ldap_domain;
+        this.log_level = config.log_level || "INFO";
       });
 
       // Focus first configuration field
@@ -301,11 +469,16 @@ export default {
       let focusAlreadySet = false;
 
       for (const validationError of validationErrors) {
-        const field = validationError.field;
+        // array items are reported as "turn_uris.0", the error belongs to the whole list
+        const field = validationError.field.split(".")[0];
 
         if (field !== "(root)") {
           // set i18n error message
-          this.error[field] = this.$t("settings." + validationError.error);
+          this.error[field] = validationError.field.includes(".")
+            ? this.$t("settings.invalid_list_item", {
+                value: validationError.value,
+              })
+            : this.$t("settings." + validationError.error);
 
           if (!focusAlreadySet) {
             this.focusElement(field);
@@ -353,6 +526,16 @@ export default {
             mail_from: this.mail_from,
             nethvoice_auth_url: this.nethvoice_auth_url,
             lets_encrypt: this.isLetsEncryptEnabled,
+            federation: this.federation,
+            federation_whitelist: this.federation
+              ? this.splitLines(this.federation_whitelist)
+              : [],
+            turn_uris: this.splitLines(this.turn_uris),
+            turn_shared_secret: this.turn_shared_secret,
+            max_upload_size_mb: this.max_upload_size_mb,
+            local_media_lifetime_days: this.local_media_lifetime_days,
+            remote_media_lifetime_days: this.remote_media_lifetime_days,
+            log_level: this.log_level,
           },
           extra: {
             title: this.$t("settings.configure_instance", {

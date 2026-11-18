@@ -11,7 +11,19 @@
             "lets_encrypt": true,
             "ldap_domain": "users.example.com",
             "mail_from": "noreply@example.com",
-            "nethvoice_auth_url": "https://voice.nethserver.org/freepbx/rest/testextauth"
+            "nethvoice_auth_url": "https://voice.nethserver.org/freepbx/rest/testextauth",
+            "federation": true,
+            "federation_whitelist": [
+                "example.org"
+            ],
+            "turn_uris": [
+                "turn:turn.example.com:3478?transport=udp"
+            ],
+            "turn_shared_secret": "",
+            "max_upload_size_mb": 50,
+            "local_media_lifetime_days": 0,
+            "remote_media_lifetime_days": 14,
+            "log_level": "INFO"
         }
     ],
     "type": "object",
@@ -50,7 +62,7 @@
                     "maxLength": 0
                 }
             ]
-    },
+        },
         "lets_encrypt": {
             "type": "boolean",
             "description": "Enable Let's Encrypt certificate management"
@@ -73,8 +85,7 @@
                     "maxLength": 0
                 }
             ]
-        }
-        ,
+        },
         "nethvoice_auth_url": {
             "description": "NethVoice Authentication URL",
             "oneOf": [
@@ -86,6 +97,55 @@
                     "type": "string",
                     "maxLength": 0
                 }
+            ]
+        },
+        "federation": {
+            "type": "boolean",
+            "description": "Allow other Matrix servers to talk with this one"
+        },
+        "federation_whitelist": {
+            "type": "array",
+            "description": "If not empty, federate only with these server names",
+            "items": {
+                "type": "string",
+                "format": "hostname"
+            }
+        },
+        "turn_uris": {
+            "type": "array",
+            "description": "External TURN server URIs, used for voice and video calls behind NAT",
+            "items": {
+                "type": "string",
+                "pattern": "^turns?:[^,\\s]+$"
+            }
+        },
+        "turn_shared_secret": {
+            "type": "string",
+            "description": "TURN shared secret (coturn use-auth-secret). An empty value keeps the current secret",
+            "pattern": "^[^\\n\\r]*$"
+        },
+        "max_upload_size_mb": {
+            "type": "integer",
+            "description": "Largest file a user can upload, in megabytes",
+            "minimum": 1,
+            "maximum": 2048
+        },
+        "local_media_lifetime_days": {
+            "type": "integer",
+            "description": "Delete local media not accessed for this many days, 0 keeps it forever",
+            "minimum": 0
+        },
+        "remote_media_lifetime_days": {
+            "type": "integer",
+            "description": "Delete cached media from other servers not accessed for this many days, 0 keeps it forever",
+            "minimum": 0
+        },
+        "log_level": {
+            "type": "string",
+            "enum": [
+                "INFO",
+                "WARNING",
+                "DEBUG"
             ]
         }
     }

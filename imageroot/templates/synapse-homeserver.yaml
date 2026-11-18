@@ -9,7 +9,7 @@ listeners:
     x_forwarded: true
     bind_addresses: ['0.0.0.0']
     resources:
-      - names: [client]
+      - names: [${SYNAPSE_LISTENER_RESOURCES}]
 
 database:
   name: psycopg2
@@ -28,7 +28,7 @@ log_config: "/data/config/log.config"
 media_store_path: /data/media_store
 uploads_path: /data/uploads
 
-max_upload_size: 50M
+max_upload_size: ${SYNAPSE_MAX_UPLOAD_SIZE}
 max_image_pixels: 32M
 
 dynamic_thumbnails: false
@@ -36,6 +36,25 @@ dynamic_thumbnails: false
 url_preview_enabled: false
 
 enable_registration: false
+
+# Federation is optional. When enabled, other servers find us through
+# /.well-known/matrix/server on port 443, so port 8448 is not needed.
+serve_server_wellknown: ${SYNAPSE_SERVE_SERVER_WELLKNOWN}
+federation_domain_whitelist: ${SYNAPSE_FEDERATION_WHITELIST}
+
+media_retention:
+  local_media_lifetime: ${SYNAPSE_LOCAL_MEDIA_LIFETIME}
+  remote_media_lifetime: ${SYNAPSE_REMOTE_MEDIA_LIFETIME}
+
+# Let users find every LDAP colleague, not only people they already share a room with
+user_directory:
+  search_all_users: true
+  prefer_local_users: true
+
+turn_uris: ${SYNAPSE_TURN_URIS}
+turn_shared_secret: ${SYNAPSE_TURN_SHARED_SECRET}
+turn_user_lifetime: 1h
+turn_allow_guests: false
 
 report_stats: false
 

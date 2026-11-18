@@ -49,8 +49,7 @@
                     "maxLength": 0
                 }
             ]
-        }
-        ,
+        },
         "nethvoice_auth_url": {
             "description": "NethVoice Authentication URL",
             "oneOf": [
@@ -62,6 +61,42 @@
                     "type": "string",
                     "maxLength": 0
                 }
+            ]
+        },
+        "federation": {
+            "type": "boolean"
+        },
+        "federation_whitelist": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "turn_uris": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "turn_shared_secret_set": {
+            "type": "boolean",
+            "description": "True if a TURN secret is stored. The secret itself is never returned"
+        },
+        "max_upload_size_mb": {
+            "type": "integer"
+        },
+        "local_media_lifetime_days": {
+            "type": "integer"
+        },
+        "remote_media_lifetime_days": {
+            "type": "integer"
+        },
+        "log_level": {
+            "type": "string",
+            "enum": [
+                "INFO",
+                "WARNING",
+                "DEBUG"
             ]
         }
     }
