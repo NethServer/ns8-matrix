@@ -20,25 +20,6 @@ element_image="ghcr.io/element-hq/element-web:v1.12.35"
 cinny_image="ghcr.io/cinnyapp/cinny:v4.12.8"
 m2a_image="ghcr.io/nethesis/matrix2acrobits:0.0.4"
 
-# Write the upstream versions into the metadata shown by the About page,
-# and restore the original file when the build ends
-metadata_file="${PWD}/ui/public/metadata.json"
-metadata_backup=$(mktemp)
-cp "${metadata_file}" "${metadata_backup}"
-cleanup() {
-    cp "${metadata_backup}" "${metadata_file}"
-    rm -f "${metadata_backup}"
-}
-trap cleanup EXIT
-jq --arg synapse "${synapse_image##*:v}" \
-   --arg element "${element_image##*:v}" \
-   --arg cinny "${cinny_image##*:v}" \
-   '.components = [
-        {"name": "Synapse", "version": $synapse},
-        {"name": "Element Web", "version": $element},
-        {"name": "Cinny", "version": $cinny}
-    ]' "${metadata_file}" > "${metadata_file}.tmp" && mv "${metadata_file}.tmp" "${metadata_file}"
-
 # Create a new empty container image
 container=$(buildah from scratch)
 
@@ -57,6 +38,9 @@ echo "Build static UI files with node..."
 buildah run \
     --workingdir=/usr/src/ui \
     --env="NODE_OPTIONS=--openssl-legacy-provider" \
+    --env="VUE_APP_SYNAPSE_VERSION=${synapse_image##*:v}" \
+    --env="VUE_APP_ELEMENT_VERSION=${element_image##*:v}" \
+    --env="VUE_APP_CINNY_VERSION=${cinny_image##*:v}" \
     nodebuilder-matrix \
     sh -c "yarn install && yarn build"
 

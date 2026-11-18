@@ -74,9 +74,8 @@
                 </span>
               </span>
             </div>
-            <!-- filled at build time by build-images.sh -->
             <div
-              v-for="component in app.components || []"
+              v-for="component in components"
               :key="component.name"
               class="key-value-setting"
             >
@@ -186,6 +185,7 @@ export default {
   },
   data() {
     return {
+      components: [],
       q: {
         page: "about",
       },
@@ -207,6 +207,7 @@ export default {
   },
   created() {
     this.getModuleInfo();
+    this.components = this.getComponents();
 
     // needed to retrieve module version
     this.listInstalledModules();
@@ -222,6 +223,14 @@ export default {
     next();
   },
   methods: {
+    getComponents() {
+      // build-images.sh passes the versions read from the image tags
+      return [
+        { name: "Synapse", version: process.env.VUE_APP_SYNAPSE_VERSION },
+        { name: "Element Web", version: process.env.VUE_APP_ELEMENT_VERSION },
+        { name: "Cinny", version: process.env.VUE_APP_CINNY_VERSION },
+      ].filter((component) => component.version);
+    },
     getModuleInfo() {
       this.loading.moduleInfo = true;
       const metadata = require("../../public/metadata.json");

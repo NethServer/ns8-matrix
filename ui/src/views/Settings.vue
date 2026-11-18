@@ -140,7 +140,7 @@
                       $t("settings.enabled")
                     }}</template>
                   </NsToggle>
-                  <template v-if="federation">
+                  <template v-if="federation || error.federation_whitelist">
                     <NsInlineNotification
                       v-if="!isLetsEncryptEnabled"
                       kind="warning"
@@ -198,7 +198,7 @@
                     ref="turn_uris"
                   ></cv-text-area>
                   <NsTextInput
-                    v-if="turn_uris"
+                    v-if="turn_uris || error.turn_shared_secret"
                     type="password"
                     :label="$t('settings.turn_shared_secret')"
                     v-model="turn_shared_secret"
@@ -338,6 +338,17 @@ export default {
       search_all_users: false,
       log_level: "INFO",
       isAdvancedOpen: false,
+      advancedFields: [
+        "mail_from",
+        "nethvoice_auth_url",
+        "federation_whitelist",
+        "turn_uris",
+        "turn_shared_secret",
+        "max_upload_size_mb",
+        "local_media_lifetime_days",
+        "remote_media_lifetime_days",
+        "log_level",
+      ],
       logLevelOptions: [
         { name: "INFO", label: "INFO", value: "INFO" },
         { name: "WARNING", label: "WARNING", value: "WARNING" },
@@ -463,6 +474,7 @@ export default {
         this.mail_from !== "" ||
         this.nethvoice_auth_url !== "" ||
         this.federation ||
+        !this.search_all_users ||
         this.turn_uris !== "" ||
         this.max_upload_size_mb !== 50 ||
         this.local_media_lifetime_days !== 0 ||
@@ -542,6 +554,9 @@ export default {
       for (const validationError of validationErrors) {
         // array items are reported as "turn_uris.0", the error belongs to the whole list
         const field = validationError.field.split(".")[0];
+        if (this.advancedFields.includes(field)) {
+          this.isAdvancedOpen = true;
+        }
 
         if (field !== "(root)") {
           // set i18n error message
@@ -551,9 +566,14 @@ export default {
               })
             : this.$t("settings." + validationError.error);
 
+          // focus after the accordion opened, and only if the field is rendered
           if (!focusAlreadySet) {
-            this.focusElement(field);
             focusAlreadySet = true;
+            this.$nextTick(() => {
+              if (this.$refs[field]) {
+                this.focusElement(field);
+              }
+            });
           }
         }
       }
