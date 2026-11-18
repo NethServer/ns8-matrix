@@ -109,7 +109,9 @@
             "description": "If not empty, federate only with these server names",
             "items": {
                 "type": "string",
-                "format": "hostname"
+                "description": "Matrix server name: host name or IP address, optionally followed by :port",
+                "pattern": "^(\\[[0-9a-fA-F:.]+\\]|[A-Za-z0-9.-]+)(:[0-9]{1,5})?$",
+                "maxLength": 255
             }
         },
         "turn_uris": {
@@ -151,7 +153,7 @@
         },
         "search_all_users": {
             "type": "boolean",
-            "description": "Let users find every user of the LDAP domain, not only people they share a room with"
+            "description": "Let users find every user who logged in at least once, not only people they share a room with"
         }
     }
 }

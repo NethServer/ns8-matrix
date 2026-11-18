@@ -41,8 +41,7 @@ if turn_uris and not turn_shared_secret and not os.path.exists('turn.env'):
     sys.exit(2)
 
 # Read current configuration
-is_existing_instance = os.path.exists("config.env")
-if is_existing_instance:
+if os.path.exists("config.env"):
     env_vars = agent.read_envfile("config.env")
 else:
     env_vars = {}
@@ -62,11 +61,14 @@ env_vars['MAX_UPLOAD_SIZE_MB'] = str(max_upload_size_mb)
 env_vars['LOCAL_MEDIA_LIFETIME_DAYS'] = str(local_media_lifetime_days)
 env_vars['REMOTE_MEDIA_LIFETIME_DAYS'] = str(remote_media_lifetime_days)
 env_vars['LOG_LEVEL'] = log_level
-# New instances search every user by default, existing ones keep the previous behavior
+# A request without the key keeps the stored value, or the behavior before this setting existed.
+# The UI proposes true for new instances through get-configuration.
 if 'search_all_users' in request:
     env_vars['SEARCH_ALL_USERS'] = '1' if request['search_all_users'] else '0'
-elif 'SEARCH_ALL_USERS' not in env_vars:
-    env_vars['SEARCH_ALL_USERS'] = '0' if is_existing_instance else '1'
+else:
+    env_vars['SEARCH_ALL_USERS'] = env_vars.get('SEARCH_ALL_USERS', '0')
+# Saved in config.json, so a restore replays the same value
+request['search_all_users'] = env_vars['SEARCH_ALL_USERS'] == '1'
 
 # Get allocated TCP ports from environment - NS8 allocates sequential ports
 tcp_ports = os.environ.get('TCP_PORTS', '20001').split(',')
@@ -81,11 +83,9 @@ env_vars['M2A_PROXY_PORT'] = tcp_ports[4]
 # Write updated configuration
 agent.write_envfile("config.env", env_vars)
 
-# An empty secret keeps the current one, so the UI never has to read it back
-if not turn_uris:
-    if os.path.exists('turn.env'):
-        os.remove('turn.env')
-elif turn_shared_secret:
+# An empty secret keeps the current one, so the UI never has to read it back.
+# Clearing the URIs keeps the secret too: it is not used without URIs, and it is there if they come back.
+if turn_shared_secret:
     # Created with mode 600 from the start, the secret is never readable by others
     fd = os.open('turn.env', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, 'w') as tfp:
