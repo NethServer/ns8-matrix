@@ -110,65 +110,75 @@
                 $t("settings.enabled")
               }}</template>
             </NsToggle>
-            <NsToggle
-              value="federation"
-              :label="$t('settings.federation')"
-              v-model="federation"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-              ref="federation"
-            >
-              <template #tooltip>
-                {{ $t("settings.federation_tooltip") }}
-              </template>
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </NsToggle>
-            <template v-if="federation">
-              <NsInlineNotification
-                v-if="!isLetsEncryptEnabled"
-                kind="warning"
-                :title="$t('settings.federation_certificate_title')"
-                :description="$t('settings.federation_certificate_description')"
-                :showCloseButton="false"
-              />
-              <cv-text-area
-                :label="$t('settings.federation_whitelist')"
-                v-model.trim="federation_whitelist"
-                :helper-text="$t('settings.federation_whitelist_helper')"
-                :placeholder="$t('settings.federation_whitelist_placeholder')"
-                :invalid-message="error.federation_whitelist"
-                :disabled="loading.getConfiguration || loading.configureModule"
-                class="mg-bottom"
-                ref="federation_whitelist"
-              ></cv-text-area>
-            </template>
-            <NsToggle
-              value="search_all_users"
-              :label="$t('settings.search_all_users')"
-              v-model="search_all_users"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-              ref="search_all_users"
-            >
-              <template #tooltip>
-                {{ $t("settings.search_all_users_tooltip") }}
-              </template>
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </NsToggle>
             <cv-accordion ref="accordion" class="mg-bottom">
               <cv-accordion-item :open="isAdvancedOpen">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
+                  <NsToggle
+                    value="federation"
+                    :label="$t('settings.federation')"
+                    v-model="federation"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    class="mg-bottom"
+                    ref="federation"
+                  >
+                    <template #tooltip>
+                      {{ $t("settings.federation_tooltip") }}
+                    </template>
+                    <template slot="text-left">{{
+                      $t("settings.disabled")
+                    }}</template>
+                    <template slot="text-right">{{
+                      $t("settings.enabled")
+                    }}</template>
+                  </NsToggle>
+                  <template v-if="federation">
+                    <NsInlineNotification
+                      v-if="!isLetsEncryptEnabled"
+                      kind="warning"
+                      :title="$t('settings.federation_certificate_title')"
+                      :description="
+                        $t('settings.federation_certificate_description')
+                      "
+                      :showCloseButton="false"
+                    />
+                    <cv-text-area
+                      :label="$t('settings.federation_whitelist')"
+                      v-model.trim="federation_whitelist"
+                      :helper-text="$t('settings.federation_whitelist_helper')"
+                      :placeholder="
+                        $t('settings.federation_whitelist_placeholder')
+                      "
+                      :invalid-message="error.federation_whitelist"
+                      :disabled="
+                        loading.getConfiguration || loading.configureModule
+                      "
+                      class="mg-bottom"
+                      ref="federation_whitelist"
+                    ></cv-text-area>
+                  </template>
+                  <NsToggle
+                    value="search_all_users"
+                    :label="$t('settings.search_all_users')"
+                    v-model="search_all_users"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    class="mg-bottom"
+                    ref="search_all_users"
+                  >
+                    <template #tooltip>
+                      {{ $t("settings.search_all_users_tooltip") }}
+                    </template>
+                    <template slot="text-left">{{
+                      $t("settings.disabled")
+                    }}</template>
+                    <template slot="text-right">{{
+                      $t("settings.enabled")
+                    }}</template>
+                  </NsToggle>
                   <cv-text-area
                     :label="$t('settings.turn_uris')"
                     v-model.trim="turn_uris"
@@ -444,6 +454,7 @@ export default {
       this.search_all_users = config.search_all_users || false;
       // open the advanced section when it holds non default values
       this.isAdvancedOpen =
+        this.federation ||
         this.turn_uris !== "" ||
         this.max_upload_size_mb !== 50 ||
         this.local_media_lifetime_days !== 0 ||
