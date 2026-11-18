@@ -18,7 +18,16 @@
         "mount": "Mount",
         "no_services": "No services",
         "no_images": "No images",
-        "no_volumes": "No volumes"
+        "no_volumes": "No volumes",
+        "application": "Application",
+        "restart_application": "Restart application",
+        "restart_module_warning": "Are you sure you want to restart {name}? The service will be briefly unavailable during the restart.",
+        "go_to_node_details": "Go to node details",
+        "failed_services": "Failed services",
+        "all_services_running": "All services are running",
+        "search_images": "Search images",
+        "search_volumes": "Search volumes",
+        "open_web_client": "Open {name}"
     },
     "settings": {
         "title": "Settings",
@@ -81,7 +90,8 @@
         "get-name": "Get name",
         "list-backup-repositories": "List backup repositories",
         "list-backups": "List backups",
-        "list-installed-modules": "List installed modules"
+        "list-installed-modules": "List installed modules",
+        "restart-module": "Restart application"
     },
     "error": {
         "error": "Error",
@@ -94,5 +104,12 @@
         "404": "Resource not found",
         "cannot_retrieve_module_info": "Cannot retrieve module info",
         "cannot_retrieve_installed_modules": "Cannot retrieve installed modules"
+    },
+    "error_title": {
+        "get-status": "Cannot load status",
+        "list-backup-repositories": "Cannot load backup destinations",
+        "list-backups": "Cannot load backups",
+        "restart-module": "Cannot restart application",
+        "get-configuration": "Cannot load configuration"
     }
 }
