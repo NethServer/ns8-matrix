@@ -16,7 +16,9 @@ This module provides a complete Matrix chat solution including:
 - Seamless integration with NethServer 8 LDAP user directory
 - Configurable domain names for both Matrix server and Element web client
 - Automatic SSL/TLS certificate management via Traefik
-- Matrix Federation support
+- Optional Matrix federation, delegated through `/.well-known` on port 443
+- Optional external TURN server for voice and video calls behind NAT
+- Upload size, media retention and log level settings
 - Persistent data storage
 - Postgresql database backend
 
@@ -43,6 +45,16 @@ Launch `configure-module`, by setting the following parameters:
 - `ldap_domain`: The LDAP domain name to be used for authentication.
 - `mail_from`: The mail sender address for notification mails
 - `nethvoice_auth_url`: The NethVoice authentication URL to enable NethVoice integration, if set the `matrix2acrobits` service will be configured and started.
+- `federation`: Set to `true` to let users talk with other Matrix servers, see [Matrix Federation](#matrix-federation). Default `false`.
+- `federation_whitelist`: Optional list of server names allowed to federate. Empty means any server.
+- `turn_uris`: Optional list of external TURN server URIs, see [Voice and video calls](#voice-and-video-calls).
+- `turn_shared_secret`: The TURN shared secret. Required the first time `turn_uris` is set, an empty value keeps the stored secret.
+- `max_upload_size_mb`: Largest file a user can upload, in megabytes. Default `50`.
+- `local_media_lifetime_days`: Delete uploaded files not viewed for this many days. Default `0`, which keeps them forever.
+- `remote_media_lifetime_days`: Delete cached files from other servers not viewed for this many days. Default `14`, `0` keeps them forever.
+- `log_level`: `INFO`, `WARNING` or `DEBUG`. Default `INFO`.
+
+All the new parameters are optional, a request without them keeps the defaults.
 
 Example:
 
@@ -122,9 +134,41 @@ If LDAP settings change while the module is running, the event handler
 
 ## Matrix Federation
 
-The module supports Matrix federation by configuring the necessary server delegation 
-and federation settings. The Synapse server is configured with the proper server name
-and federation endpoints are exposed through Traefik.
+Federation is disabled by default: users can only talk with accounts of this server.
+
+When `federation` is enabled, Synapse serves the federation API and answers
+`/.well-known/matrix/server` with `<synapse_domain_name>:443`. Other servers reach
+this one through the existing Traefik route on port 443, port 8448 is not needed.
+
+Requirements:
+- a public DNS record for `synapse_domain_name`
+- a valid certificate for it, other servers refuse self-signed certificates
+- do not change `synapse_domain_name` once federation is in use, it is part of every user ID and of the server signing key
+
+Use `federation_whitelist` to federate only with known partners. You can check
+the setup with the [Matrix Federation Tester](https://federationtester.matrix.org/).
+
+## Voice and video calls
+
+One to one calls need a TURN server when users are behind NAT. The module does
+not ship one, but it can use an external TURN server, for example
+[coturn](https://github.com/coturn/coturn) configured with `use-auth-secret`.
+Set `turn_uris` and `turn_shared_secret`, Synapse then gives short lived TURN
+credentials to the clients.
+
+The secret is stored in `state/turn.env`, it is never returned by
+`get-configuration` and it is included in the backup.
+
+Group calls with Element Call use a different technology (LiveKit) and are not covered.
+
+## Server administrators
+
+LDAP users are not Synapse administrators. To grant or revoke the flag:
+
+    api-cli run module/matrix1/set-admin --data '{"user": "alice", "admin": true}'
+
+The user must have logged in at least once. The action restarts Synapse,
+because Synapse caches the flag.
 
 ## Rotate/recreate secrets
 
@@ -174,7 +218,7 @@ NethVoice CTI integration:
 ### Future improvements
 
 - Evaluate if [Sygnal Push Gateway](https://github.com/element-hq/sygnal) is required (it should not)
-- Add support for [VoIP and Video calls](https://element-hq.github.io/synapse/latest/usage/calls.html) with [Element Call](https://github.com/element-hq/element-call)
+- Add support for group calls with [Element Call](https://github.com/element-hq/element-call)
 - Add Whatsapp Bridge with [mautrix-whatsapp](https://github.com/mautrix/whatsapp)
 - Add Telegram Bridge with [mautrix-telegram](https://github.com/mautrix/telegram)
 - Considerations for Implementing consolidated Matrix Bridges, Image: [MAtrix Bridges Image ](https://github.com/nfrastack/container-matrix-bridges)

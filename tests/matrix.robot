@@ -12,6 +12,7 @@ ${user_password}    Nethesis,1234
 ${synapse_host}    matrix.dom.test
 ${synapse_api}    https://127.0.0.1/_matrix/client/v3
 ${message}    message kept across the update
+${base_config}    "synapse_domain_name": "${synapse_host}", "element_domain_name": "chat.dom.test", "cinny_domain_name": "cinny.dom.test", "lets_encrypt": false, "ldap_domain": "${user_domain}", "mail_from": "noreply@example.com", "nethvoice_auth_url": ""
 
 *** Keywords ***
 Login to cluster-admin
@@ -71,6 +72,17 @@ user2 reads the message of user1
     ${response} =    Synapse    GET    /rooms/${room_id}/messages?dir=b&limit=20    token=${token2}
     ${bodies} =    Evaluate    [e['content'].get('body') for e in $response['chunk'] if e['type'] == 'm.room.message']
     Should Contain    ${bodies}    ${message}
+
+HTTP status of
+    [Arguments]    ${path}    ${token}=${EMPTY}
+    ${auth} =    Set Variable If    '${token}' != ''    -H "Authorization: Bearer ${token}"    ${EMPTY}
+    ${code} =    Execute Command    curl -sk -o /dev/null -w "%{http_code}" -H "Host: ${synapse_host}" ${auth} "https://127.0.0.1${path}"
+    RETURN    ${code}
+
+Configure matrix with
+    [Arguments]    ${extra}
+    Run task    module/${module_id}/configure-module    {${base_config}, ${extra}}    decode_json=${FALSE}
+    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
 
 *** Test Cases ***
 Configure the LDAP user domain
@@ -191,6 +203,55 @@ Check the message and the session survive the update
     Skip If    '${SCENARIO}' != 'update'    scenario is ${SCENARIO}, nothing to update
     # The token of user2 was issued before the update
     user2 reads the message of user1
+
+Check federation is disabled by default
+    ${code} =    HTTP status of    /_matrix/federation/v1/version
+    Should Be Equal    ${code}    404
+    ${code} =    HTTP status of    /.well-known/matrix/server
+    Should Be Equal    ${code}    404
+
+Check federation can be enabled
+    Configure matrix with    "federation": true, "federation_whitelist": ["example.org"]
+    ${code} =    HTTP status of    /_matrix/federation/v1/version
+    Should Be Equal    ${code}    200
+    ${output} =    Execute Command    curl -sk -H "Host: ${synapse_host}" https://127.0.0.1/.well-known/matrix/server
+    ${wellknown} =    Evaluate    json.loads($output)    modules=json
+    Should Be Equal    ${wellknown['m.server']}    ${synapse_host}:443
+
+Check the TURN server settings
+    Configure matrix with    "turn_uris": ["turn:turn.example.org:3478?transport=udp"], "turn_shared_secret": "@secret"
+    ${response} =    Synapse    GET    /voip/turnServer    token=${token1}
+    Should Be Equal    ${response['uris'][0]}    turn:turn.example.org:3478?transport=udp
+    Dictionary Should Contain Key    ${response}    password
+    ${config} =    Run task    module/${module_id}/get-configuration    {}
+    Should Be True    ${config['turn_shared_secret_set']}
+    Dictionary Should Not Contain Key    ${config}    turn_shared_secret
+    # An empty secret keeps the stored one
+    Configure matrix with    "turn_uris": ["turn:turn.example.org:3478?transport=udp"], "turn_shared_secret": ""
+    ${response} =    Synapse    GET    /voip/turnServer    token=${token1}
+    Dictionary Should Contain Key    ${response}    password
+
+Check the TURN secret is required
+    Configure matrix with    "turn_uris": []
+    Run task    module/${module_id}/configure-module    {${base_config}, "turn_uris": ["turn:turn.example.org"]}    rc_expected=2    decode_json=${FALSE}
+
+Check the media settings
+    Configure matrix with    "max_upload_size_mb": 100, "local_media_lifetime_days": 30, "log_level": "WARNING"
+    ${output} =    Execute Command    runagent -m ${module_id} grep -E "^max_upload_size|local_media_lifetime" synapse-config/homeserver.yaml
+    Should Contain    ${output}    max_upload_size: 100M
+    Should Contain    ${output}    local_media_lifetime: "30d"
+    ${output} =    Execute Command    curl -sk -H "Host: ${synapse_host}" -H "Authorization: Bearer ${token1}" https://127.0.0.1/_matrix/client/v1/media/config
+    ${media} =    Evaluate    json.loads($output)    modules=json
+    Should Be Equal As Integers    ${media['m.upload.size']}    104857600
+
+Check set-admin grants the admin flag
+    ${code} =    HTTP status of    /_synapse/admin/v2/users?limit=1    token=${token1}
+    Should Be Equal    ${code}    403
+    Run task    module/${module_id}/set-admin    {"user":"user1","admin":true}    decode_json=${FALSE}
+    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
+    ${code} =    HTTP status of    /_synapse/admin/v2/users?limit=1    token=${token1}
+    Should Be Equal    ${code}    200
+    Run task    module/${module_id}/set-admin    {"user":"nobody","admin":true}    rc_expected=2    decode_json=${FALSE}
 
 Retrieve element backend URL
     # Assuming the test is running on a single node cluster
