@@ -76,7 +76,7 @@ user2 reads the message of user1
 HTTP status of
     [Arguments]    ${path}    ${token}=${EMPTY}
     ${auth} =    Set Variable If    '${token}' != ''    -H "Authorization: Bearer ${token}"    ${EMPTY}
-    ${code} =    Execute Command    curl -sk -o /dev/null -w "%{http_code}" -H "Host: ${synapse_host}" ${auth} "https://127.0.0.1${path}"
+    ${code} =    Execute Command    curl -sk -o /dev/null -w "\%{http_code}" -H "Host: ${synapse_host}" ${auth} "https://127.0.0.1${path}"
     RETURN    ${code}
 
 Configure matrix with
