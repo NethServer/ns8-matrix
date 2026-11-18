@@ -147,6 +147,24 @@
                 ref="federation_whitelist"
               ></cv-text-area>
             </template>
+            <NsToggle
+              value="search_all_users"
+              :label="$t('settings.search_all_users')"
+              v-model="search_all_users"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+              ref="search_all_users"
+            >
+              <template #tooltip>
+                {{ $t("settings.search_all_users_tooltip") }}
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
             <cv-accordion ref="accordion" class="mg-bottom">
               <cv-accordion-item :open="isAdvancedOpen">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
@@ -300,7 +318,8 @@ export default {
       turn_shared_secret_set: false,
       max_upload_size_mb: 50,
       local_media_lifetime_days: 0,
-      remote_media_lifetime_days: 14,
+      remote_media_lifetime_days: 0,
+      search_all_users: false,
       log_level: "INFO",
       isAdvancedOpen: false,
       logLevelOptions: [
@@ -421,13 +440,14 @@ export default {
       this.turn_shared_secret_set = config.turn_shared_secret_set || false;
       this.max_upload_size_mb = config.max_upload_size_mb || 50;
       this.local_media_lifetime_days = config.local_media_lifetime_days || 0;
-      this.remote_media_lifetime_days = config.remote_media_lifetime_days ?? 14;
+      this.remote_media_lifetime_days = config.remote_media_lifetime_days || 0;
+      this.search_all_users = config.search_all_users || false;
       // open the advanced section when it holds non default values
       this.isAdvancedOpen =
         this.turn_uris !== "" ||
         this.max_upload_size_mb !== 50 ||
         this.local_media_lifetime_days !== 0 ||
-        this.remote_media_lifetime_days !== 14 ||
+        this.remote_media_lifetime_days !== 0 ||
         (config.log_level || "INFO") !== "INFO";
 
       // force to reload value after dom update
@@ -462,6 +482,38 @@ export default {
         }
       }
 
+      // an emptied number input gives "", which means the default value
+      const numberFields = [
+        { name: "max_upload_size_mb", min: 1, max: 2048, empty: 50 },
+        { name: "local_media_lifetime_days", min: 0, empty: 0 },
+        { name: "remote_media_lifetime_days", min: 0, empty: 0 },
+      ];
+      for (const field of numberFields) {
+        if (this[field.name] === "") {
+          this[field.name] = field.empty;
+        }
+        const value = this[field.name];
+        const isValid =
+          Number.isInteger(value) &&
+          value >= field.min &&
+          (field.max === undefined || value <= field.max);
+
+        if (!isValid) {
+          this.error[field.name] =
+            field.max === undefined
+              ? this.$t("settings.number_min", { min: field.min })
+              : this.$t("settings.number_range", {
+                  min: field.min,
+                  max: field.max,
+                });
+
+          if (isValidationOk) {
+            this.isAdvancedOpen = true;
+            this.focusElement(field.name);
+            isValidationOk = false;
+          }
+        }
+      }
       return isValidationOk;
     },
     configureModuleValidationFailed(validationErrors) {
@@ -527,15 +579,15 @@ export default {
             nethvoice_auth_url: this.nethvoice_auth_url,
             lets_encrypt: this.isLetsEncryptEnabled,
             federation: this.federation,
-            federation_whitelist: this.federation
-              ? this.splitLines(this.federation_whitelist)
-              : [],
+            // sent even when federation is off, so the list is kept for later
+            federation_whitelist: this.splitLines(this.federation_whitelist),
             turn_uris: this.splitLines(this.turn_uris),
             turn_shared_secret: this.turn_shared_secret,
             max_upload_size_mb: this.max_upload_size_mb,
             local_media_lifetime_days: this.local_media_lifetime_days,
             remote_media_lifetime_days: this.remote_media_lifetime_days,
             log_level: this.log_level,
+            search_all_users: this.search_all_users,
           },
           extra: {
             title: this.$t("settings.configure_instance", {

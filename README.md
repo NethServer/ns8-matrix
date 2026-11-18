@@ -51,7 +51,8 @@ Launch `configure-module`, by setting the following parameters:
 - `turn_shared_secret`: The TURN shared secret. Required the first time `turn_uris` is set, an empty value keeps the stored secret.
 - `max_upload_size_mb`: Largest file a user can upload, in megabytes. Default `50`.
 - `local_media_lifetime_days`: Delete uploaded files not viewed for this many days. Default `0`, which keeps them forever.
-- `remote_media_lifetime_days`: Delete cached files from other servers not viewed for this many days. Default `14`, `0` keeps them forever.
+- `remote_media_lifetime_days`: Delete cached files from other servers not viewed for this many days. Default `0`, which keeps them forever.
+- `search_all_users`: Let users find every user of the LDAP domain, not only people they share a room with. Default `true` for new instances, existing instances keep `false` until it is changed. Only users who logged in at least once can be found, Synapse does not search the LDAP directory itself.
 - `log_level`: `INFO`, `WARNING` or `DEBUG`. Default `INFO`.
 
 All the new parameters are optional, a request without them keeps the defaults.

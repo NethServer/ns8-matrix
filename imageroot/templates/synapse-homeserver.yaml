@@ -46,9 +46,9 @@ media_retention:
   local_media_lifetime: ${SYNAPSE_LOCAL_MEDIA_LIFETIME}
   remote_media_lifetime: ${SYNAPSE_REMOTE_MEDIA_LIFETIME}
 
-# Let users find every LDAP colleague, not only people they already share a room with
+# When true, users find every LDAP colleague, not only people they already share a room with
 user_directory:
-  search_all_users: true
+  search_all_users: ${SYNAPSE_SEARCH_ALL_USERS}
   prefer_local_users: true
 
 turn_uris: ${SYNAPSE_TURN_URIS}

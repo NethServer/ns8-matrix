@@ -98,6 +98,10 @@
                 "WARNING",
                 "DEBUG"
             ]
+        },
+        "search_all_users": {
+            "type": "boolean",
+            "description": "Let users find every user of the LDAP domain, not only people they share a room with"
         }
     }
 }

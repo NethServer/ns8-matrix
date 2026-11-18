@@ -27,7 +27,7 @@ turn_uris = request.get('turn_uris', [])
 turn_shared_secret = request.pop('turn_shared_secret', '')
 max_upload_size_mb = request.get('max_upload_size_mb', 50)
 local_media_lifetime_days = request.get('local_media_lifetime_days', 0)
-remote_media_lifetime_days = request.get('remote_media_lifetime_days', 14)
+remote_media_lifetime_days = request.get('remote_media_lifetime_days', 0)
 log_level = request.get('log_level', 'INFO')
 
 if not synapse_domain_name:
@@ -41,7 +41,8 @@ if turn_uris and not turn_shared_secret and not os.path.exists('turn.env'):
     sys.exit(2)
 
 # Read current configuration
-if os.path.exists("config.env"):
+is_existing_instance = os.path.exists("config.env")
+if is_existing_instance:
     env_vars = agent.read_envfile("config.env")
 else:
     env_vars = {}
@@ -61,6 +62,11 @@ env_vars['MAX_UPLOAD_SIZE_MB'] = str(max_upload_size_mb)
 env_vars['LOCAL_MEDIA_LIFETIME_DAYS'] = str(local_media_lifetime_days)
 env_vars['REMOTE_MEDIA_LIFETIME_DAYS'] = str(remote_media_lifetime_days)
 env_vars['LOG_LEVEL'] = log_level
+# New instances search every user by default, existing ones keep the previous behavior
+if 'search_all_users' in request:
+    env_vars['SEARCH_ALL_USERS'] = '1' if request['search_all_users'] else '0'
+elif 'SEARCH_ALL_USERS' not in env_vars:
+    env_vars['SEARCH_ALL_USERS'] = '0' if is_existing_instance else '1'
 
 # Get allocated TCP ports from environment - NS8 allocates sequential ports
 tcp_ports = os.environ.get('TCP_PORTS', '20001').split(',')

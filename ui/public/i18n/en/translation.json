@@ -62,10 +62,10 @@
         "media_lifetime_helper": "0 keeps files forever.",
         "log_level": "Log level",
         "invalid_list_item": "Invalid value: {value}",
-        "max_upload_size_mb_minimum": "Must be at least 1",
-        "max_upload_size_mb_maximum": "Must be at most 2048",
-        "local_media_lifetime_days_minimum": "Must be 0 or more",
-        "remote_media_lifetime_days_minimum": "Must be 0 or more"
+        "number_min": "Must be a whole number, {min} or more",
+        "number_range": "Must be a whole number between {min} and {max}",
+        "search_all_users": "Search all users",
+        "search_all_users_tooltip": "When enabled, users can find every user who logged in at least once. When disabled, they only find people they already share a room with."
     },
     "about": {
         "title": "About"
