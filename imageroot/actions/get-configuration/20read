@@ -11,6 +11,9 @@ import os
 import agent
 from agent.ldapproxy import Ldapproxy
 
+def split_list(value):
+    return [item.strip() for item in value.split(',') if item.strip()]
+
 # retrieve LDAP domains list
 lp = Ldapproxy()
 domains = []
@@ -36,6 +39,14 @@ if os.path.exists("config.env"):
     config['lets_encrypt'] = env_vars.get('LETS_ENCRYPT', '0') == '1'
     config['domains_list'] = domains
     config['nethvoice_auth_url'] = env_vars.get('NETHVOICE_AUTH_URL', '')
+    config['federation'] = env_vars.get('FEDERATION', '0') == '1'
+    config['federation_whitelist'] = split_list(env_vars.get('FEDERATION_WHITELIST', ''))
+    config['turn_uris'] = split_list(env_vars.get('TURN_URIS', ''))
+    config['max_upload_size_mb'] = int(env_vars.get('MAX_UPLOAD_SIZE_MB') or 50)
+    config['local_media_lifetime_days'] = int(env_vars.get('LOCAL_MEDIA_LIFETIME_DAYS') or 0)
+    config['remote_media_lifetime_days'] = int(env_vars.get('REMOTE_MEDIA_LIFETIME_DAYS') or 0)
+    config['log_level'] = env_vars.get('LOG_LEVEL', 'INFO')
+    config['search_all_users'] = env_vars.get('SEARCH_ALL_USERS', '0') == '1'
 else:
     # No configuration file found, return empty configuration
     config['synapse_domain_name'] = ''
@@ -46,5 +57,15 @@ else:
     config['lets_encrypt'] = False
     config['domains_list'] = domains
     config['nethvoice_auth_url'] = ''
+    config['federation'] = False
+    config['federation_whitelist'] = []
+    config['turn_uris'] = []
+    config['max_upload_size_mb'] = 50
+    config['local_media_lifetime_days'] = 0
+    config['remote_media_lifetime_days'] = 0
+    config['search_all_users'] = True
+    config['log_level'] = 'INFO'
+
+config['turn_shared_secret_set'] = os.path.exists('turn.env')
 
 json.dump(config, fp=sys.stdout)

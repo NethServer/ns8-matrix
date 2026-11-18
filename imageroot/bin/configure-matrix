@@ -23,7 +23,50 @@ SYNAPSE_QUOTED_KEYS = (
     "SYNAPSE_SMTP_USERNAME",
     "SYNAPSE_SMTP_PASSWORD",
     "SYNAPSE_SMTP_FROM",
+    "LDAP_BIND_DN",
+    "LDAP_BIND_PASSWORD",
 )
+
+def split_list(value):
+    """Turn a comma separated config.env value into a list, dropping blanks"""
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+def days_or_null(value):
+    """Synapse expects a duration like "30d", or null to keep media forever"""
+    days = int(value or 0)
+    return json.dumps(f'{days}d') if days > 0 else 'null'
+
+def synapse_derived_vars(env_vars):
+    """Compute the values that the templates cannot express with a plain substitution"""
+    federation = env_vars.get('FEDERATION', '0') == '1'
+    whitelist = split_list(env_vars.get('FEDERATION_WHITELIST', ''))
+    # null allows every server, an empty list also blocks the requests we send out
+    if not federation:
+        federation_whitelist = '[]'
+    elif whitelist:
+        federation_whitelist = json.dumps(whitelist)
+    else:
+        federation_whitelist = 'null'
+    turn_uris = split_list(env_vars.get('TURN_URIS', ''))
+    turn_secret = env_vars.get('TURN_SHARED_SECRET', '')
+    log_level = env_vars.get('LOG_LEVEL', 'INFO')
+    if log_level not in ('INFO', 'WARNING', 'DEBUG'):
+        log_level = 'INFO'
+    return {
+        'SYNAPSE_LISTENER_RESOURCES': 'client, federation' if federation else 'client',
+        'SYNAPSE_SERVE_SERVER_WELLKNOWN': 'true' if federation else 'false',
+        'SYNAPSE_FEDERATION_WHITELIST': federation_whitelist,
+        'ELEMENT_DEFAULT_FEDERATE': 'true' if federation else 'false',
+        'SYNAPSE_TURN_URIS': json.dumps(turn_uris),
+        'SYNAPSE_TURN_SHARED_SECRET': json.dumps(turn_secret) if turn_uris and turn_secret else 'null',
+        'SYNAPSE_MAX_UPLOAD_SIZE': str(int(env_vars.get('MAX_UPLOAD_SIZE_MB') or 50)) + 'M',
+        'SYNAPSE_LOCAL_MEDIA_LIFETIME': days_or_null(env_vars.get('LOCAL_MEDIA_LIFETIME_DAYS')),
+        'SYNAPSE_REMOTE_MEDIA_LIFETIME': days_or_null(env_vars.get('REMOTE_MEDIA_LIFETIME_DAYS')),
+        'SYNAPSE_LOG_LEVEL': log_level,
+        'SYNAPSE_SEARCH_ALL_USERS': 'true' if env_vars.get('SEARCH_ALL_USERS', '0') == '1' else 'false',
+        # DEBUG on the SQL logger prints access tokens, never go below INFO there
+        'SYNAPSE_SQL_LOG_LEVEL': 'WARNING' if log_level == 'WARNING' else 'INFO',
+    }
 
 def generate_secret(length=32):
     """Generate a random secret string"""
@@ -88,6 +131,12 @@ env_vars.update(secrets_env)
 smarthost_env = agent.read_envfile("smarthost.env")
 env_vars.update(smarthost_env)
 
+# The TURN secret lives in its own file, so it never appears in config.env or config.json
+turn_env = agent.read_envfile("turn.env") if os.path.exists("turn.env") else {}
+env_vars.update(turn_env)
+
+env_vars.update(synapse_derived_vars(env_vars))
+
 # Create configuration directories
 os.makedirs('synapse-config', exist_ok=True)
 os.makedirs('element-config', exist_ok=True)
@@ -114,9 +163,9 @@ with open(f'{template_dir}/matrix2acrobits.yaml', 'r') as f:
 with open('synapse-config/matrix2acrobits.yaml', 'w') as f:
     f.write(matrix_a2a)
 
-# Copy log config
+# Render log config
 with open(f'{template_dir}/synapse-log.config', 'r') as f:
-    log_config = f.read()
+    log_config = substitute_env_vars(f.read(), env_vars)
 
 with open('synapse-config/log.config', 'w') as f:
     f.write(log_config)

@@ -14,6 +14,11 @@ images=()
 repobase="${REPOBASE:-ghcr.io/nethserver}"
 # Configure the image name
 reponame="matrix"
+postgres_image="docker.io/postgres:14.25-alpine"
+synapse_image="ghcr.io/element-hq/synapse:v1.165.0"
+element_image="ghcr.io/element-hq/element-web:v1.12.35"
+cinny_image="ghcr.io/cinnyapp/cinny:v4.12.8"
+m2a_image="ghcr.io/nethesis/matrix2acrobits:0.0.4"
 
 # Create a new empty container image
 container=$(buildah from scratch)
@@ -33,6 +38,9 @@ echo "Build static UI files with node..."
 buildah run \
     --workingdir=/usr/src/ui \
     --env="NODE_OPTIONS=--openssl-legacy-provider" \
+    --env="VUE_APP_SYNAPSE_VERSION=${synapse_image##*:v}" \
+    --env="VUE_APP_ELEMENT_VERSION=${element_image##*:v}" \
+    --env="VUE_APP_CINNY_VERSION=${cinny_image##*:v}" \
     nodebuilder-matrix \
     sh -c "yarn install && yarn build"
 
@@ -45,7 +53,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.tcp-ports-demand=5" \
     --label="org.nethserver.rootfull=0" \
     --label="org.nethserver.max-per-node=1" \
-    --label="org.nethserver.images=docker.io/postgres:14.25-alpine ghcr.io/element-hq/synapse:v1.165.0 ghcr.io/element-hq/element-web:v1.12.35 ghcr.io/cinnyapp/cinny:v4.12.8 ghcr.io/nethesis/matrix2acrobits:0.0.4" \
+    --label="org.nethserver.images=${postgres_image} ${synapse_image} ${element_image} ${cinny_image} ${m2a_image}" \
     --label="org.nethserver.min-core=3.20.1" \
     "${container}"
 # Commit the image

@@ -15,7 +15,7 @@
     "default_country_code": "US",
     "show_labs_settings": false,
     "features": {},
-    "default_federate": false,
+    "default_federate": ${ELEMENT_DEFAULT_FEDERATE},
     "default_theme": "light",
     "room_directory": {
         "servers": [

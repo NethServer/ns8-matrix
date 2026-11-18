@@ -21,10 +21,25 @@ lets_encrypt = request.get('lets_encrypt', False)
 ldap_domain = request.get('ldap_domain', '')
 mail_from = request.get('mail_from', '')
 nethvoice_auth_url = request.get('nethvoice_auth_url', '')
+federation = request.get('federation', False)
+federation_whitelist = request.get('federation_whitelist', [])
+turn_uris = request.get('turn_uris', [])
+turn_shared_secret = request.pop('turn_shared_secret', '')
+turn_clear_secret = request.pop('turn_clear_secret', False)
+max_upload_size_mb = request.get('max_upload_size_mb', 50)
+local_media_lifetime_days = request.get('local_media_lifetime_days', 0)
+remote_media_lifetime_days = request.get('remote_media_lifetime_days', 0)
+log_level = request.get('log_level', 'INFO')
 
 if not synapse_domain_name:
     print("ERROR: Synapse_domain_name is required", file=sys.stderr)
     sys.exit(1)
+
+# Check it before writing anything, so a rejected request leaves the module untouched
+if turn_uris and not turn_shared_secret and (turn_clear_secret or not os.path.exists('turn.env')):
+    agent.set_status('validation-failed')
+    json.dump([{'field': 'turn_shared_secret', 'parameter': 'turn_shared_secret', 'value': '', 'error': 'turn_shared_secret_required'}], fp=sys.stdout)
+    sys.exit(2)
 
 # Read current configuration
 if os.path.exists("config.env"):
@@ -40,6 +55,21 @@ env_vars['LDAP_DOMAIN'] = ldap_domain
 env_vars['MAIL_FROM'] = mail_from
 env_vars['LETS_ENCRYPT'] = '1' if lets_encrypt else '0'
 env_vars['NETHVOICE_AUTH_URL'] = nethvoice_auth_url
+env_vars['FEDERATION'] = '1' if federation else '0'
+env_vars['FEDERATION_WHITELIST'] = ','.join(federation_whitelist)
+env_vars['TURN_URIS'] = ','.join(turn_uris)
+env_vars['MAX_UPLOAD_SIZE_MB'] = str(max_upload_size_mb)
+env_vars['LOCAL_MEDIA_LIFETIME_DAYS'] = str(local_media_lifetime_days)
+env_vars['REMOTE_MEDIA_LIFETIME_DAYS'] = str(remote_media_lifetime_days)
+env_vars['LOG_LEVEL'] = log_level
+# A request without the key keeps the stored value, or the behavior before this setting existed.
+# The UI proposes true for new instances through get-configuration.
+if 'search_all_users' in request:
+    env_vars['SEARCH_ALL_USERS'] = '1' if request['search_all_users'] else '0'
+else:
+    env_vars['SEARCH_ALL_USERS'] = env_vars.get('SEARCH_ALL_USERS', '0')
+# Saved in config.json, so a restore replays the same value
+request['search_all_users'] = env_vars['SEARCH_ALL_USERS'] == '1'
 
 # Get allocated TCP ports from environment - NS8 allocates sequential ports
 tcp_ports = os.environ.get('TCP_PORTS', '20001').split(',')
@@ -54,7 +84,18 @@ env_vars['M2A_PROXY_PORT'] = tcp_ports[4]
 # Write updated configuration
 agent.write_envfile("config.env", env_vars)
 
-# For later use and backup
+# An empty secret keeps the current one, so the UI never has to read it back.
+# Clearing the URIs keeps the secret too: it is not used without URIs, and it is there if they come back.
+if turn_shared_secret:
+    fd = os.open('turn.env', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    # os.open applies the mode only to a new file, an existing one keeps its own
+    os.fchmod(fd, 0o600)
+    with os.fdopen(fd, 'w') as tfp:
+        tfp.write('TURN_SHARED_SECRET=' + turn_shared_secret + '\n')
+elif turn_clear_secret and os.path.exists('turn.env'):
+    os.remove('turn.env')
+
+# For later use and backup. The TURN secret was popped from the request, turn.env is backed up instead
 with open('config.json', 'w') as cfp:
     cfp.write(json.dumps(request))
 
