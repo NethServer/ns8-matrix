@@ -15,7 +15,12 @@ config = agent.read_envfile('config.env')
 user_id = '@' + request['user'] + ':' + config['SYNAPSE_DOMAIN_NAME']
 
 # psql variables keep the user id out of the SQL text, so no quoting issue is possible
-sql = "UPDATE users SET admin = :admin WHERE name = :'user_id' RETURNING name;\n"
+# Returns the flag as it was before the update, or nothing if the user does not exist
+sql = (
+    "WITH previous AS (SELECT admin FROM users WHERE name = :'user_id'), "
+    "updated AS (UPDATE users SET admin = :admin WHERE name = :'user_id' RETURNING 1) "
+    "SELECT admin FROM previous;\n"
+)
 proc = subprocess.run(
     ['podman', 'exec', '-i', 'postgresql', 'psql', '-U', 'postgres', '-d', 'synapse',
      '-v', 'ON_ERROR_STOP=1', '-v', 'admin=' + ('1' if request['admin'] else '0'),
@@ -27,10 +32,13 @@ if proc.returncode != 0:
     sys.exit(1)
 
 # Synapse creates the account at the first login, before that there is nothing to update
-if proc.stdout.strip() != user_id:
+previous = proc.stdout.strip()
+if previous == '':
     agent.set_status('validation-failed')
     json.dump([{'field': 'user', 'parameter': 'user', 'value': request['user'], 'error': 'user_not_found'}], fp=sys.stdout)
     sys.exit(2)
 
-# Synapse caches the admin flag and never rereads it from the database while running
-subprocess.run(['systemctl', '--user', 'try-restart', 'synapse.service'], check=True)
+# Synapse caches the admin flag and never rereads it from the database while running,
+# restart it only when the flag really changed
+if previous != ('1' if request['admin'] else '0'):
+    subprocess.run(['systemctl', '--user', 'try-restart', 'synapse.service'], check=True)
