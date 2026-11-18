@@ -66,26 +66,6 @@
                 {{ $t("settings.choose_the_ldap_domain_to_use") }}
               </template>
             </NsComboBox>
-            <cv-text-input
-              :label="$t('settings.mail_from')"
-              v-model="mail_from"
-              :placeholder="$t('settings.mail_from_placeholder')"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              :invalid-message="error.mail_from"
-              ref="mail_from"
-            ></cv-text-input>
-            <cv-text-input
-              :label="$t('settings.nethvoice_auth_url')"
-              v-model="nethvoice_auth_url"
-              :placeholder="$t('settings.nethvoice_auth_url_placeholder')"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              :invalid-message="error.nethvoice_auth_url"
-              ref="nethvoice_auth_url"
-            >
-              <template slot="tooltip">
-                {{ $t("settings.nethvoice_auth_url_placeholder_tooltip") }}
-              </template>
-            </cv-text-input>
             <NsToggle
               value="letsEncrypt"
               :label="core.$t('apps_lets_encrypt.request_https_certificate')"
@@ -114,6 +94,32 @@
               <cv-accordion-item :open="isAdvancedOpen">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
+                  <cv-text-input
+                    :label="$t('settings.mail_from')"
+                    v-model="mail_from"
+                    :placeholder="$t('settings.mail_from_placeholder')"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    :invalid-message="error.mail_from"
+                    ref="mail_from"
+                  ></cv-text-input>
+                  <cv-text-input
+                    :label="$t('settings.nethvoice_auth_url')"
+                    v-model="nethvoice_auth_url"
+                    :placeholder="$t('settings.nethvoice_auth_url_placeholder')"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    :invalid-message="error.nethvoice_auth_url"
+                    ref="nethvoice_auth_url"
+                  >
+                    <template slot="tooltip">
+                      {{
+                        $t("settings.nethvoice_auth_url_placeholder_tooltip")
+                      }}
+                    </template>
+                  </cv-text-input>
                   <NsToggle
                     value="federation"
                     :label="$t('settings.federation')"
@@ -454,6 +460,8 @@ export default {
       this.search_all_users = config.search_all_users || false;
       // open the advanced section when it holds non default values
       this.isAdvancedOpen =
+        this.mail_from !== "" ||
+        this.nethvoice_auth_url !== "" ||
         this.federation ||
         this.turn_uris !== "" ||
         this.max_upload_size_mb !== 50 ||
