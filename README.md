@@ -14,7 +14,7 @@ This module provides a complete Matrix chat solution including:
 ## Features
 
 - Seamless integration with NethServer 8 LDAP user directory
-- Configurable domain names for both Matrix server and Element web client
+- Configurable domain names for the Matrix server and the Element and Cinny web clients
 - Automatic SSL/TLS certificate management via Traefik
 - Optional Matrix federation, delegated through `/.well-known` on port 443
 - Optional external TURN server for voice and video calls behind NAT
@@ -39,9 +39,9 @@ Let's assume that the matrix instance is named `matrix1`.
 
 Launch `configure-module`, by setting the following parameters:
 - `synapse_domain_name`: The fully qualified domain name for the Matrix server (e.g., `matrix.example.com`)
-- `element_domain_name`: The fully qualified domain name for the Element web client (e.g., `chat.example.com`)
-- `cinny_domain_name`: The fully qualified domain name for the Cinny client (e.g., `cinny.example.com`)
-- `lets_encrypt`: Set to `true` to enable automatic SSL certificate generation via Let's Encrypt for both domains.
+- `element_domain_name`: The fully qualified domain name for the Element web client (e.g., `chat.example.com`). Leave empty to disable Element.
+- `cinny_domain_name`: The fully qualified domain name for the Cinny client (e.g., `cinny.example.com`). Leave empty to disable Cinny.
+- `lets_encrypt`: Set to `true` to request Let's Encrypt certificates for all the configured domains.
 - `ldap_domain`: The LDAP domain name to be used for authentication.
 - `mail_from`: The mail sender address for notification mails
 - `nethvoice_auth_url`: The NethVoice authentication URL to enable NethVoice integration, if set the `matrix2acrobits` service will be configured and started.
@@ -64,7 +64,7 @@ Example:
 The above command will:
 - Start and configure the Synapse Matrix homeserver with LDAP authentication
 - Deploy Element Web client and Cinny client configured to connect to the local Synapse instance
-- Set up Traefik routes for both domains with automatic SSL certificates
+- Set up Traefik routes for the three domains with automatic SSL certificates
 - Start Matrix2Acrobits Application Service
 
 Access your Matrix installation:
@@ -74,7 +74,7 @@ Access your Matrix installation:
 
 ## Web clients
 
-Two web clients are available, Element web and Cinny. They can be enabled in the UI or by using the `enable_element` or `enable_cinny` flag.
+Two web clients are available, Element web and Cinny. A client is enabled when its domain name is set, in the UI or with `element_domain_name` and `cinny_domain_name`. An empty domain name disables it.
 
 ### Element web client
 
@@ -120,7 +120,8 @@ The Element client supports customized themes, examples are added to the configu
 
 ### Cinny Client
 
-Cinny is an alternative web client for Matrix chat, included in this module to provide users with a modern, lightweight interface. It can be accessed via a web browser and supports essential Matrix features such as messaging, rooms, and user authentication via OpenID Connect. Cinny is pre-configured to work with the Synapse server for seamless integration with NethServer 8 LDAP.
+Cinny is an alternative web client for Matrix chat, included in this module to provide users with a modern, lightweight interface. It can be accessed via a web browser and supports essential Matrix features such as messaging and rooms. Cinny is pre-configured to work with the Synapse server, users log in with their LDAP user name and password.
+
 ## LDAP Integration
 
 The module automatically discovers LDAP settings from the NethServer 8 configuration. 
@@ -130,8 +131,10 @@ the centralized user directory.
 The LDAP discovery happens every time the services start through the `bin/discover-ldap` 
 script, which refreshes the `state/ldap.env` file with current LDAP configuration.
 
-If LDAP settings change while the module is running, the event handler 
-`events/ldap-changed/10reload_services` will restart the affected services.
+When the LDAP settings of the cluster change, the event handler
+`events/ldap-changed/10reload_services` restarts Synapse, which reads the
+new settings at startup. Any LDAP change in the cluster triggers it, not
+only changes to the domain used by Matrix.
 
 ## Matrix Federation
 
@@ -173,7 +176,13 @@ because Synapse caches the flag.
 
 ## Rotate/recreate secrets
 
-The used secrets are stored in `matrix-secrets.env`. To rotate or recreate those secrets, you can remove the file, it will be recreated with new secrets after reconfiguration of the app.
+The secrets are stored in `matrix-secrets.env`. To rotate them, remove the file and run `configure-module` again: it is recreated with new secrets.
+
+Rotating them has side effects:
+- `MACAROON_SECRET` and `FORM_SECRET` sign short lived tokens (login tokens, form submissions), any pending one becomes invalid. Access tokens are stored in the database, so users stay logged in
+- `M2A_AS_TOKEN` and `M2A_HS_TOKEN` change, and matrix2acrobits is reconfigured with the new values
+
+`REGISTRATION_SECRET` and `SYNAPSE_SECRET` are generated but not used by the current configuration.
 
 ## Uninstall
 
