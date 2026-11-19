@@ -1,0 +1,48 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+set -e -o pipefail
+exec 1>&2 # Redirect any output to the journal (stderr)
+
+# A data directory created by an older major version keeps PG_VERSION at the
+# volume root. PostgreSQL 18 stores it under 18/docker/ instead.
+data_version=$(podman run --rm --network=none \
+    --volume=postgres-data:/v:Z \
+    --entrypoint=cat "${POSTGRES_IMAGE}" /v/PG_VERSION 2>/dev/null || true)
+
+if [[ -z "${data_version}" ]]; then
+    echo "PostgreSQL data is already in the current layout, skipping the upgrade"
+    exit 0
+fi
+
+# The new image cannot read the old data, so the dump must come from the old
+# container, which keeps running until the services restart.
+if ! systemctl --user is-active -q postgresql.service; then
+    echo "PostgreSQL ${data_version} data needs an upgrade but postgresql.service is not running."
+    echo "Start the module and run the update again."
+    exit 1
+fi
+
+echo "Upgrading PostgreSQL data from version ${data_version}"
+db_clients=()
+for unit in synapse.service matrix2acrobits.service; do
+    if systemctl --user is-active -q "${unit}"; then
+        db_clients+=("${unit}")
+    fi
+done
+# Stop the writers so the dump is consistent
+systemctl --user stop synapse.service matrix2acrobits.service
+
+../bin/module-dump-state
+systemctl --user stop postgresql.service
+podman volume rm postgres-data
+
+# Restore the dump into a new volume; the dump file is removed only on success
+../actions/restore-module/40restore_database
+
+systemctl --user start postgresql.service "${db_clients[@]}"
+echo "PostgreSQL data upgraded"

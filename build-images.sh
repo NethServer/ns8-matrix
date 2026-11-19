@@ -14,7 +14,7 @@ images=()
 repobase="${REPOBASE:-ghcr.io/nethserver}"
 # Configure the image name
 reponame="matrix"
-postgres_image="docker.io/postgres:14.25-alpine"
+postgres_image="docker.io/postgres:18.7-alpine"
 synapse_image="ghcr.io/element-hq/synapse:v1.165.0"
 element_image="ghcr.io/element-hq/element-web:v1.12.35"
 cinny_image="ghcr.io/cinnyapp/cinny:v4.12.8"
