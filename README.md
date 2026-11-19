@@ -20,7 +20,7 @@ This module provides a complete Matrix chat solution including:
 - Optional external TURN server for voice and video calls behind NAT
 - Upload size, media retention and log level settings
 - Persistent data storage
-- Postgresql database backend
+- PostgreSQL 18 database backend, migrated automatically from older versions on update
 
 ## Install
 
