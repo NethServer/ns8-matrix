@@ -10,21 +10,17 @@ exec 1>&2 # Redirect any output to the journal (stderr)
 
 # A data directory created by an older major version keeps PG_VERSION at the
 # volume root. PostgreSQL 18 stores it under 18/docker/ instead.
-data_version=$(podman run --rm --network=none \
-    --volume=postgres-data:/v:Z \
-    --entrypoint=cat "${POSTGRES_IMAGE}" /v/PG_VERSION 2>/dev/null || true)
+# Read it from the host side: mounting the volume with :Z in a helper
+# container relabels it and locks out a running PostgreSQL.
+volume_path=$(podman volume inspect postgres-data --format '{{.Mountpoint}}' 2>/dev/null || true)
+data_version=""
+if [[ -n "${volume_path}" ]]; then
+    data_version=$(podman unshare cat "${volume_path}/PG_VERSION" 2>/dev/null || true)
+fi
 
 if [[ -z "${data_version}" ]]; then
     echo "PostgreSQL data is already in the current layout, skipping the upgrade"
     exit 0
-fi
-
-# The new image cannot read the old data, so the dump must come from the old
-# container, which keeps running until the services restart.
-if ! systemctl --user is-active -q postgresql.service; then
-    echo "PostgreSQL ${data_version} data needs an upgrade but postgresql.service is not running."
-    echo "Start the module and run the update again."
-    exit 1
 fi
 
 echo "Upgrading PostgreSQL data from version ${data_version}"
@@ -34,15 +30,33 @@ for unit in synapse.service matrix2acrobits.service; do
         db_clients+=("${unit}")
     fi
 done
-# Stop the writers so the dump is consistent
-systemctl --user stop synapse.service matrix2acrobits.service
+systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
 
-../bin/module-dump-state
-systemctl --user stop postgresql.service
+# The new image cannot read the old data. Dump it with a temporary container
+# of the old major version, so the upgrade also works when the service is down.
+old_image="docker.io/postgres:${data_version}-alpine"
+podman run --detach --rm --network=none \
+    --volume=postgres-data:/var/lib/postgresql/data:Z \
+    --replace --name=postgresql-upgrade \
+    "${old_image}"
+trap 'podman stop --ignore postgresql-upgrade >/dev/null' EXIT
+
+for _ in $(seq 1 60); do
+    if podman exec postgresql-upgrade pg_isready -U postgres -q; then
+        break
+    fi
+    sleep 2
+done
+echo "Dumping all PostgreSQL databases"
+podman exec postgresql-upgrade pg_dumpall -U postgres > postgresql.pg_dump
+podman stop postgresql-upgrade
+trap - EXIT
+
 podman volume rm postgres-data
 
 # Restore the dump into a new volume; the dump file is removed only on success
 ../actions/restore-module/40restore_database
 
 systemctl --user start postgresql.service "${db_clients[@]}"
+podman image rm --ignore "${old_image}"
 echo "PostgreSQL data upgraded"
