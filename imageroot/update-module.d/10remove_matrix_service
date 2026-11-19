@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# The unit file is gone, so the enable link dangles: test it with -L, not -e
+[[ -L ../systemd/user/default.target.wants/matrix.service ]] || exit 0
+
+systemctl --user stop matrix.service 2>/dev/null || :
+# extract-image removes the unit file, but not its enable link
+rm -f ../systemd/user/default.target.wants/matrix.service
+systemctl --user daemon-reload
+systemctl --user reset-failed matrix.service 2>/dev/null || :
