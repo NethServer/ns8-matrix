@@ -8,7 +8,8 @@
 set -e -o pipefail
 exec 1>&2 # Redirect any output to the journal (stderr)
 
-# Image that last wrote the data of each old major version. When bumping the
+# Image used to dump the data of each old major version. Any minor release
+# reads data written by another minor of the same major. When bumping the
 # PostgreSQL major version, add the image the module shipped before the bump.
 declare -A old_images=(
     [14]="docker.io/postgres:14.25-alpine"
