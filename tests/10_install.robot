@@ -27,9 +27,8 @@ Check if matrix is installed correctly
     Set Global Variable    ${module_id}    ${output.module_id}
 
 Check if matrix can be configured
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"synapse_domain_name": "${synapse_host}", "element_domain_name": "chat.dom.test", "cinny_domain_name": "cinny.dom.test", "lets_encrypt": false, "ldap_domain": "${user_domain}", "mail_from": "noreply@example.com", "nethvoice_auth_url": "https://nethvoice.nethserver.org/freepbx/rest/testextauth"}'
-    ...    return_rc=True  return_stdout=False
-    Should Be Equal As Integers    ${rc}  0
+    Configure matrix with    "nethvoice_auth_url": "https://nethvoice.nethserver.org/freepbx/rest/testextauth"
+    Read the Synapse port
 
 Check if postgresql service is loaded correctly
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} systemctl --user show --property=LoadState postgresql
@@ -62,7 +61,4 @@ Check if matrix2acrobits service is loaded correctly
     Should Be Equal As Strings    ${output}    LoadState=loaded
 
 Check the services are running
-    FOR    ${service}    IN    postgresql    synapse    element-web    cinny
-        Wait Until Keyword Succeeds    30 times    5 seconds    Service is active    ${service}
-    END
-    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
+    Matrix is running

@@ -12,12 +12,12 @@ Update matrix to the image under test
     ...    api-cli run update-module --data '{"force":true,"module_url":"${IMAGE_URL}","instances":["${module_id}"]}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
+    # Without it the checks below could pass against the stable release
+    ${image} =    Execute Command    redis-cli hget module/${module_id}/environment IMAGE_URL
+    Should Be Equal    ${image.strip()}    ${IMAGE_URL}
 
 Check matrix works after the update
-    FOR    ${service}    IN    postgresql    synapse    element-web    cinny
-        Wait Until Keyword Succeeds    30 times    5 seconds    Service is active    ${service}
-    END
-    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
+    Matrix is running
     Get a token for    user1
 
 Check the configuration survives the update

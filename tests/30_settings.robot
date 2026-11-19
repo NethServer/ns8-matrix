@@ -55,30 +55,6 @@ Check the media settings
     ${media} =    Evaluate    json.loads($output)    modules=json
     Should Be Equal As Integers    ${media['m.upload.size']}    104857600
 
-Retrieve element backend URL
-    # Assuming the test is running on a single node cluster
-    ${response} =    Run task     module/traefik1/get-route    {"instance":"${module_id}-element"}
-    Set Suite Variable    ${backend_url}    ${response['url']}
-
-Check if element works as expected
-    Retry test    Backend URL is reachable
-
-Verify element frontend title
-    ${output} =    Execute Command    curl -s ${backend_url}
-    Should Contain    ${output}    <title>Element</title>
-
-Retrieve cinny backend URL
-    # Assuming the test is running on a single node cluster
-    ${response} =    Run task     module/traefik1/get-route    {"instance":"${module_id}-cinny"}
-    Set Suite Variable    ${backend_url}    ${response['url']}
-
-Check if cinny works as expected
-    Retry test    Backend URL is reachable
-
-Verify cinny frontend title
-    ${output} =    Execute Command    curl -s ${backend_url}
-    Should Contain    ${output}    <title>Cinny</title>
-
 Check the Element client can be disabled and enabled again
     Configure matrix with    "element_domain_name": ""
     ${host} =    Element route host
@@ -95,8 +71,7 @@ Check a change of LDAP domain
     ${mid_other} =    Set Variable    ${response['module_id']}
     Run task    module/${mid_other}/configure-module    {"domain":"${other_domain}","admuser":"admin","admpass":"${user_password}","provision":"new-domain"}
     Run task    module/${mid_other}/add-user    {"user":"user3","display_name":"User Three","password":"${user_password}"}
-    Set Test Variable    ${base_config}    ${base_config.replace('"${user_domain}"', '"${other_domain}"')}
-    Configure matrix with    "federation": false
+    Configure matrix with    "ldap_domain": "${other_domain}"
     ${response} =    Log in    user1
     Should Be Equal    ${response['errcode']}    M_FORBIDDEN    user1 of ${user_domain} must not log in any more
     Get a token for    user3
@@ -104,6 +79,5 @@ Check a change of LDAP domain
     ${response} =    Synapse    GET    /account/whoami    token=${token1}
     Should Be Equal    ${response['user_id']}    @user1:${synapse_host}
     [Teardown]    Run Keywords
-    ...    Set Test Variable    ${base_config}    ${base_config.replace('"${other_domain}"', '"${user_domain}"')}
-    ...    AND    Configure matrix with    "federation": false
+    ...    Configure matrix with    "ldap_domain": "${user_domain}"
     ...    AND    Run task    cluster/remove-internal-domain    {"domain":"${other_domain}"}

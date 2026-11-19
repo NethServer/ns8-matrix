@@ -13,7 +13,7 @@ ${message}    message kept across the update
 ${element_host}    chat.dom.test
 ${cinny_host}    cinny.dom.test
 ${resolve_test_hosts}    --resolve ${synapse_host}:443:127.0.0.1 --resolve ${element_host}:443:127.0.0.1 --resolve ${cinny_host}:443:127.0.0.1
-${base_config}    "synapse_domain_name": "${synapse_host}", "element_domain_name": "chat.dom.test", "cinny_domain_name": "cinny.dom.test", "lets_encrypt": false, "ldap_domain": "${user_domain}", "mail_from": "noreply@example.com", "nethvoice_auth_url": ""
+${base_config}    "synapse_domain_name": "${synapse_host}", "element_domain_name": "${element_host}", "cinny_domain_name": "${cinny_host}", "lets_encrypt": false, "ldap_domain": "${user_domain}", "mail_from": "noreply@example.com", "nethvoice_auth_url": ""
 
 *** Keywords ***
 Add module
@@ -22,15 +22,6 @@ Add module
     ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0
     RETURN    ${output}
-
-Retry test
-    [Arguments]    ${keyword}
-    Wait Until Keyword Succeeds    60 seconds    1 second    ${keyword}
-
-Backend URL is reachable
-    ${rc} =    Execute Command    curl -f ${backend_url}
-    ...    return_rc=True  return_stdout=False
-    Should Be Equal As Integers    ${rc}  0
 
 Synapse
     [Arguments]    ${method}    ${path}    ${body}=${EMPTY}    ${token}=${EMPTY}
@@ -45,9 +36,8 @@ Log in
     # Synapse allows a few logins per client address, and through Traefik every
     # test call comes from 127.0.0.1. Log in on the Synapse port instead, with
     # its own forwarded address, so the suites do not hit that limit.
-    ${port} =    Execute Command    runagent -m ${module_id} sh -c 'grep ^SYNAPSE_PORT= config.env | cut -d= -f2'
     ${address} =    Evaluate    f"10.99.{random.randint(0, 255)}.{random.randint(1, 254)}"    modules=random
-    ${out} =    Execute Command    curl -s -X POST -H "X-Forwarded-For: ${address}" -H "Content-Type: application/json" -d '{"type":"m.login.password","identifier":{"type":"m.id.user","user":"${user}"},"password":"${password}"}' "http://127.0.0.1:${port.strip()}/_matrix/client/v3/login"
+    ${out} =    Execute Command    curl -s -X POST -H "X-Forwarded-For: ${address}" -H "Content-Type: application/json" -d '{"type":"m.login.password","identifier":{"type":"m.id.user","user":"${user}"},"password":"${password}"}' "http://127.0.0.1:${synapse_port}/_matrix/client/v3/login"
     ${response} =    Evaluate    json.loads($out)    modules=json
     RETURN    ${response}
 
@@ -61,6 +51,18 @@ Service is active
     [Arguments]    ${service}
     ${output} =    Execute Command    runagent -m ${module_id} systemctl --user show --property=ActiveState ${service}
     Should Be Equal As Strings    ${output}    ActiveState=active
+
+Read the Synapse port
+    [Documentation]    Call it whenever ${module_id} changes
+    ${port} =    Execute Command    runagent -m ${module_id} sh -c 'grep ^SYNAPSE_PORT= config.env | cut -d= -f2'
+    Should Not Be Empty    ${port}
+    Set Global Variable    ${synapse_port}    ${port.strip()}
+
+Matrix is running
+    FOR    ${service}    IN    postgresql    synapse    element-web    cinny
+        Wait Until Keyword Succeeds    30 times    5 seconds    Service is active    ${service}
+    END
+    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
 
 Synapse answers
     ${rc} =    Execute Command    curl -skf -o /dev/null -H "Host: ${synapse_host}" https://127.0.0.1/_matrix/client/versions
@@ -94,6 +96,8 @@ Matrix fingerprint
     RETURN    ${out.strip()}
 
 Configure matrix with
+    [Documentation]    Configure the module with the base settings, overridden by ${extra}
     [Arguments]    ${extra}
-    Run task    module/${module_id}/configure-module    {${base_config}, ${extra}}    decode_json=${FALSE}
+    ${payload} =    Evaluate    json.dumps({**json.loads('{' + $base_config + '}'), **json.loads('{' + $extra + '}')})    modules=json
+    Run task    module/${module_id}/configure-module    ${payload}    decode_json=${FALSE}
     Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers

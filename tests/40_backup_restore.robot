@@ -2,8 +2,20 @@
 Library    SSHLibrary
 Resource    api.resource
 Resource    matrix.resource
+Suite Teardown    Remove the test backup
 
 *** Keywords ***
+Remove the test backup
+    # Runs even when a step failed half way, so check what was created
+    ${bid} =    Get Variable Value    ${backup_id}    ${NONE}
+    IF    $bid is not None
+        Run task    cluster/remove-backup    {"id":${bid}}
+    END
+    ${created} =    Get Variable Value    ${repository_created}    ${FALSE}
+    IF    ${created}
+        Run task    cluster/remove-backup-repository    {"id":"${repository}"}
+    END
+
 Module environment
     [Arguments]    ${name}
     ${out} =    Execute Command    runagent -m ${module_id} printenv ${name}
@@ -55,20 +67,19 @@ Back up matrix
 Restore matrix in place
     ${out} =    Run task    cluster/restore-module
     ...    {"repository":"${repository}","path":"matrix/${module_uuid}","snapshot":"${snapshot}","node":${module_node},"replace":true}
-    Should Be Equal    ${out}[module_uuid]    ${module_uuid}
-    Should Not Be Equal    ${out}[module_id]    ${old_module_id}
+    # Store the new id first: the old instance is gone, so later suites must target this one
     Set Global Variable    ${module_id}    ${out}[module_id]
     Set Suite Variable    ${restored}    ${TRUE}
+    Should Be Equal    ${out}[module_uuid]    ${module_uuid}
+    Should Not Be Equal    ${out}[module_id]    ${old_module_id}
     ${rc} =    Execute Command    runagent -m ${old_module_id} true
     ...    return_rc=True    return_stdout=False
     Should Not Be Equal As Integers    ${rc}    0    ${old_module_id} must be gone after a replace
 
 Matrix runs again after the restore
     [Setup]    The restore has run
-    FOR    ${service}    IN    postgresql    synapse    element-web    cinny
-        Wait Until Keyword Succeeds    30 times    5 seconds    Service is active    ${service}
-    END
-    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
+    Matrix is running
+    Read the Synapse port
 
 The database is restored as it was
     [Setup]    The restore has run
@@ -88,9 +99,3 @@ Sessions and messages survive the restore
     user2 reads the message of user1
     ${sent} =    Synapse    PUT    /rooms/${room_id}/send/m.room.message/after-restore    {"msgtype":"m.text","body":"after restore"}    token=${token1}
     Dictionary Should Contain Key    ${sent}    event_id
-
-Remove the test backup
-    Run task    cluster/remove-backup    {"id":${backup_id}}
-    IF    ${repository_created}
-        Run task    cluster/remove-backup-repository    {"id":"${repository}"}
-    END

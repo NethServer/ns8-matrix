@@ -29,7 +29,8 @@ Web client can log in
     # The browser checks CORS before posting the login from another domain
     ${headers} =    Curl client    https://${synapse_host}/_matrix/client/v3/login    ${origin}
     ...    -X OPTIONS -D - -o /dev/null -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type,authorization"
-    Should Match Regexp    ${headers}    (?i)access-control-allow-origin: (\\*|${origin})
+    ${escaped} =    Regexp Escape    ${origin}
+    Should Match Regexp    ${headers}    (?i)access-control-allow-origin: (\\*|${escaped})
     Should Match Regexp    ${headers}    (?i)access-control-allow-headers:.*authorization
 
     ${out} =    Curl client    https://${synapse_host}/_matrix/client/v3/login    ${origin}
