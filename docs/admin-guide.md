@@ -54,8 +54,9 @@ Two keys behave differently:
 
 ### Validation errors
 
-`turn_shared_secret_required`: `turn_uris` is set but there is no secret, in the request or
-stored. The module is left untouched.
+`turn_shared_secret_required`: `turn_uris` is set but no secret would remain. Either there is
+no secret in the request and none stored, or the request has `turn_clear_secret: true` without
+a new secret. The module is left untouched.
 
 ## Web clients
 
@@ -122,10 +123,15 @@ Group calls with Element Call use a different technology (LiveKit) and are not c
 
 Synapse sends notification mails through the cluster smarthost. `bin/discover-smarthost` runs
 when `synapse.service` starts and writes `state/smarthost.env`. The `smarthost-changed` event
-reloads Synapse.
+restarts Synapse, so connected clients reconnect.
 
-When `mail_from` is empty, the sender is `noreply@<smarthost host>`, or `noreply@<node FQDN>`
-when no smarthost is set.
+The sender depends on the smarthost:
+
+- smarthost with a username: `mail_from`, or `noreply@<smarthost host>` when empty. TLS is
+  required.
+- smarthost without a username: `mail_from`, or `noreply@<node FQDN>` when empty. TLS is not
+  required.
+- no smarthost, or a disabled one: mail is disabled.
 
 ## Secrets
 

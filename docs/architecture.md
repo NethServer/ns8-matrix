@@ -1,8 +1,22 @@
 # Architecture
 
-The module is rootless and runs one instance per node. All containers use host networking or
-publish on the loopback ports NS8 allocates to the module. Traefik is the only entry point
-from outside.
+The module is rootless and runs one instance per node. Traefik is the entry point from
+outside. It reaches every service on 127.0.0.1.
+
+## Network
+
+| Service | Network | Listens on |
+|---|---|---|
+| Synapse | host | `127.0.0.1:SYNAPSE_PORT` (`bind_addresses` in `homeserver.yaml`) |
+| PostgreSQL | rootless bridge | `127.0.0.1:POSTGRES_PORT`, published to 5432 in the container |
+| Element web | rootless bridge | `127.0.0.1:ELEMENT_WEB_PORT`, published to 8080 in the container |
+| Cinny | rootless bridge | `127.0.0.1:CINNY_PORT`, published to 80 in the container |
+| matrix2acrobits | host | every interface, `M2A_PROXY_PORT` |
+
+matrix2acrobits only reads a port, not a listen address, so it listens on every interface. It
+runs only when `nethvoice_auth_url` is set. The node firewall keeps its port closed from
+outside. The Element image runs as a non-root user and cannot bind port 80, so it listens on
+8080 inside the container.
 
 ## Ports
 
@@ -45,14 +59,17 @@ flowchart TB
     EW[element-web.service]
     CI[cinny.service]
     MA[matrix2acrobits.service]
+    PG -- "Before" --> SY
     EW -- "After, Wants" --> SY
     CI -- "After, Wants" --> SY
     MA -- "After, Wants" --> SY
 ```
 
-`synapse.service` has no unit dependency on `postgresql.service`. `80start_services` restarts
-PostgreSQL first, then Synapse. At boot both start independently, and Synapse restarts
-(`Restart=always`) until PostgreSQL answers.
+`postgresql.service` has `Before=synapse.service`. This is ordering only, there is no `Wants`
+or `Requires`. When both start in the same transaction, at boot or in `80start_services`,
+systemd waits for PostgreSQL to be started before it starts Synapse. PostgreSQL counts as
+started only when its `ExecStartPost` loop can open the `synapse` database, so Synapse finds
+the database ready.
 
 `80start_services` enables `postgresql` and `synapse` always. It enables `element-web` and
 `cinny` when their domain name is set, and `matrix2acrobits` when `nethvoice_auth_url` is set.
@@ -73,10 +90,12 @@ flowchart LR
     R --> CJ[state/config.json]
     R --> TE[state/turn.env]
     DL[discover-ldap] --> LE[state/ldap.env]
+    R --> ME[state/m2a.env]
     DS[discover-smarthost] --> SE[state/smarthost.env]
     CM[configure-matrix]
     CE --> CM
     LE --> CM
+    SE --> CM
     TE --> CM
     DB[state/database.env] --> CM
     MS[state/matrix-secrets.env] --> CM
@@ -121,7 +140,7 @@ The list of backed up paths is in `etc/state-include.conf`.
 | Event | Handler |
 |---|---|
 | `ldap-changed` | restarts `synapse.service` |
-| `smarthost-changed` | reloads or restarts `synapse.service` |
+| `smarthost-changed` | restarts `synapse.service`, the unit has no reload command |
 
 ## PostgreSQL migration
 
