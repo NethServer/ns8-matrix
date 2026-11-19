@@ -45,5 +45,6 @@ Check registration is closed
     Should Be Equal    ${response['errcode']}    M_FORBIDDEN
 
 Check the user directory finds a room member
-    # Synapse fills the directory in the background after a join
-    Wait Until Keyword Succeeds    30 seconds    2 seconds    user1 finds user2 in the directory
+    # Synapse fills the directory in the background after a join. On the stable release run by
+    # the update scenario this took more than 30 seconds in CI
+    Wait Until Keyword Succeeds    2 minutes    2 seconds    user1 finds user2 in the directory
