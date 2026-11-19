@@ -25,9 +25,9 @@ ExecStart=/usr/bin/podman run \
     --cidfile=%t/element-web.ctr-id \
     --cgroups=no-conmon \
     --replace --name=element-web \
-    --network=host \
+    --publish 127.0.0.1:${ELEMENT_WEB_PORT}:8080 \
+    --env=ELEMENT_WEB_PORT=8080 \
     --volume=%S/state/element-config/config.json:/app/config.json:Z \
-    --env-file=config.env \
     ${ELEMENT_WEB_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/element-web.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/element-web.ctr-id

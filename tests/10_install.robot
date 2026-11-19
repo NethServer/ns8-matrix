@@ -62,3 +62,8 @@ Check if matrix2acrobits service is loaded correctly
 
 Check the services are running
     Matrix is running
+
+Check the services listen on localhost only
+    # The update scenario installed the stable release, 22_update checks the image under test
+    Skip If    '${SCENARIO}' == 'update'    checked after the update
+    Services listen on localhost only
