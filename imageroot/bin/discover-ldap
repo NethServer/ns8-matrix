@@ -49,7 +49,7 @@ if odom['schema'] == "rfc2307":
         print('LDAP_BASE_DN=ou=people,' + odom['base_dn'], file=denv)
         print('LDAP_USERNAME=uid', file=denv)
         print('LDAP_EMAIL_ATTR=mail', file=denv)
-        print('LDAP_NAME_ATTR=cn', file=denv)
+        print('LDAP_NAME_ATTR=displayName', file=denv)
 elif odom['schema'] == "ad":
     with open(tmpfile, "w") as denv:
         print('LDAP_PORT=' + str(odom['port']), file=denv)
@@ -58,8 +58,8 @@ elif odom['schema'] == "ad":
         print('LDAP_BIND_PASSWORD=' + odom['bind_password'], file=denv)
         print('LDAP_SCHEMA=' + odom['schema'], file=denv)
         print('LDAP_BASE_DN=cn=Users,' + odom['base_dn'], file=denv)
-        print('LDAP_USERNAME=cn', file=denv)
+        print('LDAP_USERNAME=sAMAccountName', file=denv)
         print('LDAP_EMAIL_ATTR=mail', file=denv)
-        print('LDAP_NAME_ATTR=cn', file=denv)
+        print('LDAP_NAME_ATTR=displayName', file=denv)
 
 os.replace(tmpfile, "ldap.env")
