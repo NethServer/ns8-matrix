@@ -32,8 +32,6 @@ else
   systemctl --user disable cinny.service
 fi
 
-systemctl --user enable matrix.service
-
 # Restart Matrix services
 systemctl --user restart postgresql.service
 systemctl --user restart synapse.service
