@@ -8,55 +8,103 @@
 set -e -o pipefail
 exec 1>&2 # Redirect any output to the journal (stderr)
 
-# A data directory created by an older major version keeps PG_VERSION at the
-# volume root. PostgreSQL 18 stores it under 18/docker/ instead.
-# Read it from the host side: mounting the volume with :Z in a helper
-# container relabels it and locks out a running PostgreSQL.
-volume_path=$(podman volume inspect postgres-data --format '{{.Mountpoint}}' 2>/dev/null || true)
-data_version=""
-if [[ -n "${volume_path}" ]]; then
-    data_version=$(podman unshare cat "${volume_path}/PG_VERSION" 2>/dev/null || true)
+# Image that last wrote the data of each old major version. When bumping the
+# PostgreSQL major version, add the image the module shipped before the bump.
+declare -A old_images=(
+    [14]="docker.io/postgres:14.25-alpine"
+)
+
+target_tag=${POSTGRES_IMAGE##*:}
+target_major=${target_tag%%.*}
+
+# The dump and its row counts survive a failed run, so a retry resumes the
+# restore instead of starting Synapse on an empty database.
+upgrade_dump=upgrade.pg_dump
+upgrade_counts=upgrade.counts
+count_query="select (select count(*) from users), (select count(*) from events), (select count(*) from rooms)"
+
+if [[ ! -f "${upgrade_dump}" ]]; then
+    # Read PG_VERSION from the host side: mounting the volume with :Z in a
+    # helper container relabels it and locks out a running PostgreSQL.
+    volume_path=$(podman volume inspect postgres-data --format '{{.Mountpoint}}' 2>/dev/null || true)
+    data_version=""
+    old_mount=""
+    if [[ -n "${volume_path}" ]]; then
+        # Up to 17 the data sits at the volume root, from 18 under <major>/docker
+        data_version=$(podman unshare cat "${volume_path}/PG_VERSION" 2>/dev/null || true)
+        old_mount=/var/lib/postgresql/data
+        if [[ -z "${data_version}" ]]; then
+            data_version=$(podman unshare sh -c 'cat "$1"/*/docker/PG_VERSION' sh "${volume_path}" 2>/dev/null | sort -n | tail -n 1 || true)
+            old_mount=/var/lib/postgresql
+        fi
+    fi
+
+    if [[ -z "${data_version}" || "${data_version}" == "${target_major}" ]]; then
+        echo "PostgreSQL data matches version ${target_major}, skipping the upgrade"
+        exit 0
+    fi
+
+    old_image=${old_images[${data_version}]}
+    if [[ -z "${old_image}" ]]; then
+        echo "No known image to dump PostgreSQL ${data_version} data, aborting before any change"
+        exit 1
+    fi
+
+    # Pull first, so a registry failure aborts while the services still run
+    podman pull "${old_image}"
+
+    echo "Upgrading PostgreSQL data from version ${data_version} to ${target_major}"
+    systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
+
+    podman run --detach --rm --network=none \
+        --volume="postgres-data:${old_mount}:Z" \
+        --replace --name=postgresql-upgrade \
+        "${old_image}"
+    trap 'podman stop --ignore postgresql-upgrade >/dev/null' EXIT
+
+    ready=0
+    for _ in $(seq 1 60); do
+        if podman exec postgresql-upgrade pg_isready -U postgres -q 2>/dev/null; then
+            ready=1
+            break
+        fi
+        sleep 2
+    done
+    if [[ "${ready}" != 1 ]]; then
+        echo "PostgreSQL ${data_version} did not start, the data is unchanged"
+        exit 1
+    fi
+
+    echo "Dumping all PostgreSQL databases"
+    podman exec postgresql-upgrade pg_dumpall -U postgres > "${upgrade_dump}.tmp"
+    podman exec postgresql-upgrade psql -U postgres -d synapse -Atc "${count_query}" > "${upgrade_counts}"
+    mv "${upgrade_dump}.tmp" "${upgrade_dump}"
+    podman stop postgresql-upgrade
+    trap - EXIT
+    podman image rm --ignore "${old_image}"
+else
+    echo "Resuming an interrupted PostgreSQL upgrade"
+    systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
 fi
 
-if [[ -z "${data_version}" ]]; then
-    echo "PostgreSQL data is already in the current layout, skipping the upgrade"
-    exit 0
-fi
+podman volume rm --force postgres-data
 
-echo "Upgrading PostgreSQL data from version ${data_version}"
-db_clients=()
-for unit in synapse.service matrix2acrobits.service; do
-    if systemctl --user is-active -q "${unit}"; then
-        db_clients+=("${unit}")
-    fi
-done
-systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
-
-# The new image cannot read the old data. Dump it with a temporary container
-# of the old major version, so the upgrade also works when the service is down.
-old_image="docker.io/postgres:${data_version}-alpine"
-podman run --detach --rm --network=none \
-    --volume=postgres-data:/var/lib/postgresql/data:Z \
-    --replace --name=postgresql-upgrade \
-    "${old_image}"
-trap 'podman stop --ignore postgresql-upgrade >/dev/null' EXIT
-
-for _ in $(seq 1 60); do
-    if podman exec postgresql-upgrade pg_isready -U postgres -q; then
-        break
-    fi
-    sleep 2
-done
-echo "Dumping all PostgreSQL databases"
-podman exec postgresql-upgrade pg_dumpall -U postgres > postgresql.pg_dump
-podman stop postgresql-upgrade
-trap - EXIT
-
-podman volume rm postgres-data
-
-# Restore the dump into a new volume; the dump file is removed only on success
+# The restore action removes its input file, so give it a copy
+cp "${upgrade_dump}" postgresql.pg_dump
 ../actions/restore-module/40restore_database
 
-systemctl --user start postgresql.service "${db_clients[@]}"
-podman image rm --ignore "${old_image}"
-echo "PostgreSQL data upgraded"
+systemctl --user start postgresql.service
+restored_counts=$(podman exec postgresql psql -U postgres -d synapse -Atc "${count_query}")
+if [[ "${restored_counts}" != "$(cat "${upgrade_counts}")" ]]; then
+    echo "Restored row counts ${restored_counts} differ from $(cat "${upgrade_counts}")."
+    echo "The dump is kept in ${upgrade_dump}; run the update again to retry."
+    exit 1
+fi
+
+rm -f "${upgrade_dump}" "${upgrade_counts}"
+for unit in synapse.service matrix2acrobits.service; do
+    if systemctl --user is-enabled -q "${unit}"; then
+        systemctl --user start "${unit}"
+    fi
+done
+echo "PostgreSQL data upgraded, row counts match: ${restored_counts}"
