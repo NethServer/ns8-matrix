@@ -20,6 +20,9 @@ Check matrix works after the update
     Matrix is running
     Get a token for    user1
 
+Check the services listen on localhost only after the update
+    Services listen on localhost only
+
 Check the configuration survives the update
     ${config} =    Run task    module/${module_id}/get-configuration    {}
     Should Be Equal    ${config['synapse_domain_name']}    ${synapse_host}

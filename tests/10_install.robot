@@ -64,13 +64,6 @@ Check the services are running
     Matrix is running
 
 Check the services listen on localhost only
-    # Traefik reaches every service on 127.0.0.1, any wider bind exposes it to the network
-    FOR    ${var}    IN    SYNAPSE_PORT    ELEMENT_WEB_PORT    CINNY_PORT    POSTGRES_PORT
-        ${port} =    Execute Command    runagent -m ${module_id} sh -c 'grep ^${var}= config.env | cut -d= -f2'
-        Should Not Be Empty    ${port}
-        ${addresses} =    Execute Command    ss -ltnH 'sport = :${port.strip()}' | awk '{print $4}'
-        Should Not Be Empty    ${addresses}    nothing listens on ${var} ${port}
-        FOR    ${address}    IN    @{addresses.splitlines()}
-            Should Be Equal    ${address}    127.0.0.1:${port.strip()}    ${var} listens on ${address}
-        END
-    END
+    # The update scenario installed the stable release, 22_update checks the image under test
+    Skip If    '${SCENARIO}' == 'update'    checked after the update
+    Services listen on localhost only

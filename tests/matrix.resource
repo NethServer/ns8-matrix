@@ -101,3 +101,15 @@ Configure matrix with
     ${payload} =    Evaluate    json.dumps({**json.loads('{' + $base_config + '}'), **json.loads('{' + $extra + '}')})    modules=json
     Run task    module/${module_id}/configure-module    ${payload}    decode_json=${FALSE}
     Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
+
+Services listen on localhost only
+    # Traefik reaches every service on 127.0.0.1, any wider bind exposes it to the network
+    FOR    ${var}    IN    SYNAPSE_PORT    ELEMENT_WEB_PORT    CINNY_PORT    POSTGRES_PORT
+        ${port} =    Execute Command    runagent -m ${module_id} sh -c 'grep ^${var}= config.env | cut -d= -f2'
+        Should Not Be Empty    ${port}
+        ${addresses} =    Execute Command    ss -ltnH 'sport = :${port.strip()}' | awk '{print $4}'
+        Should Not Be Empty    ${addresses}    nothing listens on ${var} ${port}
+        FOR    ${address}    IN    @{addresses.splitlines()}
+            Should Be Equal    ${address}    127.0.0.1:${port.strip()}    ${var} listens on ${address}
+        END
+    END
