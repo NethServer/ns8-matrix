@@ -195,7 +195,6 @@
               <cv-text-input
                 :label="$t('settings.livekit_public_address')"
                 v-model.trim="livekit_public_address"
-                :placeholder="livekit_detected_address"
                 :helper-text="
                   livekit_detected_address
                     ? $t('settings.livekit_public_address_helper', {
