@@ -34,7 +34,8 @@ fi
 systemctl --user restart matrix.service
 systemctl --user start postgresql.service synapse.service "${optional[@]}"
 
-# LiveKit is outside the pod, so the pod restart above does not reload its configuration
+# LiveKit is outside the pod, and lk-jwt can be started by the pod before its new
+# environment is written: restart both so they always load the new configuration
 if [[ ${LIVEKIT_ENABLED} == 1 ]]; then
-    systemctl --user restart livekit.service
+    systemctl --user restart livekit.service lk-jwt.service
 fi
