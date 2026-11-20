@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Before 80restart_services: the units need the LiveKit ports older instances lack.
+
+set -e
+exec 1>&2
+
+exec apply-livekit-ports

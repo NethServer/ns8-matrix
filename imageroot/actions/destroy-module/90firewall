@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Not asserted: a destroy that refuses to finish leaves an instance nobody can remove.
+
+import os
+
+import agent
+
+agent.remove_public_service(os.environ["MODULE_ID"])

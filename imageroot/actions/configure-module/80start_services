@@ -25,6 +25,7 @@ optional=()
 [[ -n ${ELEMENT_DOMAIN_NAME} ]] && optional+=(element-web.service) || systemctl --user disable --now element-web.service
 [[ -n ${CINNY_DOMAIN_NAME} ]] && optional+=(cinny.service) || systemctl --user disable --now cinny.service
 [[ -n ${NETHVOICE_AUTH_URL} ]] && optional+=(matrix2acrobits.service) || systemctl --user disable --now matrix2acrobits.service
+[[ ${LIVEKIT_ENABLED} == 1 ]] && optional+=(lk-jwt.service livekit.service) || systemctl --user disable --now lk-jwt.service livekit.service
 if [[ ${#optional[@]} -gt 0 ]]; then
   systemctl --user enable "${optional[@]}"
 fi
@@ -32,3 +33,8 @@ fi
 # Recreate the pod, the running containers restart with it
 systemctl --user restart matrix.service
 systemctl --user start postgresql.service synapse.service "${optional[@]}"
+
+# LiveKit is outside the pod, so the pod restart above does not reload its configuration
+if [[ ${LIVEKIT_ENABLED} == 1 ]]; then
+    systemctl --user restart livekit.service
+fi

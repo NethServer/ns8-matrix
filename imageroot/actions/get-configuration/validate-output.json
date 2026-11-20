@@ -102,6 +102,26 @@
         "search_all_users": {
             "type": "boolean",
             "description": "Let users find every user who logged in at least once, not only people they share a room with"
+        },
+        "livekit_enabled": {
+            "type": "boolean"
+        },
+        "livekit_turn_enabled": {
+            "type": "boolean"
+        },
+        "livekit_public_address": {
+            "type": "string"
+        },
+        "livekit_detected_address": {
+            "type": "string",
+            "description": "Public address found by the last detection, empty if none"
+        },
+        "livekit_ports": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Ports to open or forward to this node, like 20005/tcp"
         }
     }
 }

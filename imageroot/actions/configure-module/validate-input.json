@@ -24,7 +24,10 @@
             "local_media_lifetime_days": 0,
             "remote_media_lifetime_days": 0,
             "log_level": "INFO",
-            "search_all_users": true
+            "search_all_users": true,
+            "livekit_enabled": true,
+            "livekit_turn_enabled": false,
+            "livekit_public_address": ""
         }
     ],
     "type": "object",
@@ -158,6 +161,31 @@
         "turn_clear_secret": {
             "type": "boolean",
             "description": "Remove the stored TURN shared secret. Ignored when a new turn_shared_secret is sent"
+        },
+        "livekit_enabled": {
+            "type": "boolean",
+            "description": "Run LiveKit for Element Call voice and video calls"
+        },
+        "livekit_turn_enabled": {
+            "type": "boolean",
+            "description": "Enable the LiveKit TURN relay on port 3478/udp. Requires livekit_enabled"
+        },
+        "livekit_public_address": {
+            "description": "Address announced to call clients. Empty uses the detected public address",
+            "oneOf": [
+                {
+                    "type": "string",
+                    "format": "ipv4"
+                },
+                {
+                    "type": "string",
+                    "format": "ipv6"
+                },
+                {
+                    "type": "string",
+                    "maxLength": 0
+                }
+            ]
         }
     }
 }

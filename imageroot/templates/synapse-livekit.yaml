@@ -1,0 +1,31 @@
+
+# Element Call (MatrixRTC) with LiveKit, appended only when LiveKit is enabled.
+# Clients find lk-jwt-service through /_matrix/client/v1/rtc/transports. The m.livekit
+# entry is the stable one; current Element Web and Element Call still pick the livekit one.
+matrix_rtc:
+  transports:
+    - type: m.livekit
+      url: wss://${SYNAPSE_DOMAIN_NAME}/livekit/sfu
+    - type: livekit
+      livekit_service_url: https://${SYNAPSE_DOMAIN_NAME}/livekit/jwt
+
+# matrix-js-sdk only asks for the transports when the unstable feature is advertised
+experimental_features:
+  msc4143_enabled: true
+
+# Cinny reads the focus from the client well-known only
+serve_client_wellknown: true
+extra_well_known_client_content:
+  org.matrix.msc4143.rtc_foci:
+    - type: livekit
+      livekit_service_url: https://${SYNAPSE_DOMAIN_NAME}/livekit/jwt
+
+# Delayed events remove a member who drops out of a call without hanging up
+max_event_delay_duration: 24h
+rc_delayed_event_mgmt:
+  per_second: 1
+  burst_count: 20
+# Call encryption keys are sent in bursts as people join
+rc_message:
+  per_second: 0.5
+  burst_count: 30

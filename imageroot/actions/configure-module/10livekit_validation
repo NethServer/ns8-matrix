@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Before any change, so a refusal leaves the module untouched.
+#
+
+import json
+import os
+import subprocess
+import sys
+
+import agent
+
+data = json.load(sys.stdin)
+config = agent.read_envfile("config.env") if os.path.exists("config.env") else {}
+
+# Omitted keeps the current state, like search_all_users
+livekit = data.get("livekit_enabled", config.get("LIVEKIT_ENABLED") == "1")
+turn = data.get("livekit_turn_enabled", config.get("LIVEKIT_TURN_ENABLED") == "1")
+turn_was_on = config.get("LIVEKIT_ENABLED") == "1" and config.get("LIVEKIT_TURN_ENABLED") == "1"
+
+
+def refuse(field, error):
+    agent.set_status("validation-failed")
+    json.dump([{"field": field, "parameter": field, "value": data.get(field),
+                "error": error}], fp=sys.stdout)
+    sys.exit(2)
+
+
+# Only an explicit request: turning LiveKit off also turns its TURN off
+if data.get("livekit_turn_enabled") and not livekit:
+    refuse("livekit_turn_enabled", "turn_needs_livekit")
+
+# Only when switching on: a conflict found later must not block unrelated settings
+if livekit and turn and not turn_was_on:
+    owner = subprocess.run(["turn-port-owner"], capture_output=True, text=True)
+    if owner.returncode != 0:
+        print(agent.SD_ERR + "port 3478 is already in use on this node:\n" + owner.stdout,
+              file=sys.stderr)
+        refuse("livekit_turn_enabled", "turn_port_in_use")

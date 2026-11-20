@@ -154,6 +154,77 @@
                 $t("settings.enabled")
               }}</template>
             </NsToggle>
+            <NsToggle
+              value="livekit_enabled"
+              :label="$t('settings.livekit_enabled')"
+              v-model="livekit_enabled"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+              ref="livekit_enabled"
+            >
+              <template #tooltip>
+                {{ $t("settings.livekit_enabled_tooltip") }}
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
+            <div
+              v-if="
+                livekit_enabled ||
+                error.livekit_public_address ||
+                error.livekit_turn_enabled
+              "
+              class="toggle-dependent"
+            >
+              <cv-text-input
+                :label="$t('settings.livekit_public_address')"
+                v-model.trim="livekit_public_address"
+                :placeholder="livekit_detected_address"
+                :helper-text="
+                  livekit_detected_address
+                    ? $t('settings.livekit_public_address_helper', {
+                        address: livekit_detected_address,
+                      })
+                    : $t('settings.livekit_public_address_none')
+                "
+                :invalid-message="error.livekit_public_address"
+                :disabled="loading.getConfiguration || loading.configureModule"
+                ref="livekit_public_address"
+              ></cv-text-input>
+              <NsToggle
+                value="livekit_turn_enabled"
+                :label="$t('settings.livekit_turn_enabled')"
+                v-model="livekit_turn_enabled"
+                :disabled="loading.getConfiguration || loading.configureModule"
+                :invalid-message="error.livekit_turn_enabled"
+                class="mg-bottom"
+                ref="livekit_turn_enabled"
+              >
+                <template #tooltip>
+                  {{ $t("settings.livekit_turn_enabled_tooltip") }}
+                </template>
+                <template slot="text-left">{{
+                  $t("settings.disabled")
+                }}</template>
+                <template slot="text-right">{{
+                  $t("settings.enabled")
+                }}</template>
+              </NsToggle>
+              <NsInlineNotification
+                v-if="livekitPorts.length"
+                kind="info"
+                :description="
+                  $t('settings.livekit_ports_helper', {
+                    ports: livekitPorts.join(', '),
+                  })
+                "
+                :showCloseButton="false"
+              />
+            </div>
             <cv-accordion ref="accordion" class="mg-bottom">
               <cv-accordion-item :open="isAdvancedOpen">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
@@ -437,6 +508,11 @@ export default {
       turn_shared_secret: "",
       turn_shared_secret_set: false,
       turn_enabled: false,
+      livekit_enabled: false,
+      livekit_turn_enabled: false,
+      livekit_public_address: "",
+      livekit_detected_address: "",
+      livekit_ports: [],
       max_upload_size_mb: 50,
       local_media_lifetime_days: 0,
       remote_media_lifetime_days: 0,
@@ -480,11 +556,21 @@ export default {
         local_media_lifetime_days: "",
         remote_media_lifetime_days: "",
         log_level: "",
+        livekit_public_address: "",
+        livekit_turn_enabled: "",
       },
     };
   },
   computed: {
     ...mapState(["instanceName", "core", "appName"]),
+    // the TURN port is opened only once saved, show it as soon as it is switched on
+    livekitPorts() {
+      const ports = this.livekit_ports.filter((port) => port !== "3478/udp");
+      if (ports.length && this.livekit_turn_enabled) {
+        ports.push("3478/udp");
+      }
+      return ports;
+    },
   },
   beforeRouteEnter(to, from, next) {
     next((vm) => {
@@ -511,6 +597,12 @@ export default {
     nethvoice_enabled(enabled) {
       if (!enabled) {
         this.error.nethvoice_auth_url = "";
+      }
+    },
+    livekit_enabled(enabled) {
+      if (!enabled) {
+        this.error.livekit_public_address = "";
+        this.error.livekit_turn_enabled = "";
       }
     },
     turn_enabled(enabled) {
@@ -602,6 +694,11 @@ export default {
       this.local_media_lifetime_days = config.local_media_lifetime_days || 0;
       this.remote_media_lifetime_days = config.remote_media_lifetime_days || 0;
       this.search_all_users = config.search_all_users || false;
+      this.livekit_enabled = config.livekit_enabled || false;
+      this.livekit_turn_enabled = config.livekit_turn_enabled || false;
+      this.livekit_public_address = config.livekit_public_address || "";
+      this.livekit_detected_address = config.livekit_detected_address || "";
+      this.livekit_ports = config.livekit_ports || [];
       // open the advanced section when it holds non default values
       this.isAdvancedOpen =
         this.mail_from !== "" ||
@@ -806,6 +903,12 @@ export default {
             remote_media_lifetime_days: this.remote_media_lifetime_days,
             log_level: this.log_level,
             search_all_users: this.search_all_users,
+            livekit_enabled: this.livekit_enabled,
+            livekit_turn_enabled:
+              this.livekit_enabled && this.livekit_turn_enabled,
+            livekit_public_address: this.livekit_enabled
+              ? this.livekit_public_address
+              : "",
           },
           extra: {
             title: this.$t("settings.configure_instance", {

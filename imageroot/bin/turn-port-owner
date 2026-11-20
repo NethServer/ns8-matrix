@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# 3478 is outside the allocator. Match ours by uid, so a restarting eturnal counts.
+#
+
+import getpass
+import os
+import re
+import subprocess
+import sys
+
+TURN_PORT = 3478
+
+
+def our_uids():
+    uid = os.getuid()
+    ranges = [(uid, uid)]
+    user = getpass.getuser()
+    try:
+        with open("/etc/subuid") as fp:
+            for line in fp:
+                name, start, count = line.strip().split(":")
+                if name in (user, str(uid)):
+                    ranges.append((int(start), int(start) + int(count) - 1))
+    except (OSError, ValueError):
+        pass
+    return ranges
+
+
+ours = our_uids()
+
+ss = subprocess.run(["ss", "-Hlntue", f"sport = :{TURN_PORT}"], capture_output=True, text=True)
+if ss.returncode != 0:
+    # Unknown is not "in use": eturnal itself fails loudly if the port is taken.
+    print(f"cannot check port {TURN_PORT}: {ss.stderr.strip()}", file=sys.stderr)
+    sys.exit(0)
+out = ss.stdout.splitlines()
+
+foreign = []
+for line in out:
+    m = re.search(r"\buid:(\d+)", line)
+    owner = int(m.group(1)) if m else 0
+    if not any(lo <= owner <= hi for lo, hi in ours):
+        foreign.append(line)
+
+if foreign:
+    print("\n".join(foreign))
+    sys.exit(1)
