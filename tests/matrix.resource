@@ -102,6 +102,11 @@ Configure matrix with
     Run task    module/${module_id}/configure-module    ${payload}    decode_json=${FALSE}
     Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
 
+Synapse background updates are done
+    # The user directory stays empty while Synapse rebuilds it in the background
+    ${pending} =    Execute Command    runagent -m ${module_id} podman exec postgresql psql -U postgres -At synapse -c "select update_name from background_updates"
+    Should Be Empty    ${pending}    Synapse background updates still pending
+
 user1 finds user2 in the directory
     ${response} =    Synapse    POST    /user_directory/search    {"search_term":"user2"}    token=${token1}
     ${ids} =    Evaluate    [r['user_id'] for r in $response['results']]

@@ -41,4 +41,5 @@ Check registration is closed
 Check the user directory finds a room member
     # The stable release often missed the member for minutes in CI, 22_update checks the image under test
     Skip If    '${SCENARIO}' == 'update'    checked after the update
+    Wait Until Keyword Succeeds    10 minutes    10 seconds    Synapse background updates are done
     Wait Until Keyword Succeeds    2 minutes    2 seconds    user1 finds user2 in the directory
