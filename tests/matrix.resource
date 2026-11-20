@@ -102,6 +102,11 @@ Configure matrix with
     Run task    module/${module_id}/configure-module    ${payload}    decode_json=${FALSE}
     Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
 
+user1 finds user2 in the directory
+    ${response} =    Synapse    POST    /user_directory/search    {"search_term":"user2"}    token=${token1}
+    ${ids} =    Evaluate    [r['user_id'] for r in $response['results']]
+    Should Contain    ${ids}    @user2:${synapse_host}
+
 Matrix pod is running
     ${rc} =    Execute Command    runagent -m ${module_id} podman pod exists matrix
     ...    return_rc=True  return_stdout=False

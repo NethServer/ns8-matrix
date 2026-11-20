@@ -31,6 +31,9 @@ Check the configuration survives the update
     Should Be Equal    ${config['synapse_domain_name']}    ${synapse_host}
     Should Be Equal    ${config['ldap_domain']}    ${user_domain}
 
+Check the user directory finds a room member after the update
+    Wait Until Keyword Succeeds    2 minutes    2 seconds    user1 finds user2 in the directory
+
 Check the message and the session survive the update
     # The token of user2 was issued before the update
     user2 reads the message of user1
