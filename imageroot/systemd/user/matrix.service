@@ -4,7 +4,7 @@
 #
 
 # This unit creates the pod. Every Matrix container joins it and starts it through BindsTo.
-# The pod does not start the containers, so a Synapse restart does not bounce the pod.
+# The pod has no Requires on the containers, so a Synapse restart does not bounce the pod.
 
 [Unit]
 Description=Podman matrix.service
@@ -30,6 +30,9 @@ ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/matrix.pid \
     --publish 127.0.0.1:${M2A_PROXY_PORT}:${M2A_PROXY_PORT} \
     --replace
 ExecStart=/usr/bin/podman pod start --pod-id-file %t/matrix.pod-id
+# After a pod crash systemd restarts the pod only, so bring the enabled containers back.
+# Without --no-block this would wait for the containers, which wait for the pod.
+ExecStartPost=/usr/bin/bash -c 'for unit in postgresql synapse element-web cinny matrix2acrobits; do systemctl --user is-enabled -q $unit.service && systemctl --user start --no-block $unit.service; done; exit 0'
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/matrix.pod-id -t 10
 ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file %t/matrix.pod-id
 PIDFile=%t/matrix.pid
