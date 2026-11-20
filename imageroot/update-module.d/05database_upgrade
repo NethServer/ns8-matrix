@@ -55,7 +55,7 @@ if [[ ! -f "${upgrade_dump}" ]]; then
     podman pull "${old_image}"
 
     echo "Upgrading PostgreSQL data from version ${data_version} to ${target_major}"
-    systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
+    systemctl --user stop synapse.service matrix2acrobits.service element-web.service cinny.service postgresql.service matrix.service
 
     podman run --detach --rm --network=none \
         --volume="postgres-data:${old_mount}:Z" \
@@ -85,7 +85,7 @@ if [[ ! -f "${upgrade_dump}" ]]; then
     podman image rm --ignore "${old_image}"
 else
     echo "Resuming an interrupted PostgreSQL upgrade"
-    systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
+    systemctl --user stop synapse.service matrix2acrobits.service element-web.service cinny.service postgresql.service matrix.service
 fi
 
 podman volume rm --force postgres-data

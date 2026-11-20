@@ -9,9 +9,19 @@
 # Find settings for LDAP service
 #
 
+import ipaddress
 import os
+import socket
 import agent
 from agent.ldapproxy import Ldapproxy
+
+
+def is_node_loopback(host):
+    # Resolved on the node, so a name mapped to 127.x in /etc/hosts counts too
+    try:
+        return any(ipaddress.ip_address(a[4][0]).is_loopback for a in socket.getaddrinfo(host, None))
+    except (OSError, ValueError):
+        return False
 
 if os.path.exists("config.env"):
     config = agent.read_envfile("config.env")
@@ -38,7 +48,7 @@ except:
     }
 
 # Synapse runs in a pod: the node loopback is the pod gateway, see matrix.service
-if odom['host'] in ('127.0.0.1', 'localhost', '::1'):
+if is_node_loopback(odom['host']):
     odom['host'] = '10.0.2.2'
 
 tmpfile = "ldap.env." + str(os.getpid())

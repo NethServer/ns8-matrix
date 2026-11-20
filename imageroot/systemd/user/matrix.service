@@ -3,12 +3,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-# This unit creates the pod. Every Matrix container joins it.
+# This unit creates the pod. Every Matrix container joins it and starts it through BindsTo.
+# The pod does not start the containers, so a Synapse restart does not bounce the pod.
 
 [Unit]
 Description=Podman matrix.service
-Requires=postgresql.service synapse.service
-Before=postgresql.service synapse.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n

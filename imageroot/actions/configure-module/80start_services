@@ -33,8 +33,9 @@ else
   systemctl --user disable cinny.service
 fi
 
-# Restarting the pod stops every container, then starts PostgreSQL and Synapse again
+# Recreate the pod, the running containers restart with it
 systemctl --user restart matrix.service
+systemctl --user start postgresql.service synapse.service
 
 # Start element web client when enabled in UI, else stop it
 if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then

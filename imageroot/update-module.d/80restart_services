@@ -7,12 +7,16 @@
 
 exec 1>&2
 
+# Do not start a module that is not configured or was stopped on purpose
+systemctl --user is-enabled -q synapse.service || exit 0
+
 # Ensure config.env exists and get the env variables
 touch config.env
 source config.env
 
-# Restarting the pod stops every container, then starts PostgreSQL and Synapse again
+# Recreate the pod with the new unit, the running containers restart with it
 systemctl --user restart matrix.service
+systemctl --user start postgresql.service synapse.service
 
 # Start element web client when enabled
 if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
