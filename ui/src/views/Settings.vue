@@ -158,7 +158,11 @@
               value="livekit_enabled"
               :label="$t('settings.livekit_enabled')"
               v-model="livekit_enabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
+              :disabled="
+                loading.getConfiguration ||
+                loading.configureModule ||
+                (livekit_ports_in_use && !livekit_enabled)
+              "
               class="mg-bottom"
               ref="livekit_enabled"
             >
@@ -173,9 +177,11 @@
               }}</template>
             </NsToggle>
             <NsInlineNotification
-              v-if="error.livekit_enabled"
-              kind="error"
-              :title="error.livekit_enabled"
+              v-if="error.livekit_enabled || livekit_ports_in_use"
+              kind="warning"
+              :title="
+                error.livekit_enabled || $t('settings.livekit_port_in_use')
+              "
               :showCloseButton="false"
             />
             <div
@@ -205,8 +211,11 @@
                 value="livekit_turn_enabled"
                 :label="$t('settings.livekit_turn_enabled')"
                 v-model="livekit_turn_enabled"
-                :disabled="loading.getConfiguration || loading.configureModule"
-                :invalid-message="error.livekit_turn_enabled"
+                :disabled="
+                  loading.getConfiguration ||
+                  loading.configureModule ||
+                  (livekit_turn_port_in_use && !livekit_turn_enabled)
+                "
                 class="mg-bottom"
                 ref="livekit_turn_enabled"
               >
@@ -220,6 +229,15 @@
                   $t("settings.enabled")
                 }}</template>
               </NsToggle>
+              <NsInlineNotification
+                v-if="error.livekit_turn_enabled || livekit_turn_port_in_use"
+                kind="warning"
+                :title="
+                  error.livekit_turn_enabled ||
+                  $t('settings.turn_port_in_use')
+                "
+                :showCloseButton="false"
+              />
               <NsInlineNotification
                 v-if="livekitPorts.length"
                 kind="info"
@@ -519,6 +537,8 @@ export default {
       livekit_public_address: "",
       livekit_detected_address: "",
       livekit_ports: [],
+      livekit_ports_in_use: false,
+      livekit_turn_port_in_use: false,
       max_upload_size_mb: 50,
       local_media_lifetime_days: 0,
       remote_media_lifetime_days: 0,
@@ -707,6 +727,8 @@ export default {
       this.livekit_public_address = config.livekit_public_address || "";
       this.livekit_detected_address = config.livekit_detected_address || "";
       this.livekit_ports = config.livekit_ports || [];
+      this.livekit_ports_in_use = config.livekit_ports_in_use || false;
+      this.livekit_turn_port_in_use = config.livekit_turn_port_in_use || false;
       // open the advanced section when it holds non default values
       this.isAdvancedOpen =
         this.mail_from !== "" ||

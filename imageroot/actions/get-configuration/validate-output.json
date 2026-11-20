@@ -125,6 +125,14 @@
         },
         "livekit_tls_skip_verify": {
             "type": "boolean"
+        },
+        "livekit_ports_in_use": {
+            "type": "boolean",
+            "description": "True if another application holds 7881/tcp or 7882/udp. Only checked while LiveKit is off"
+        },
+        "livekit_turn_port_in_use": {
+            "type": "boolean",
+            "description": "True if another application holds 3478/udp. Only checked while the TURN relay is off"
         }
     }
 }
