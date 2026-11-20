@@ -20,7 +20,7 @@ of the node:
 The pod uses pasta with its own address, `10.0.2.100`. It keeps reaching the node IP, so a
 NethVoice or a smarthost on the same node still answers. `--map-gw` makes the gateway
 `10.0.2.2` lead to the node loopback. `discover-ldap` and `discover-smarthost` write `10.0.2.2`
-when the user domain or the smarthost is on 127.0.0.1 or localhost.
+when the user domain or the smarthost resolves to a loopback address on the node.
 
 The pod publishes the Element, Cinny and matrix2acrobits ports even when these services are
 off, because publishing is fixed when the pod is created. The Element image runs as a
@@ -71,19 +71,20 @@ flowchart TB
     EW[element-web.service]
     CI[cinny.service]
     MA[matrix2acrobits.service]
-    MX -- "Requires, Before" --> PG
-    MX -- "Requires, Before" --> SY
+    PG -- "BindsTo, After" --> MX
+    SY -- "BindsTo, After" --> MX
+    EW -- "BindsTo, After" --> MX
+    CI -- "BindsTo, After" --> MX
+    MA -- "BindsTo, After" --> MX
     PG -- "Before" --> SY
-    EW -- "After, Wants" --> SY
-    CI -- "After, Wants" --> SY
-    MA -- "After, Wants" --> SY
 ```
 
-`matrix.service` creates the pod. It requires `postgresql` and `synapse`, so starting it
-starts them. Every container unit has `BindsTo=matrix.service` and `After=matrix.service`:
-stopping or restarting the pod stops every container first. A restart starts only PostgreSQL
-and Synapse again, so `80start_services` and `update-module.d/80restart_services` start
-`element-web`, `cinny` and `matrix2acrobits` after it when they are enabled.
+`matrix.service` creates the pod. Every container unit has `BindsTo=matrix.service` and
+`After=matrix.service`: starting a container starts the pod first, and stopping or restarting
+the pod stops or restarts the running containers. The pod does not start the containers, so
+restarting Synapse alone, for example on `ldap-changed`, leaves the pod and the other
+containers running. `80start_services` and `update-module.d/80restart_services` restart the
+pod, then start each enabled container.
 
 PostgreSQL counts as started only when its `ExecStartPost` loop can open the `synapse`
 database, so Synapse finds the database ready.
@@ -92,7 +93,7 @@ database, so Synapse finds the database ready.
 `element-web` and `cinny` when their domain name is set, and `matrix2acrobits` when
 `nethvoice_auth_url` is set. The others are disabled and stopped.
 
-The first update to the pod runs `update-module.d/04stop_before_pod`. It stops the old
+The first update to the pod runs `update-module.d/06stop_before_pod`, after the PostgreSQL upgrade. It stops the old
 containers, which hold the ports the pod publishes, and the old oneshot `matrix.service`.
 
 Each unit runs scripts as `ExecStartPre`:
