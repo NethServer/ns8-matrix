@@ -130,4 +130,4 @@ Services listen on localhost only
     END
     # PostgreSQL is reachable only inside the pod
     ${bindings} =    Execute Command    runagent -m ${module_id} podman pod inspect matrix --format '{{.InfraConfig.PortBindings}}'
-    Should Not Contain    ${bindings}    5432    PostgreSQL is published on the node
+    Should Not Contain    ${bindings}    5432/tcp    PostgreSQL is published on the node

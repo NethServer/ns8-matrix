@@ -121,7 +121,7 @@
             "items": {
                 "type": "string"
             },
-            "description": "Ports to open or forward to this node, like 20005/tcp"
+            "description": "Ports to open or forward to this node, like 7881/tcp"
         },
         "livekit_tls_skip_verify": {
             "type": "boolean"

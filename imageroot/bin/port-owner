@@ -45,7 +45,7 @@ def ours_line(line):
 foreign = []
 for arg in sys.argv[1:]:
     port, proto = arg.split("/")
-    flag = "-Hlntue" if proto == "tcp" else "-Hlnuue"
+    flag = "-Hlnte" if proto == "tcp" else "-Hlnue"
     ss = subprocess.run(["ss", flag, f"sport = :{port}"], capture_output=True, text=True)
     if ss.returncode != 0:
         # Unknown is not "in use": LiveKit itself fails loudly if the port is taken
