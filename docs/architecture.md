@@ -78,7 +78,11 @@ routes exist when `livekit_enabled` is true. Otherwise
 `configure-module` deletes them. All routes redirect HTTP to HTTPS and follow `lets_encrypt`.
 
 With federation, Synapse adds the `federation` listener resource and serves
-`/.well-known/matrix/server` on the same route.
+`/.well-known/matrix/server` on the same route. With LiveKit and no federation, it adds the
+`openid` resource instead and still serves the server well-known: lk-jwt-service finds the
+OpenID userinfo endpoint through it. Synapse also appends `templates/synapse-livekit.yaml`:
+`matrix_rtc` transports, `msc4143_enabled`, the `rtc_foci` client well-known for Cinny,
+delayed events and the rate limits Element Call needs.
 
 ## Systemd units
 
@@ -90,11 +94,15 @@ flowchart TB
     EW[element-web.service]
     CI[cinny.service]
     MA[matrix2acrobits.service]
+    LJ[lk-jwt.service]
+    LK[livekit.service<br/>host network]
     PG -- "BindsTo, After" --> MX
     SY -- "BindsTo, After" --> MX
     EW -- "BindsTo, After" --> MX
     CI -- "BindsTo, After" --> MX
     MA -- "BindsTo, After" --> MX
+    LJ -- "BindsTo, After" --> MX
+    SY -- "Before" --> LK
     PG -- "Before" --> SY
 ```
 
@@ -104,6 +112,10 @@ every container. Once the pod runs, its `ExecStartPost` starts each enabled cont
 waiting, so the containers come back after a pod crash. The pod has no `Requires=` on the
 containers, so restarting Synapse alone, for example on `ldap-changed`, leaves the pod and the
 other containers running.
+
+`livekit.service` is not in the pod and is not bound to it, so a pod restart leaves it
+running. `80start_services` and `update-module.d/80restart_services` restart it, and
+`lk-jwt.service`, so they always load the new configuration.
 
 `80start_services` stops the disabled clients, restarts the pod, then starts PostgreSQL,
 Synapse and the enabled clients. `update-module.d/80restart_services` does the same when

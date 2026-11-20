@@ -145,7 +145,7 @@ The TURN relay helps clients on networks that block the other ports but allow 34
 refused if another application, for example BigBlueButton, already uses 3478 on the node.
 Networks that only allow port 443 are not covered.
 
-LiveKit announces the public address found when it was enabled. Behind NAT, check it in the
+LiveKit announces the public address found at the last save of the settings. Behind NAT, check it in the
 Settings page and set `livekit_public_address` if it is wrong.
 
 LiveKit must reach `https://<synapse_domain_name>` from the node to check who joins a call.
@@ -204,12 +204,18 @@ The backup contains:
 - `state/database.env`, the PostgreSQL password
 - `state/config.json`, the last `configure-module` request, without the TURN secret
 - `state/turn.env`, the TURN secret
+- `state/livekit.env`, the LiveKit API key and secret
 - the `synapse-data` volume, with the server signing key and the media
 - the `matrix2acrobits-data` volume
 
 The restore loads the dump into a new database, then runs `configure-module` with
 `config.json`. `matrix-secrets.env` is not in the backup, so the restore generates new internal
 secrets. The effect is the same as a rotation, see [Secrets](#secrets).
+
+A restore or a clone onto a node where another application already uses 7881/tcp or
+7882/udp turns Element Call off, and one where 3478/udp is used turns the LiveKit TURN off.
+The task logs a warning and the rest of the instance comes back. Free the port, then enable
+the option again.
 
 ## Update
 
