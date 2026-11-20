@@ -172,6 +172,12 @@
                 $t("settings.enabled")
               }}</template>
             </NsToggle>
+            <NsInlineNotification
+              v-if="error.livekit_enabled"
+              kind="error"
+              :title="error.livekit_enabled"
+              :showCloseButton="false"
+            />
             <div
               v-if="
                 livekit_enabled ||
@@ -556,6 +562,7 @@ export default {
         local_media_lifetime_days: "",
         remote_media_lifetime_days: "",
         log_level: "",
+        livekit_enabled: "",
         livekit_public_address: "",
         livekit_turn_enabled: "",
       },
@@ -601,6 +608,7 @@ export default {
     },
     livekit_enabled(enabled) {
       if (!enabled) {
+        this.error.livekit_enabled = "";
         this.error.livekit_public_address = "";
         this.error.livekit_turn_enabled = "";
       }
@@ -906,9 +914,8 @@ export default {
             livekit_enabled: this.livekit_enabled,
             livekit_turn_enabled:
               this.livekit_enabled && this.livekit_turn_enabled,
-            livekit_public_address: this.livekit_enabled
-              ? this.livekit_public_address
-              : "",
+            // Kept while disabled: a NAT address is not always the detected one
+            livekit_public_address: this.livekit_public_address,
           },
           extra: {
             title: this.$t("settings.configure_instance", {
