@@ -20,6 +20,11 @@ Set the smarthost
 Restore the smarthost
     ${payload} =    Evaluate    json.dumps({k: v for k, v in $saved_smarthost.items() if k in ("host", "port", "username", "password", "enabled", "encrypt_smtp", "tls_verify")})    modules=json
     Run task    cluster/set-smarthost    ${payload}
+    # smarthost-changed restarts Synapse: wait for it, or the next test gets a 502 from Traefik
+    ${username} =    Evaluate    $saved_smarthost['username'] or None
+    ${password} =    Evaluate    $saved_smarthost['password'] if $saved_smarthost['username'] else None
+    Wait Until Keyword Succeeds    2 minutes    5 seconds    Synapse SMTP credentials are    ${username}    ${password}
+    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
 
 Synapse SMTP credentials are
     [Arguments]    ${username}    ${password}
