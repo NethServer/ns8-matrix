@@ -32,6 +32,7 @@ Check the configuration survives the update
     Should Be Equal    ${config['ldap_domain']}    ${user_domain}
 
 Check the user directory finds a room member after the update
+    Wait Until Keyword Succeeds    10 minutes    10 seconds    Synapse background updates are done
     Wait Until Keyword Succeeds    2 minutes    2 seconds    user1 finds user2 in the directory
 
 Check the message and the session survive the update

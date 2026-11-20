@@ -7,12 +7,53 @@ Resource    matrix.resource
 ${other_domain}    other.dom.test
 
 *** Keywords ***
+Save the smarthost
+    ${smarthost} =    Run task    cluster/get-smarthost    {}
+    Set Test Variable    ${saved_smarthost}    ${smarthost}
+
+Set the smarthost
+    [Arguments]    ${username}    ${password}
+    # Disabled, so set-smarthost does not try to reach the server, but Synapse still gets the values
+    ${payload} =    Evaluate    json.dumps({"host": "smtp.example.org", "port": 587, "username": $username, "password": $password, "enabled": False, "encrypt_smtp": "starttls", "tls_verify": False})    modules=json
+    Run task    cluster/set-smarthost    ${payload}
+
+Restore the smarthost
+    ${payload} =    Evaluate    json.dumps({k: v for k, v in $saved_smarthost.items() if k in ("host", "port", "username", "password", "enabled", "encrypt_smtp", "tls_verify")})    modules=json
+    Run task    cluster/set-smarthost    ${payload}
+    # smarthost-changed restarts Synapse: wait for it, or the next test gets a 502 from Traefik
+    ${username} =    Evaluate    $saved_smarthost['username'] or None
+    ${password} =    Evaluate    $saved_smarthost['password'] if $saved_smarthost['username'] else None
+    Wait Until Keyword Succeeds    2 minutes    5 seconds    Synapse SMTP credentials are    ${username}    ${password}
+    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
+
+Synapse SMTP credentials are
+    [Arguments]    ${username}    ${password}
+    ${out} =    Execute Command    runagent -m ${module_id} podman exec synapse python3 -c 'import json, yaml; e = yaml.safe_load(open("/data/config/homeserver.yaml"))["email"]; print(json.dumps([e["smtp_user"], e["smtp_pass"]]))'
+    ${values} =    Evaluate    json.loads($out)    modules=json
+    Should Be Equal    ${values[0]}    ${username}
+    Should Be Equal    ${values[1]}    ${password}
+
 Element route host
     ${route} =    Run task    module/traefik1/get-route    {"instance":"${module_id}-element"}
     ${host} =    Evaluate    $route.get('host', '')
     RETURN    ${host}
 
 *** Test Cases ***
+Check Synapse skips SMTP authentication without credentials
+    [Setup]    Save the smarthost
+    Set the smarthost    ${EMPTY}    ${EMPTY}
+    Wait Until Keyword Succeeds    2 minutes    5 seconds    Synapse SMTP credentials are    ${NONE}    ${NONE}
+    [Teardown]    Restore the smarthost
+
+Check Synapse reads SMTP credentials with reserved characters
+    [Setup]    Save the smarthost
+    # Quotes, YAML markers and a placeholder that must not be expanded again
+    ${password} =    Evaluate    'p@ss: #"1" ' + chr(36) + '{SYNAPSE_PORT}'
+    Set the smarthost    bob@example.org    ${password}
+    Wait Until Keyword Succeeds    2 minutes    5 seconds    Synapse SMTP credentials are    bob@example.org    ${password}
+    Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
+    [Teardown]    Restore the smarthost
+
 Check federation is disabled by default
     ${code} =    HTTP status of    /_matrix/federation/v1/version
     Should Be Equal    ${code}    404

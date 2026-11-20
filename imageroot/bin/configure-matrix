@@ -7,21 +7,22 @@
 
 import os
 import json
+import re
 import secrets
 import string
 import agent
 
 # Environment variables substituted into synapse-homeserver.yaml as string
-# scalars. Their values are user supplied (SMTP smarthost credentials and
-# sender address) and may contain characters that are reserved in YAML when
+# scalars. Their values are user supplied (SMTP host and sender, LDAP bind DN
+# and password) and may contain characters that are reserved in YAML when
 # they appear at the start of a value ('@', '*', '&', '!', '%', quotes ...) or
 # special sequences (':', '#', '\'). They must therefore be emitted as
 # properly quoted and escaped YAML strings. Keys NOT listed here (ports,
 # booleans) are substituted verbatim so they keep their native YAML type.
+# The SMTP username and password are quoted in synapse_derived_vars instead,
+# because they become null without a username: do not add them here.
 SYNAPSE_QUOTED_KEYS = (
     "SYNAPSE_SMTP_HOST",
-    "SYNAPSE_SMTP_USERNAME",
-    "SYNAPSE_SMTP_PASSWORD",
     "SYNAPSE_SMTP_FROM",
     "LDAP_BIND_DN",
     "LDAP_BIND_PASSWORD",
@@ -49,6 +50,9 @@ def synapse_derived_vars(env_vars):
         federation_whitelist = 'null'
     turn_uris = split_list(env_vars.get('TURN_URIS', ''))
     turn_secret = env_vars.get('TURN_SHARED_SECRET', '')
+    # Synapse requires SMTP authentication as soon as smtp_user is set, even to ""
+    smtp_user = env_vars.get('SYNAPSE_SMTP_USERNAME', '')
+    smtp_pass = env_vars.get('SYNAPSE_SMTP_PASSWORD', '')
     log_level = env_vars.get('LOG_LEVEL', 'INFO')
     if log_level not in ('INFO', 'WARNING', 'DEBUG'):
         log_level = 'INFO'
@@ -57,6 +61,8 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_SERVE_SERVER_WELLKNOWN': 'true' if federation else 'false',
         'SYNAPSE_FEDERATION_WHITELIST': federation_whitelist,
         'ELEMENT_DEFAULT_FEDERATE': 'true' if federation else 'false',
+        'SYNAPSE_SMTP_USER_VALUE': json.dumps(smtp_user, ensure_ascii=False) if smtp_user else 'null',
+        'SYNAPSE_SMTP_PASS_VALUE': json.dumps(smtp_pass, ensure_ascii=False) if smtp_user else 'null',
         'SYNAPSE_TURN_URIS': json.dumps(turn_uris),
         'SYNAPSE_TURN_SHARED_SECRET': json.dumps(turn_secret) if turn_uris and turn_secret else 'null',
         'SYNAPSE_MAX_UPLOAD_SIZE': str(int(env_vars.get('MAX_UPLOAD_SIZE_MB') or 50)) + 'M',
@@ -82,13 +88,15 @@ def substitute_env_vars(content, env_vars, quoted_keys=()):
     from values containing YAML reserved characters. All other values are
     substituted verbatim, preserving numeric and boolean YAML types.
     """
-    for key, value in env_vars.items():
+    # One pass, so a value holding "${...}" is never expanded again
+    def replace(match):
+        key = match.group(1)
+        if key not in env_vars:
+            return match.group(0)
         if key in quoted_keys:
-            replacement = json.dumps(str(value), ensure_ascii=False)
-        else:
-            replacement = str(value)
-        content = content.replace(f'${{{key}}}', replacement)
-    return content
+            return json.dumps(str(env_vars[key]), ensure_ascii=False)
+        return str(env_vars[key])
+    return re.sub(r'\$\{(\w+)\}', replace, content)
 
 # Read environment variables from config
 env_vars = agent.read_envfile("config.env")
