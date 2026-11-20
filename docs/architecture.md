@@ -6,8 +6,8 @@ outside. It reaches every service on 127.0.0.1.
 ## Network
 
 Every container runs in one rootless pod named `matrix`, created by `matrix.service`. The
-containers reach each other on the pod loopback. The pod publishes four ports on 127.0.0.1
-of the node:
+containers reach each other on the pod loopback. LiveKit is the only exception, see below.
+The pod publishes these ports on 127.0.0.1 of the node:
 
 | Service | Listens in the pod | Published on the node |
 |---|---|---|
@@ -16,6 +16,7 @@ of the node:
 | Element web | `8080` | `127.0.0.1:ELEMENT_WEB_PORT` |
 | Cinny | `80` | `127.0.0.1:CINNY_PORT` |
 | matrix2acrobits | `M2A_PROXY_PORT` | `127.0.0.1:M2A_PROXY_PORT` |
+| lk-jwt-service | `LK_JWT_PORT` | `127.0.0.1:LK_JWT_PORT` |
 
 The pod uses pasta with its own address, `10.0.2.100`. It keeps reaching the node IP, so a
 NethVoice or a smarthost on the same node still answers. `--map-gw` makes the gateway
@@ -26,13 +27,18 @@ The pod publishes the Element, Cinny and matrix2acrobits ports even when these s
 off, because publishing is fixed when the pod is created. The Element image runs as a
 non-root user and cannot bind port 80, so it listens on 8080 inside the pod.
 
-Call media never goes through the module. Clients talk WebRTC to each other or through the
-external TURN server.
+Legacy one to one calls never go through the module. Clients talk WebRTC to each other or
+through the external TURN server.
+
+LiveKit runs outside the pod, in the node network namespace, like the BigBlueButton media
+server. Call media must leave from the node address, and pasta would rewrite it. Its HTTP port
+listens on 127.0.0.1 only. Its RTC TCP and UDP ports, and 3478/udp with TURN, are opened in the
+firewall through `add_public_service`, only while `livekit_enabled` is true.
 
 ## Ports
 
-NS8 allocates 5 TCP ports (`org.nethserver.tcp-ports-demand=5`). `configure-module` assigns
-them in this order:
+NS8 allocates 8 TCP ports (`org.nethserver.tcp-ports-demand=8`) and one UDP port
+(`org.nethserver.udp-ports-demand=1`). `configure-module` assigns them in this order:
 
 | Index | Variable | Service |
 |---|---|---|
@@ -41,6 +47,14 @@ them in this order:
 | 2 | `CINNY_PORT` | Cinny |
 | 3 | `POSTGRES_PORT` | unused since the pod, kept so the other indexes do not move |
 | 4 | `M2A_PROXY_PORT` | matrix2acrobits |
+| 5 | `LIVEKIT_HTTP_PORT` | LiveKit signaling and API, 127.0.0.1 |
+| 6 | `LIVEKIT_RTC_TCP_PORT` | LiveKit media over TCP, public |
+| 7 | `LK_JWT_PORT` | lk-jwt-service |
+
+The UDP port is `LIVEKIT_RTC_UDP_PORT`, LiveKit media for every participant. An instance
+installed before LiveKit had 5 TCP and no UDP port. The core does not allocate new ports on
+update, so `bin/apply-livekit-ports` allocates the missing ones once and stores them in the
+module environment.
 
 ## Traefik routes
 
@@ -52,10 +66,13 @@ flowchart LR
     T -- "host cinny_domain_name<br/>route matrix1-cinny" --> C["Cinny<br/>CINNY_PORT"]
     T -- "synapse_domain_name/m2a<br/>route matrix1-m2a, prefix stripped" --> M["matrix2acrobits<br/>M2A_PROXY_PORT"]
     T -- "synapse_domain_name/_matrix/push/v1/notify<br/>route matrix1-push" --> M
+    T -- "synapse_domain_name/livekit/sfu<br/>route matrix1-livekit-sfu, prefix stripped" --> L["LiveKit<br/>LIVEKIT_HTTP_PORT"]
+    T -- "synapse_domain_name/livekit/jwt<br/>route matrix1-livekit-jwt, prefix stripped" --> J["lk-jwt-service<br/>LK_JWT_PORT"]
 ```
 
 The Synapse route always exists. The Element and Cinny routes exist when their domain name is
-set. The two matrix2acrobits routes exist when `nethvoice_auth_url` is set. Otherwise
+set. The two matrix2acrobits routes exist when `nethvoice_auth_url` is set. The two LiveKit
+routes exist when `livekit_enabled` is true. Otherwise
 `configure-module` deletes them. All routes redirect HTTP to HTTPS and follow `lets_encrypt`.
 
 With federation, Synapse adds the `federation` listener resource and serves
