@@ -13,6 +13,11 @@ Element route host
     RETURN    ${host}
 
 *** Test Cases ***
+Check Synapse skips SMTP authentication without credentials
+    # Synapse asks the server to authenticate as soon as smtp_user is set, even to ""
+    ${out} =    Execute Command    runagent -m ${module_id} grep -E '^ +smtp_(user|pass):' synapse-config/homeserver.yaml
+    Should Be Equal    ${out}    ${SPACE}${SPACE}smtp_user: null\n${SPACE}${SPACE}smtp_pass: null
+
 Check federation is disabled by default
     ${code} =    HTTP status of    /_matrix/federation/v1/version
     Should Be Equal    ${code}    404

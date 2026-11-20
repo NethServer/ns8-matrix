@@ -20,8 +20,6 @@ import agent
 # booleans) are substituted verbatim so they keep their native YAML type.
 SYNAPSE_QUOTED_KEYS = (
     "SYNAPSE_SMTP_HOST",
-    "SYNAPSE_SMTP_USERNAME",
-    "SYNAPSE_SMTP_PASSWORD",
     "SYNAPSE_SMTP_FROM",
     "LDAP_BIND_DN",
     "LDAP_BIND_PASSWORD",
@@ -49,6 +47,9 @@ def synapse_derived_vars(env_vars):
         federation_whitelist = 'null'
     turn_uris = split_list(env_vars.get('TURN_URIS', ''))
     turn_secret = env_vars.get('TURN_SHARED_SECRET', '')
+    # Synapse requires SMTP authentication as soon as smtp_user is set, even to ""
+    smtp_user = env_vars.get('SYNAPSE_SMTP_USERNAME', '')
+    smtp_pass = env_vars.get('SYNAPSE_SMTP_PASSWORD', '')
     log_level = env_vars.get('LOG_LEVEL', 'INFO')
     if log_level not in ('INFO', 'WARNING', 'DEBUG'):
         log_level = 'INFO'
@@ -57,6 +58,8 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_SERVE_SERVER_WELLKNOWN': 'true' if federation else 'false',
         'SYNAPSE_FEDERATION_WHITELIST': federation_whitelist,
         'ELEMENT_DEFAULT_FEDERATE': 'true' if federation else 'false',
+        'SYNAPSE_SMTP_USER_VALUE': json.dumps(smtp_user, ensure_ascii=False) if smtp_user else 'null',
+        'SYNAPSE_SMTP_PASS_VALUE': json.dumps(smtp_pass, ensure_ascii=False) if smtp_user else 'null',
         'SYNAPSE_TURN_URIS': json.dumps(turn_uris),
         'SYNAPSE_TURN_SHARED_SECRET': json.dumps(turn_secret) if turn_uris and turn_secret else 'null',
         'SYNAPSE_MAX_UPLOAD_SIZE': str(int(env_vars.get('MAX_UPLOAD_SIZE_MB') or 50)) + 'M',
