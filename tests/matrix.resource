@@ -104,7 +104,7 @@ Configure matrix with
 
 Services listen on localhost only
     # Traefik reaches every service on 127.0.0.1, any wider bind exposes it to the network
-    FOR    ${var}    IN    SYNAPSE_PORT    ELEMENT_WEB_PORT    CINNY_PORT    POSTGRES_PORT
+    FOR    ${var}    IN    SYNAPSE_PORT    ELEMENT_WEB_PORT    CINNY_PORT    M2A_PROXY_PORT
         ${port} =    Execute Command    runagent -m ${module_id} sh -c 'grep ^${var}= config.env | cut -d= -f2'
         Should Not Be Empty    ${port}
         ${addresses} =    Execute Command    ss -ltnH 'sport = :${port.strip()}' | awk '{print $4}'
@@ -113,3 +113,7 @@ Services listen on localhost only
             Should Be Equal    ${address}    127.0.0.1:${port.strip()}    ${var} listens on ${address}
         END
     END
+    # PostgreSQL is reachable only inside the pod
+    ${port} =    Execute Command    runagent -m ${module_id} sh -c 'grep ^POSTGRES_PORT= config.env | cut -d= -f2'
+    ${addresses} =    Execute Command    ss -ltnH 'sport = :${port.strip()}'
+    Should Be Empty    ${addresses}    PostgreSQL is published on the node

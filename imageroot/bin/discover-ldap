@@ -37,6 +37,10 @@ except:
         'bind_password': 'invalid',
     }
 
+# Synapse runs in a pod: the node loopback is the pod gateway, see matrix.service
+if odom['host'] in ('127.0.0.1', 'localhost', '::1'):
+    odom['host'] = '10.0.2.2'
+
 tmpfile = "ldap.env." + str(os.getpid())
 
 if odom['schema'] == "rfc2307":

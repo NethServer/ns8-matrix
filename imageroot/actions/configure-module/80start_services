@@ -15,6 +15,7 @@ touch config.env
 source config.env
 
 # Enable Matrix services
+systemctl --user enable matrix.service
 systemctl --user enable postgresql.service
 systemctl --user enable synapse.service
 
@@ -32,20 +33,19 @@ else
   systemctl --user disable cinny.service
 fi
 
-# Restart Matrix services
-systemctl --user restart postgresql.service
-systemctl --user restart synapse.service
+# Restarting the pod stops every container, then starts PostgreSQL and Synapse again
+systemctl --user restart matrix.service
 
-# Restart element web client when enabled in UI, else stop it
+# Start element web client when enabled in UI, else stop it
 if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
-  systemctl --user restart element-web.service
+  systemctl --user start element-web.service
 else
   systemctl --user stop element-web.service
 fi
 
-# Restart cinny client when enabled in UI, else stop it
+# Start cinny client when enabled in UI, else stop it
 if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
-  systemctl --user restart cinny.service
+  systemctl --user start cinny.service
 else
   systemctl --user stop cinny.service
 fi
@@ -54,8 +54,8 @@ fi
 if [[ -n ${NETHVOICE_AUTH_URL} ]]; then
   # Enable NethVoice Matrix Auth service
   systemctl --user enable matrix2acrobits.service
-  # Restart NethVoice Matrix Auth service
-  systemctl --user restart matrix2acrobits.service
+  # Start NethVoice Matrix Auth service
+  systemctl --user start matrix2acrobits.service
 else
   # Disable and stop NethVoice Matrix Auth service
   systemctl --user disable --now matrix2acrobits.service

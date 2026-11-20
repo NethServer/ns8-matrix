@@ -8,7 +8,8 @@
 #
 [Unit]
 Description=Element Web Matrix Client
-After=network-online.target synapse.service
+BindsTo=matrix.service
+After=matrix.service synapse.service
 Wants=synapse.service
 
 [Service]
@@ -25,7 +26,7 @@ ExecStart=/usr/bin/podman run \
     --cidfile=%t/element-web.ctr-id \
     --cgroups=no-conmon \
     --replace --name=element-web \
-    --publish 127.0.0.1:${ELEMENT_WEB_PORT}:8080 \
+    --pod-id-file %t/matrix.pod-id \
     --env=ELEMENT_WEB_PORT=8080 \
     --volume=%S/state/element-config/config.json:/app/config.json:Z \
     ${ELEMENT_WEB_IMAGE}

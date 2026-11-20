@@ -8,7 +8,8 @@
 #
 [Unit]
 Description=Synapse Matrix Homeserver
-After=network-online.target
+BindsTo=matrix.service
+After=matrix.service postgresql.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -30,7 +31,7 @@ ExecStart=/usr/bin/podman run \
     --cidfile=%t/synapse.ctr-id \
     --cgroups=no-conmon \
     --replace --name=synapse \
-    --network=host \
+    --pod-id-file %t/matrix.pod-id \
     --volume=synapse-data:/data:z \
     --volume=%S/state/synapse-config:/data/config:z \
     --env=SYNAPSE_SERVER_NAME=${SYNAPSE_DOMAIN_NAME} \

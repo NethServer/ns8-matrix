@@ -5,6 +5,8 @@
 
 [Unit]
 Description=Podman postgresql.service
+BindsTo=matrix.service
+After=matrix.service
 Before=synapse.service
 
 [Service]
@@ -26,7 +28,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/postgresql.pid \
     --env=POSTGRES_DB=synapse \
     --env=POSTGRES_INITDB_ARGS="--encoding=UTF-8 --lc-collate=C --lc-ctype=C" \
     --env=TZ=UTC \
-    --publish 127.0.0.1:${POSTGRES_PORT}:5432 \
+    --pod-id-file %t/matrix.pod-id \
     ${POSTGRES_IMAGE}
 ExecStartPost=/usr/bin/bash -c "while ! podman  exec postgresql psql -U postgres -d synapse ;  do sleep 5 ; done"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/postgresql.ctr-id -t 10

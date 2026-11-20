@@ -11,21 +11,20 @@ exec 1>&2
 touch config.env
 source config.env
 
-# Restart Postgresql and Synapse service
-systemctl --user try-restart postgresql.service
-systemctl --user try-restart synapse.service
+# Restarting the pod stops every container, then starts PostgreSQL and Synapse again
+systemctl --user restart matrix.service
 
-# Restart element web client when enabled
+# Start element web client when enabled
 if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
-  systemctl --user try-restart element-web.service
+  systemctl --user start element-web.service
 fi
 
-# Restart cinny client when enabled
+# Start cinny client when enabled
 if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
-  systemctl --user try-restart cinny.service
+  systemctl --user start cinny.service
 fi
 
-# Restart Matrix2acrobits service when enabled
+# Start Matrix2acrobits service when enabled
 if [[ -n ${NETHVOICE_AUTH_URL} ]]; then
-  systemctl --user try-restart matrix2acrobits.service
+  systemctl --user start matrix2acrobits.service
 fi
