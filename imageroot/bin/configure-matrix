@@ -215,8 +215,6 @@ if env_vars.get('LIVEKIT_ENABLED') == '1' and livekit_env:
     livekit_vars.update(livekit_env)
     livekit_vars.update({
         'LIVEKIT_HTTP_PORT': os.environ['LIVEKIT_HTTP_PORT'],
-        'LIVEKIT_RTC_TCP_PORT': os.environ['LIVEKIT_RTC_TCP_PORT'],
-        'LIVEKIT_RTC_UDP_PORT': os.environ['LIVEKIT_RTC_UDP_PORT'],
         'LK_JWT_PORT': os.environ['LK_JWT_PORT'],
         'LIVEKIT_NODE_IP': env_vars.get('LIVEKIT_PUBLIC_ADDRESS') or os.environ.get('DETECTED_PUBLIC_IP', ''),
         'LIVEKIT_TURN_ENABLED_BOOL': 'true' if env_vars.get('LIVEKIT_TURN_ENABLED') == '1' else 'false',

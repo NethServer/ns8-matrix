@@ -6,7 +6,9 @@
 #
 
 #
-# 3478 is outside the allocator. Match ours by uid, so a restarting eturnal counts.
+# Usage: port-owner 7881/tcp 7882/udp ...
+# Print the sockets of other users on these fixed ports, outside the NS8 allocator,
+# and exit 1 if any. Ours are matched by uid, so a restarting LiveKit counts as ours.
 #
 
 import getpass
@@ -14,8 +16,6 @@ import os
 import re
 import subprocess
 import sys
-
-TURN_PORT = 3478
 
 
 def our_uids():
@@ -35,19 +35,23 @@ def our_uids():
 
 ours = our_uids()
 
-ss = subprocess.run(["ss", "-Hlntue", f"sport = :{TURN_PORT}"], capture_output=True, text=True)
-if ss.returncode != 0:
-    # Unknown is not "in use": eturnal itself fails loudly if the port is taken.
-    print(f"cannot check port {TURN_PORT}: {ss.stderr.strip()}", file=sys.stderr)
-    sys.exit(0)
-out = ss.stdout.splitlines()
 
-foreign = []
-for line in out:
+def ours_line(line):
     m = re.search(r"\buid:(\d+)", line)
     owner = int(m.group(1)) if m else 0
-    if not any(lo <= owner <= hi for lo, hi in ours):
-        foreign.append(line)
+    return any(lo <= owner <= hi for lo, hi in ours)
+
+
+foreign = []
+for arg in sys.argv[1:]:
+    port, proto = arg.split("/")
+    flag = "-Hlntue" if proto == "tcp" else "-Hlnuue"
+    ss = subprocess.run(["ss", flag, f"sport = :{port}"], capture_output=True, text=True)
+    if ss.returncode != 0:
+        # Unknown is not "in use": LiveKit itself fails loudly if the port is taken
+        print(f"cannot check port {arg}: {ss.stderr.strip()}", file=sys.stderr)
+        continue
+    foreign += [line for line in ss.stdout.splitlines() if not ours_line(line)]
 
 if foreign:
     print("\n".join(foreign))

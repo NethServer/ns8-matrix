@@ -81,6 +81,7 @@
         "livekit_turn_enabled": "LiveKit TURN on port 3478",
         "livekit_turn_enabled_tooltip": "Relays calls for clients whose network blocks the LiveKit ports but allows 3478/udp.",
         "turn_port_in_use": "Port 3478 is already used by another application on this node",
+        "livekit_port_in_use": "Port 7881/tcp or 7882/udp is already used by another application on this node",
         "turn_needs_livekit": "Enable Element Call first",
         "livekit_public_address_number_one_of": "Must be an IPv4 or IPv6 address",
         "max_upload_size_mb": "Maximum upload size (MB)",

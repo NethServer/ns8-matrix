@@ -73,11 +73,8 @@ config['livekit_enabled'] = env_vars.get('LIVEKIT_ENABLED', '0') == '1'
 config['livekit_turn_enabled'] = env_vars.get('LIVEKIT_TURN_ENABLED', '0') == '1'
 config['livekit_public_address'] = env_vars.get('LIVEKIT_PUBLIC_ADDRESS', '')
 config['livekit_detected_address'] = os.environ.get('DETECTED_PUBLIC_IP', '')
-# Not allocated yet on an instance updated from a release without LiveKit
-config['livekit_ports'] = []
-if os.environ.get('LIVEKIT_RTC_TCP_PORT'):
-    config['livekit_ports'] = [os.environ['LIVEKIT_RTC_TCP_PORT'] + '/tcp', os.environ['LIVEKIT_RTC_UDP_PORT'] + '/udp']
-    if config['livekit_turn_enabled']:
-        config['livekit_ports'].append('3478/udp')
+config['livekit_ports'] = ['7881/tcp', '7882/udp']
+if config['livekit_turn_enabled']:
+    config['livekit_ports'].append('3478/udp')
 
 json.dump(config, fp=sys.stdout)

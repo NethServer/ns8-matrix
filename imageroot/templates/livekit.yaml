@@ -4,9 +4,10 @@ bind_addresses:
   - 127.0.0.1
 
 rtc:
-  tcp_port: ${LIVEKIT_RTC_TCP_PORT}
+  # Fixed ports, opened in the firewall and forwarded by the router
+  tcp_port: 7881
   # One UDP socket for every participant, so the firewall opens a single port
-  udp_port: ${LIVEKIT_RTC_UDP_PORT}
+  udp_port: 7882
   # The address comes from detect-addresses or the UI, never from a STUN lookup at startup
   use_external_ip: false
   node_ip: ${LIVEKIT_NODE_IP}

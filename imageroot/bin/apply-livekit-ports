@@ -6,12 +6,12 @@
 #
 
 #
-# Give LiveKit its ports, then open or close them in the firewall.
+# Give LiveKit its loopback ports, then open or close its media ports in the firewall.
 #
-# A new instance gets 8 TCP and 1 UDP port from the image labels. An instance
-# updated from an older release still has 5 TCP and no UDP port: the core
-# stores the new demand on update but allocates nothing, so the missing ports
-# are allocated here, once, and kept in the module environment.
+# A new instance gets 7 TCP ports from the image labels. An instance updated
+# from an older release still has 5: the core stores the new demand on update
+# but allocates nothing, so the 2 missing ports are allocated here, once, and
+# kept in the module environment.
 #
 
 import os
@@ -19,40 +19,35 @@ import sys
 
 import agent
 
-LIVEKIT_TCP_PORTS = 3
+# Fixed, so the router forward survives a restore, a clone or a move to another node
+MEDIA_PORTS = ["7881/tcp", "7882/udp"]
+TURN_PORT = "3478/udp"
 
-# agent.set_env() does not update os.environ: read the file back.
+# agent.set_env() does not update os.environ: read the file back
 env = agent.read_envfile(os.path.join(os.environ["AGENT_STATE_DIR"], "environment"))
 config = agent.read_envfile("config.env") if os.path.exists("config.env") else {}
 
 tcp_ports = [p for p in env.get("TCP_PORTS", "").split(",") if p]
-if len(tcp_ports) >= 5 + LIVEKIT_TCP_PORTS:
-    livekit_tcp = tcp_ports[5:5 + LIVEKIT_TCP_PORTS]
+if len(tcp_ports) >= 7:
+    http_port, jwt_port = tcp_ports[5], tcp_ports[6]
 elif env.get("LIVEKIT_TCP_PORTS"):
     livekit_tcp = env["LIVEKIT_TCP_PORTS"].split(",")
+    http_port, jwt_port = livekit_tcp[0], livekit_tcp[-1]
 else:
-    start, end = agent.allocate_ports(LIVEKIT_TCP_PORTS, "tcp", keep_existing=True)
-    livekit_tcp = [str(p) for p in range(start, end + 1)]
-    agent.set_env("LIVEKIT_TCP_PORTS", ",".join(livekit_tcp))
+    start, end = agent.allocate_ports(2, "tcp", keep_existing=True)
+    # Stored before anything else can fail: a second allocation would exceed the demand
+    agent.set_env("LIVEKIT_TCP_PORTS", f"{start},{end}")
+    http_port, jwt_port = str(start), str(end)
     print(f"allocated TCP ports {start}-{end} for LiveKit", file=sys.stderr)
 
-udp_port = env.get("UDP_PORT", "")
-if not udp_port:
-    start, _ = agent.allocate_ports(1, "udp")
-    udp_port = str(start)
-    agent.set_env("UDP_PORT", udp_port)
-    print(f"allocated UDP port {udp_port} for LiveKit", file=sys.stderr)
-
-agent.set_env("LIVEKIT_HTTP_PORT", livekit_tcp[0])
-agent.set_env("LIVEKIT_RTC_TCP_PORT", livekit_tcp[1])
-agent.set_env("LK_JWT_PORT", livekit_tcp[2])
-agent.set_env("LIVEKIT_RTC_UDP_PORT", udp_port)
+agent.set_env("LIVEKIT_HTTP_PORT", http_port)
+agent.set_env("LK_JWT_PORT", jwt_port)
 
 module_id = os.environ["MODULE_ID"]
 if config.get("LIVEKIT_ENABLED") == "1":
-    ports = [f"{livekit_tcp[1]}/tcp", f"{udp_port}/udp"]
+    ports = list(MEDIA_PORTS)
     if config.get("LIVEKIT_TURN_ENABLED") == "1":
-        ports.append("3478/udp")
+        ports.append(TURN_PORT)
     agent.assert_exp(agent.add_public_service(module_id, ports, replace_ports=True))
     print(f"public ports: {' '.join(ports)}", file=sys.stderr)
 else:

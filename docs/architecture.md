@@ -32,13 +32,13 @@ through the external TURN server.
 
 LiveKit runs outside the pod, in the node network namespace, like the BigBlueButton media
 server. Call media must leave from the node address, and pasta would rewrite it. Its HTTP port
-listens on 127.0.0.1 only. Its RTC TCP and UDP ports, and 3478/udp with TURN, are opened in the
-firewall through `add_public_service`, only while `livekit_enabled` is true.
+listens on 127.0.0.1 only. Its media ports 7881/tcp and 7882/udp, and 3478/udp with TURN, are
+opened in the firewall through `add_public_service`, only while `livekit_enabled` is true.
 
 ## Ports
 
-NS8 allocates 8 TCP ports (`org.nethserver.tcp-ports-demand=8`) and one UDP port
-(`org.nethserver.udp-ports-demand=1`). `configure-module` assigns them in this order:
+NS8 allocates 7 TCP ports (`org.nethserver.tcp-ports-demand=7`). `configure-module` assigns
+them in this order:
 
 | Index | Variable | Service |
 |---|---|---|
@@ -48,13 +48,16 @@ NS8 allocates 8 TCP ports (`org.nethserver.tcp-ports-demand=8`) and one UDP port
 | 3 | `POSTGRES_PORT` | unused since the pod, kept so the other indexes do not move |
 | 4 | `M2A_PROXY_PORT` | matrix2acrobits |
 | 5 | `LIVEKIT_HTTP_PORT` | LiveKit signaling and API, 127.0.0.1 |
-| 6 | `LIVEKIT_RTC_TCP_PORT` | LiveKit media over TCP, public |
-| 7 | `LK_JWT_PORT` | lk-jwt-service |
+| 6 | `LK_JWT_PORT` | lk-jwt-service |
 
-The UDP port is `LIVEKIT_RTC_UDP_PORT`, LiveKit media for every participant. An instance
-installed before LiveKit had 5 TCP and no UDP port. The core does not allocate new ports on
-update, so `bin/apply-livekit-ports` allocates the missing ones once and stores them in the
+An instance installed before LiveKit has 5 TCP ports. The core does not allocate new ports on
+update, so `bin/apply-livekit-ports` allocates the 2 missing ones once and stores them in the
 module environment.
+
+The LiveKit media ports are fixed, outside the NS8 allocator: 7881/tcp, 7882/udp, and
+3478/udp with TURN. The router forward then survives a restore, a clone or a move to another
+node. `bin/port-owner` refuses to enable LiveKit or its TURN when another application holds
+one of them.
 
 ## Traefik routes
 

@@ -52,8 +52,7 @@ buildah add "${container}" ui/dist /ui
 # Setup the entrypoint, ask to reserve three TCP ports and set a rootless container
 buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm cluster:accountconsumer node:fwadm,portsadm" \
-    --label="org.nethserver.tcp-ports-demand=8" \
-    --label="org.nethserver.udp-ports-demand=1" \
+    --label="org.nethserver.tcp-ports-demand=7" \
     --label="org.nethserver.rootfull=0" \
     --label="org.nethserver.max-per-node=1" \
     --label="org.nethserver.images=${postgres_image} ${synapse_image} ${element_image} ${cinny_image} ${m2a_image} ${livekit_image} ${lk_jwt_image}" \

@@ -131,11 +131,14 @@ Web uses Element Call for every call, so it can call Element X users. Clients th
 legacy calls, like Nheko, can no longer call Element Web users.
 
 Signaling goes through Traefik on the Synapse domain, under `/livekit/sfu` and `/livekit/jwt`.
-Media does not. Open or forward these ports to the node, the Settings page shows their numbers:
+Media does not. Open or forward these ports to the node:
 
-- one TCP port, used when UDP is blocked
-- one UDP port, shared by every participant
+- 7882/udp, shared by every participant
+- 7881/tcp, used when UDP is blocked
 - 3478/udp, only with `livekit_turn_enabled`
+
+Enabling LiveKit is refused if another application already uses 7881/tcp or 7882/udp on the
+node.
 
 The TURN relay helps clients on networks that block the other ports but allow 3478/udp. It is
 refused if another application, for example BigBlueButton, already uses 3478 on the node.
