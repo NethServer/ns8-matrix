@@ -78,6 +78,15 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_SQL_LOG_LEVEL': 'WARNING' if log_level == 'WARNING' else 'INFO',
     }
 
+def write_private(path, content):
+    """Write an owner-only file atomically: synapse, livekit and lk-jwt run this script at the same time."""
+    tmp = path + '.tmp' + str(os.getpid())
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w') as f:
+        f.write(content)
+    os.replace(tmp, path)
+
+
 def generate_secret(length=32):
     """Generate a random secret string"""
     alphabet = string.ascii_letters + string.digits
@@ -216,19 +225,17 @@ if env_vars.get('LIVEKIT_ENABLED') == '1' and livekit_env:
     os.makedirs('livekit-config', exist_ok=True)
     with open(f'{template_dir}/livekit.yaml', 'r') as f:
         livekit_config = substitute_env_vars(f.read(), livekit_vars)
-    fd = os.open('livekit-config/livekit.yaml', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, 'w') as f:
-        f.write(livekit_config)
+    write_private('livekit-config/livekit.yaml', livekit_config)
 
-    fd = os.open('lk-jwt.env', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, 'w') as f:
-        f.write(f"LIVEKIT_URL=wss://{env_vars['SYNAPSE_DOMAIN_NAME']}/livekit/sfu\n")
-        f.write(f"LIVEKIT_KEY={livekit_env['LIVEKIT_KEY']}\n")
-        f.write(f"LIVEKIT_SECRET={livekit_env['LIVEKIT_SECRET']}\n")
+    write_private('lk-jwt.env', ''.join([
+        f"LIVEKIT_URL=wss://{env_vars['SYNAPSE_DOMAIN_NAME']}/livekit/sfu\n",
+        f"LIVEKIT_KEY={livekit_env['LIVEKIT_KEY']}\n",
+        f"LIVEKIT_SECRET={livekit_env['LIVEKIT_SECRET']}\n",
         # Only local users may create a call room, remote ones can only join
-        f.write(f"LIVEKIT_FULL_ACCESS_HOMESERVERS={env_vars['SYNAPSE_DOMAIN_NAME']}\n")
+        f"LIVEKIT_FULL_ACCESS_HOMESERVERS={env_vars['SYNAPSE_DOMAIN_NAME']}\n",
         # Published traffic reaches the pod address, not its loopback
-        f.write(f"LIVEKIT_JWT_BIND=0.0.0.0:{os.environ['LK_JWT_PORT']}\n")
+        f"LIVEKIT_JWT_BIND=0.0.0.0:{os.environ['LK_JWT_PORT']}\n",
+    ]))
 
 # Process Cinny configuration
 with open(f'{template_dir}/cinny-config.json', 'r') as f:
