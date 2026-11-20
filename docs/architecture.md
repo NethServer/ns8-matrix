@@ -37,7 +37,7 @@ opened in the firewall through `add_public_service`, only while `livekit_enabled
 
 ## Ports
 
-NS8 allocates 7 TCP ports (`org.nethserver.tcp-ports-demand=7`). `configure-module` assigns
+NS8 allocates 6 TCP ports (`org.nethserver.tcp-ports-demand=6`). `configure-module` assigns
 them in this order:
 
 | Index | Variable | Service |
@@ -45,13 +45,12 @@ them in this order:
 | 0 | `SYNAPSE_PORT` | Synapse |
 | 1 | `ELEMENT_WEB_PORT` | Element web |
 | 2 | `CINNY_PORT` | Cinny |
-| 3 | `POSTGRES_PORT` | unused since the pod, kept so the other indexes do not move |
+| 3 | `LIVEKIT_HTTP_PORT` | LiveKit signaling and API, 127.0.0.1. Was `POSTGRES_PORT` before the pod |
 | 4 | `M2A_PROXY_PORT` | matrix2acrobits |
-| 5 | `LIVEKIT_HTTP_PORT` | LiveKit signaling and API, 127.0.0.1 |
-| 6 | `LK_JWT_PORT` | lk-jwt-service |
+| 5 | `LK_JWT_PORT` | lk-jwt-service |
 
 An instance installed before LiveKit has 5 TCP ports. The core does not allocate new ports on
-update, so `bin/apply-livekit-ports` allocates the 2 missing ones once and stores them in the
+update, so `bin/apply-livekit-ports` allocates the missing one once and stores it in the
 module environment.
 
 The LiveKit media ports are fixed, outside the NS8 allocator: 7881/tcp, 7882/udp, and

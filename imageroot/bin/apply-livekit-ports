@@ -8,10 +8,11 @@
 #
 # Give LiveKit its loopback ports, then open or close its media ports in the firewall.
 #
-# A new instance gets 7 TCP ports from the image labels. An instance updated
-# from an older release still has 5: the core stores the new demand on update
-# but allocates nothing, so the 2 missing ports are allocated here, once, and
-# kept in the module environment.
+# LiveKit HTTP takes index 3, free since PostgreSQL moved into the pod. A new
+# instance gets 6 TCP ports from the image labels. An instance updated from an
+# older release still has 5: the core stores the new demand on update but
+# allocates nothing, so the lk-jwt-service port is allocated here, once, and kept
+# in the module environment.
 #
 
 import os
@@ -28,20 +29,14 @@ env = agent.read_envfile(os.path.join(os.environ["AGENT_STATE_DIR"], "environmen
 config = agent.read_envfile("config.env") if os.path.exists("config.env") else {}
 
 tcp_ports = [p for p in env.get("TCP_PORTS", "").split(",") if p]
-if len(tcp_ports) >= 7:
-    http_port, jwt_port = tcp_ports[5], tcp_ports[6]
-elif env.get("LIVEKIT_TCP_PORTS"):
-    livekit_tcp = env["LIVEKIT_TCP_PORTS"].split(",")
-    http_port, jwt_port = livekit_tcp[0], livekit_tcp[-1]
-else:
-    start, end = agent.allocate_ports(2, "tcp", keep_existing=True)
-    # Stored before anything else can fail: a second allocation would exceed the demand
-    agent.set_env("LIVEKIT_TCP_PORTS", f"{start},{end}")
-    http_port, jwt_port = str(start), str(end)
-    print(f"allocated TCP ports {start}-{end} for LiveKit", file=sys.stderr)
-
-agent.set_env("LIVEKIT_HTTP_PORT", http_port)
-agent.set_env("LK_JWT_PORT", jwt_port)
+agent.set_env("LIVEKIT_HTTP_PORT", tcp_ports[3])
+if len(tcp_ports) >= 6:
+    agent.set_env("LK_JWT_PORT", tcp_ports[5])
+elif not env.get("LK_JWT_PORT"):
+    start, _ = agent.allocate_ports(1, "tcp", keep_existing=True)
+    # Stored at once: a second allocation would exceed the demand
+    agent.set_env("LK_JWT_PORT", str(start))
+    print(f"allocated TCP port {start} for lk-jwt-service", file=sys.stderr)
 
 module_id = os.environ["MODULE_ID"]
 if config.get("LIVEKIT_ENABLED") == "1":

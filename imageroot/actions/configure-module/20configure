@@ -91,7 +91,6 @@ tcp_ports = os.environ.get('TCP_PORTS', '20001').split(',')
 env_vars['SYNAPSE_PORT'] = tcp_ports[0]
 env_vars['ELEMENT_WEB_PORT'] = tcp_ports[1]
 env_vars['CINNY_PORT'] = tcp_ports[2]
-env_vars['POSTGRES_PORT'] = tcp_ports[3]
 env_vars['M2A_PROXY_PORT'] = tcp_ports[4]
 
 # Write updated configuration
