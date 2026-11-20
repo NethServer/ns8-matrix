@@ -7,6 +7,7 @@
 
 import os
 import json
+import re
 import secrets
 import string
 import agent
@@ -87,13 +88,15 @@ def substitute_env_vars(content, env_vars, quoted_keys=()):
     from values containing YAML reserved characters. All other values are
     substituted verbatim, preserving numeric and boolean YAML types.
     """
-    for key, value in env_vars.items():
+    # One pass, so a value holding "${...}" is never expanded again
+    def replace(match):
+        key = match.group(1)
+        if key not in env_vars:
+            return match.group(0)
         if key in quoted_keys:
-            replacement = json.dumps(str(value), ensure_ascii=False)
-        else:
-            replacement = str(value)
-        content = content.replace(f'${{{key}}}', replacement)
-    return content
+            return json.dumps(str(env_vars[key]), ensure_ascii=False)
+        return str(env_vars[key])
+    return re.sub(r'\$\{(\w+)\}', replace, content)
 
 # Read environment variables from config
 env_vars = agent.read_envfile("config.env")
