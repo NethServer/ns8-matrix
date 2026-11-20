@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-# Before 80restart_services: the units need the LiveKit ports older instances lack.
+# Before 05database_upgrade, which starts the pod: it publishes LK_JWT_PORT, which older instances lack.
 
 set -e
 exec 1>&2
