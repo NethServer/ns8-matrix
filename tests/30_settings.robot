@@ -18,7 +18,7 @@ Set the smarthost
     Run task    cluster/set-smarthost    ${payload}
 
 Restore the smarthost
-    ${payload} =    Evaluate    json.dumps({k: $saved_smarthost[k] for k in ("host", "port", "username", "password", "enabled", "encrypt_smtp", "tls_verify")})    modules=json
+    ${payload} =    Evaluate    json.dumps({k: v for k, v in $saved_smarthost.items() if k in ("host", "port", "username", "password", "enabled", "encrypt_smtp", "tls_verify")})    modules=json
     Run task    cluster/set-smarthost    ${payload}
 
 Synapse SMTP credentials are
