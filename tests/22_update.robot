@@ -20,6 +20,9 @@ Check matrix works after the update
     Matrix is running
     Get a token for    user1
 
+Check the matrix pod runs after the update
+    Matrix pod is running
+
 Check the services listen on localhost only after the update
     Services listen on localhost only
 

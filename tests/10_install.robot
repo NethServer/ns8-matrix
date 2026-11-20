@@ -31,9 +31,8 @@ Check if matrix can be configured
     Read the Synapse port
 
 Check if the matrix pod is running
-    ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman pod exists matrix
-    ...    return_rc=True
-    Should Be Equal As Integers    ${rc}  0
+    Skip If    '${SCENARIO}' == 'update'    checked after the update
+    Matrix pod is running
 
 Check if postgresql service is loaded correctly
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} systemctl --user show --property=LoadState postgresql

@@ -102,6 +102,11 @@ Configure matrix with
     Run task    module/${module_id}/configure-module    ${payload}    decode_json=${FALSE}
     Wait Until Keyword Succeeds    30 times    5 seconds    Synapse answers
 
+Matrix pod is running
+    ${rc} =    Execute Command    runagent -m ${module_id} podman pod exists matrix
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+
 Services listen on localhost only
     # Traefik reaches every service on 127.0.0.1, any wider bind exposes it to the network
     FOR    ${var}    IN    SYNAPSE_PORT    ELEMENT_WEB_PORT    CINNY_PORT    M2A_PROXY_PORT
