@@ -19,45 +19,16 @@ systemctl --user enable matrix.service
 systemctl --user enable postgresql.service
 systemctl --user enable synapse.service
 
-# Enable element web client when enabled in UI
-if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
-  systemctl --user enable element-web.service
-else
-  systemctl --user disable element-web.service
-fi
-
-# Enable cinny client when enabled in UI
-if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
-  systemctl --user enable cinny.service
-else
-  systemctl --user disable cinny.service
+# Enable the optional services set in the UI. Stop the others before the pod restarts:
+# the restart would start them again, and a stop during that start fails the unit.
+optional=()
+[[ -n ${ELEMENT_DOMAIN_NAME} ]] && optional+=(element-web.service) || systemctl --user disable --now element-web.service
+[[ -n ${CINNY_DOMAIN_NAME} ]] && optional+=(cinny.service) || systemctl --user disable --now cinny.service
+[[ -n ${NETHVOICE_AUTH_URL} ]] && optional+=(matrix2acrobits.service) || systemctl --user disable --now matrix2acrobits.service
+if [[ ${#optional[@]} -gt 0 ]]; then
+  systemctl --user enable "${optional[@]}"
 fi
 
 # Recreate the pod, the running containers restart with it
 systemctl --user restart matrix.service
-systemctl --user start postgresql.service synapse.service
-
-# Start element web client when enabled in UI, else stop it
-if [[ -n ${ELEMENT_DOMAIN_NAME} ]]; then
-  systemctl --user start element-web.service
-else
-  systemctl --user stop element-web.service
-fi
-
-# Start cinny client when enabled in UI, else stop it
-if [[ -n ${CINNY_DOMAIN_NAME} ]]; then
-  systemctl --user start cinny.service
-else
-  systemctl --user stop cinny.service
-fi
-
-# Manage matrix2acrobits service
-if [[ -n ${NETHVOICE_AUTH_URL} ]]; then
-  # Enable NethVoice Matrix Auth service
-  systemctl --user enable matrix2acrobits.service
-  # Start NethVoice Matrix Auth service
-  systemctl --user start matrix2acrobits.service
-else
-  # Disable and stop NethVoice Matrix Auth service
-  systemctl --user disable --now matrix2acrobits.service
-fi
+systemctl --user start postgresql.service synapse.service "${optional[@]}"
