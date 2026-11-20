@@ -12,12 +12,14 @@ import string
 import agent
 
 # Environment variables substituted into synapse-homeserver.yaml as string
-# scalars. Their values are user supplied (SMTP smarthost credentials and
-# sender address) and may contain characters that are reserved in YAML when
+# scalars. Their values are user supplied (SMTP host and sender, LDAP bind DN
+# and password) and may contain characters that are reserved in YAML when
 # they appear at the start of a value ('@', '*', '&', '!', '%', quotes ...) or
 # special sequences (':', '#', '\'). They must therefore be emitted as
 # properly quoted and escaped YAML strings. Keys NOT listed here (ports,
 # booleans) are substituted verbatim so they keep their native YAML type.
+# The SMTP username and password are quoted in synapse_derived_vars instead,
+# because they become null without a username: do not add them here.
 SYNAPSE_QUOTED_KEYS = (
     "SYNAPSE_SMTP_HOST",
     "SYNAPSE_SMTP_FROM",
