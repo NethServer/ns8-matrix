@@ -1,0 +1,42 @@
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# This unit creates the pod. Every Matrix container joins it and starts it through BindsTo.
+# The pod has no Requires on the containers, so a Synapse restart does not bounce the pod.
+
+[Unit]
+Description=Podman matrix.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+EnvironmentFile=%S/state/config.env
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/matrix.pid %t/matrix.pod-id
+# The pod gets its own address, so it still reaches the node's own IP (same-node NethVoice or
+# smarthost). --map-gw makes the gateway 10.0.2.2 lead to the node loopback, where ldapproxy listens.
+# Ports are published even for disabled clients: they are fixed when the pod is created.
+ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/matrix.pid \
+    --pod-id-file %t/matrix.pod-id \
+    --name matrix \
+    --network=pasta:-a,10.0.2.100,-n,24,-g,10.0.2.2,--map-gw \
+    --publish 127.0.0.1:${SYNAPSE_PORT}:${SYNAPSE_PORT} \
+    --publish 127.0.0.1:${ELEMENT_WEB_PORT}:8080 \
+    --publish 127.0.0.1:${CINNY_PORT}:80 \
+    --publish 127.0.0.1:${M2A_PROXY_PORT}:${M2A_PROXY_PORT} \
+    --replace
+ExecStart=/usr/bin/podman pod start --pod-id-file %t/matrix.pod-id
+# After a pod crash systemd restarts the pod only, so bring the enabled containers back.
+# Without --no-block this would wait for the containers, which wait for the pod.
+ExecStartPost=/usr/bin/bash -c 'for unit in postgresql synapse element-web cinny matrix2acrobits; do systemctl --user is-enabled -q $unit.service && systemctl --user start --no-block $unit.service; done; exit 0'
+ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/matrix.pod-id -t 10
+ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file %t/matrix.pod-id
+PIDFile=%t/matrix.pid
+Type=forking
+
+[Install]
+WantedBy=default.target

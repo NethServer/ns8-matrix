@@ -8,7 +8,8 @@
 #
 [Unit]
 Description=matrix2acrobits Matrix Client
-After=network-online.target synapse.service
+BindsTo=matrix.service
+After=matrix.service synapse.service
 Wants=synapse.service
 
 [Service]
@@ -25,7 +26,7 @@ ExecStart=/usr/bin/podman run \
     --cidfile=%t/matrix2acrobits.ctr-id \
     --cgroups=no-conmon \
     --replace --name=matrix2acrobits \
-    --network=host \
+    --pod-id-file %t/matrix.pod-id \
     --env-file=%S/state/matrix-secrets.env \
     --env-file=%S/state/m2a.env \
     --volume=matrix2acrobits-data:/tmp \

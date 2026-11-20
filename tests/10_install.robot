@@ -30,6 +30,10 @@ Check if matrix can be configured
     Configure matrix with    "nethvoice_auth_url": "https://nethvoice.nethserver.org/freepbx/rest/testextauth"
     Read the Synapse port
 
+Check if the matrix pod is running
+    Skip If    '${SCENARIO}' == 'update'    checked after the update
+    Matrix pod is running
+
 Check if postgresql service is loaded correctly
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} systemctl --user show --property=LoadState postgresql
     ...    return_rc=True

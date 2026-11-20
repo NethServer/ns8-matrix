@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+exec 1>&2
+
+# Nothing to do once the pod runs, or when the module is not configured or stopped on purpose
+podman pod exists matrix && exit 0
+systemctl --user is-enabled -q synapse.service || exit 0
+
+# The old containers hold the ports the pod publishes. The old oneshot matrix.service also
+# still counts as active, so starting a container would not create the pod.
+systemctl --user stop element-web.service cinny.service matrix2acrobits.service synapse.service postgresql.service matrix.service
+systemctl --user enable matrix.service

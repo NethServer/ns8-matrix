@@ -7,7 +7,8 @@ listeners:
     tls: false
     type: http
     x_forwarded: true
-    bind_addresses: ['127.0.0.1']
+    # Published traffic reaches the pod address, not its loopback. Only the node 127.0.0.1 port is published.
+    bind_addresses: ['0.0.0.0']
     resources:
       - names: [${SYNAPSE_LISTENER_RESOURCES}]
 
@@ -19,7 +20,7 @@ database:
     password: ${POSTGRES_PASSWORD}
     database: synapse
     host: 127.0.0.1
-    port: ${POSTGRES_PORT}
+    port: 5432
     cp_min: 5
     cp_max: 10
 

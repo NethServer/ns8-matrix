@@ -5,18 +5,29 @@ outside. It reaches every service on 127.0.0.1.
 
 ## Network
 
-| Service | Network | Listens on |
-|---|---|---|
-| Synapse | host | `127.0.0.1:SYNAPSE_PORT` (`bind_addresses` in `homeserver.yaml`) |
-| PostgreSQL | rootless bridge | `127.0.0.1:POSTGRES_PORT`, published to 5432 in the container |
-| Element web | rootless bridge | `127.0.0.1:ELEMENT_WEB_PORT`, published to 8080 in the container |
-| Cinny | rootless bridge | `127.0.0.1:CINNY_PORT`, published to 80 in the container |
-| matrix2acrobits | host | every interface, `M2A_PROXY_PORT` |
+Every container runs in one rootless pod named `matrix`, created by `matrix.service`. The
+containers reach each other on the pod loopback. The pod publishes four ports on 127.0.0.1
+of the node:
 
-matrix2acrobits only reads a port, not a listen address, so it listens on every interface. It
-runs only when `nethvoice_auth_url` is set. The node firewall keeps its port closed from
-outside. The Element image runs as a non-root user and cannot bind port 80, so it listens on
-8080 inside the container.
+| Service | Listens in the pod | Published on the node |
+|---|---|---|
+| Synapse | `SYNAPSE_PORT` (`bind_addresses` in `homeserver.yaml`) | `127.0.0.1:SYNAPSE_PORT` |
+| PostgreSQL | `5432` | not published |
+| Element web | `8080` | `127.0.0.1:ELEMENT_WEB_PORT` |
+| Cinny | `80` | `127.0.0.1:CINNY_PORT` |
+| matrix2acrobits | `M2A_PROXY_PORT` | `127.0.0.1:M2A_PROXY_PORT` |
+
+The pod uses pasta with its own address, `10.0.2.100`. It keeps reaching the node IP, so a
+NethVoice or a smarthost on the same node still answers. `--map-gw` makes the gateway
+`10.0.2.2` lead to the node loopback. `discover-ldap` and `discover-smarthost` write `10.0.2.2`
+when the user domain or the smarthost resolves to a loopback address on the node.
+
+The pod publishes the Element, Cinny and matrix2acrobits ports even when these services are
+off, because publishing is fixed when the pod is created. The Element image runs as a
+non-root user and cannot bind port 80, so it listens on 8080 inside the pod.
+
+Call media never goes through the module. Clients talk WebRTC to each other or through the
+external TURN server.
 
 ## Ports
 
@@ -28,7 +39,7 @@ them in this order:
 | 0 | `SYNAPSE_PORT` | Synapse |
 | 1 | `ELEMENT_WEB_PORT` | Element web |
 | 2 | `CINNY_PORT` | Cinny |
-| 3 | `POSTGRES_PORT` | PostgreSQL |
+| 3 | `POSTGRES_PORT` | unused since the pod, kept so the other indexes do not move |
 | 4 | `M2A_PROXY_PORT` | matrix2acrobits |
 
 ## Traefik routes
@@ -54,26 +65,41 @@ With federation, Synapse adds the `federation` listener resource and serves
 
 ```mermaid
 flowchart TB
+    MX[matrix.service<br/>pod]
     PG[postgresql.service]
     SY[synapse.service]
     EW[element-web.service]
     CI[cinny.service]
     MA[matrix2acrobits.service]
+    PG -- "BindsTo, After" --> MX
+    SY -- "BindsTo, After" --> MX
+    EW -- "BindsTo, After" --> MX
+    CI -- "BindsTo, After" --> MX
+    MA -- "BindsTo, After" --> MX
     PG -- "Before" --> SY
-    EW -- "After, Wants" --> SY
-    CI -- "After, Wants" --> SY
-    MA -- "After, Wants" --> SY
 ```
 
-`postgresql.service` has `Before=synapse.service`. This is ordering only, there is no `Wants`
-or `Requires`. When both start in the same transaction, at boot or in `80start_services`,
-systemd waits for PostgreSQL to be started before it starts Synapse. PostgreSQL counts as
-started only when its `ExecStartPost` loop can open the `synapse` database, so Synapse finds
-the database ready.
+`matrix.service` creates the pod. Every container unit has `BindsTo=matrix.service` and
+`After=matrix.service`: starting a container starts the pod first, and stopping the pod stops
+every container. Once the pod runs, its `ExecStartPost` starts each enabled container without
+waiting, so the containers come back after a pod crash. The pod has no `Requires=` on the
+containers, so restarting Synapse alone, for example on `ldap-changed`, leaves the pod and the
+other containers running.
 
-`80start_services` enables `postgresql` and `synapse` always. It enables `element-web` and
-`cinny` when their domain name is set, and `matrix2acrobits` when `nethvoice_auth_url` is set.
-The others are disabled and stopped.
+`80start_services` stops the disabled clients, restarts the pod, then starts PostgreSQL,
+Synapse and the enabled clients. `update-module.d/80restart_services` does the same when
+`synapse.service` is enabled, and does nothing otherwise.
+
+PostgreSQL counts as started only when its `ExecStartPost` loop can open the `synapse`
+database, so Synapse finds the database ready.
+
+`80start_services` enables `matrix`, `postgresql` and `synapse` always. It enables
+`element-web` and `cinny` when their domain name is set, and `matrix2acrobits` when
+`nethvoice_auth_url` is set. The others are disabled and stopped.
+
+The first update to the pod runs `update-module.d/06stop_before_pod`, after the PostgreSQL
+upgrade. It stops the old containers, which hold the ports the pod publishes, and the old
+oneshot `matrix.service`.
 
 Each unit runs scripts as `ExecStartPre`:
 
@@ -154,15 +180,18 @@ flowchart TB
     B --> C{"same major as POSTGRES_IMAGE?"}
     C -- yes --> X[skip]
     C -- no --> D["pull the old image<br/>abort if unknown or pull fails"]
-    D --> E["stop synapse, matrix2acrobits, postgresql"]
+    D --> E["stop every container and the pod"]
     E --> F["start the old PostgreSQL on the volume<br/>pg_dumpall to upgrade.pg_dump<br/>save row counts"]
     F --> G
     R --> G["remove the postgres-data volume"]
     G --> H["restore the dump with the new image"]
-    H --> I{"row counts match?"}
+    H --> I{"row counts match?<br/>read in a throwaway container"}
     I -- no --> K["fail, keep upgrade.pg_dump"]
-    I -- yes --> J["delete the dump, start enabled services"]
+    I -- yes --> J["delete the dump, start PostgreSQL,<br/>then Synapse and matrix2acrobits if enabled"]
 ```
+
+The row counts are read in a throwaway PostgreSQL container: starting `postgresql.service`
+would start the pod, which starts Synapse on a database not yet checked.
 
 The old images are listed in `old_images`. When bumping the PostgreSQL major version, add the
 image the module shipped before the bump. Up to PostgreSQL 17 the data sits at the volume root,

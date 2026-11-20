@@ -13,15 +13,25 @@ flowchart LR
     U[Browsers and Matrix apps] -- "HTTPS :443" --> T["Traefik"]
     F[Other Matrix servers] -. "federation, :443" .-> T
     subgraph NS8["NS8 node"]
-        T -- "synapse_domain_name" --> S[Synapse]
-        T -- "element_domain_name" --> E[Element web]
-        T -- "cinny_domain_name" --> C[Cinny]
-        T -- "/m2a, /_matrix/push/v1/notify" --> M[matrix2acrobits]
-        S --> P[(PostgreSQL 18)]
-        S --> L[LDAP proxy]
+        T -- "synapse_domain_name" --> S
+        T -- "element_domain_name" --> E
+        T -- "cinny_domain_name" --> C
+        T -- "/m2a, /_matrix/push/v1/notify" --> M
+        subgraph POD["matrix pod, pasta, ports on 127.0.0.1 only"]
+            S[Synapse]
+            E[Element web]
+            C[Cinny]
+            M[matrix2acrobits]
+            P[(PostgreSQL 18<br/>not published)]
+            S --> P
+        end
+        S -- "10.0.2.2, node loopback" --> L[LDAP proxy]
         S --> SM[Cluster smarthost]
     end
 ```
+
+Every container runs in one rootless pod. Call media goes directly between clients or through
+the TURN server, never through the pod.
 
 ## Documentation
 

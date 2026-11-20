@@ -55,7 +55,7 @@ if [[ ! -f "${upgrade_dump}" ]]; then
     podman pull "${old_image}"
 
     echo "Upgrading PostgreSQL data from version ${data_version} to ${target_major}"
-    systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
+    systemctl --user stop synapse.service matrix2acrobits.service element-web.service cinny.service postgresql.service matrix.service
 
     podman run --detach --rm --network=none \
         --volume="postgres-data:${old_mount}:Z" \
@@ -85,7 +85,7 @@ if [[ ! -f "${upgrade_dump}" ]]; then
     podman image rm --ignore "${old_image}"
 else
     echo "Resuming an interrupted PostgreSQL upgrade"
-    systemctl --user stop synapse.service matrix2acrobits.service postgresql.service
+    systemctl --user stop synapse.service matrix2acrobits.service element-web.service cinny.service postgresql.service matrix.service
 fi
 
 podman volume rm --force postgres-data
@@ -94,8 +94,20 @@ podman volume rm --force postgres-data
 cp "${upgrade_dump}" postgresql.pg_dump
 ../actions/restore-module/40restore_database
 
-systemctl --user start postgresql.service
-restored_counts=$(podman exec postgresql psql -U postgres -d synapse -Atc "${count_query}")
+# Check in a throwaway server: starting postgresql.service creates the pod, which starts Synapse
+podman run --detach --rm --network=none \
+    --env-file=./database.env \
+    --volume=postgres-data:/var/lib/postgresql:Z \
+    --replace --name=postgresql-check \
+    "${POSTGRES_IMAGE}"
+trap 'podman stop --ignore postgresql-check >/dev/null' EXIT
+for _ in $(seq 1 60); do
+    podman exec postgresql-check pg_isready -U postgres -q 2>/dev/null && break
+    sleep 2
+done
+restored_counts=$(podman exec postgresql-check psql -U postgres -d synapse -Atc "${count_query}")
+podman stop postgresql-check
+trap - EXIT
 if [[ "${restored_counts}" != "$(cat "${upgrade_counts}")" ]]; then
     echo "Restored row counts ${restored_counts} differ from $(cat "${upgrade_counts}")."
     echo "The dump is kept in ${upgrade_dump}; run the update again to retry."
@@ -103,7 +115,7 @@ if [[ "${restored_counts}" != "$(cat "${upgrade_counts}")" ]]; then
 fi
 
 rm -f "${upgrade_dump}" "${upgrade_counts}"
-for unit in synapse.service matrix2acrobits.service; do
+for unit in postgresql.service synapse.service matrix2acrobits.service; do
     if systemctl --user is-enabled -q "${unit}"; then
         systemctl --user start "${unit}"
     fi
