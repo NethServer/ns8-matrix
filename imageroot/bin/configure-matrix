@@ -233,6 +233,9 @@ if env_vars.get('LIVEKIT_ENABLED') == '1' and livekit_env:
         f"LIVEKIT_FULL_ACCESS_HOMESERVERS={env_vars['SYNAPSE_DOMAIN_NAME']}\n",
         # Published traffic reaches the pod address, not its loopback
         f"LIVEKIT_JWT_BIND=0.0.0.0:{os.environ['LK_JWT_PORT']}\n",
+        # Test labs with a self signed certificate only, it also trusts any federated server
+        'LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING\n'
+        if env_vars.get('LIVEKIT_TLS_SKIP_VERIFY') == '1' else '',
     ]))
 
 # Process Cinny configuration

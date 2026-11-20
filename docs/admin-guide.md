@@ -29,6 +29,7 @@ Set them in the Settings page or with `configure-module`.
 | `livekit_enabled` | `false` | Run LiveKit for Element Call, see [Element Call with LiveKit](#element-call-with-livekit). |
 | `livekit_turn_enabled` | `false` | Start the LiveKit TURN relay on 3478/udp. Needs `livekit_enabled`. |
 | `livekit_public_address` | empty | Address announced to call clients. Empty uses the detected public address. |
+| `livekit_tls_skip_verify` | `false` | Test labs only, not in the UI. lk-jwt-service accepts a self signed certificate. |
 | `max_upload_size_mb` | `50` | Largest file a user can upload, in megabytes. |
 | `local_media_lifetime_days` | `0` | Delete uploaded files not viewed for this many days. `0` keeps them forever. |
 | `remote_media_lifetime_days` | `0` | Delete cached files from other servers not viewed for this many days. `0` keeps them forever. |
@@ -148,7 +149,9 @@ LiveKit announces the public address found when it was enabled. Behind NAT, chec
 Settings page and set `livekit_public_address` if it is wrong.
 
 LiveKit must reach `https://<synapse_domain_name>` from the node to check who joins a call.
-The certificate must be valid, a self signed one makes every call fail. For the same check,
+The certificate must be valid, a self signed one makes every call fail. In a test lab, send
+`"livekit_tls_skip_verify": true` with `api-cli`. Never in production: lk-jwt-service then
+also trusts any federated server without checking its certificate. For the same check,
 Synapse serves `/.well-known/matrix/server` even with federation off. Other servers then try
 to federate and get an error, nothing else is exposed.
 

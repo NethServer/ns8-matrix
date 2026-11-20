@@ -186,6 +186,10 @@
                     "maxLength": 0
                 }
             ]
+        },
+        "livekit_tls_skip_verify": {
+            "type": "boolean",
+            "description": "Test labs only: let lk-jwt-service accept a self signed Synapse certificate"
         }
     }
 }

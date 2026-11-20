@@ -72,7 +72,8 @@ else:
 request['search_all_users'] = env_vars['SEARCH_ALL_USERS'] == '1'
 
 # Omitted keys keep the stored value. Saved in config.json, so a restore replays them.
-for key, var in (('livekit_enabled', 'LIVEKIT_ENABLED'), ('livekit_turn_enabled', 'LIVEKIT_TURN_ENABLED')):
+for key, var in (('livekit_enabled', 'LIVEKIT_ENABLED'), ('livekit_turn_enabled', 'LIVEKIT_TURN_ENABLED'),
+                 ('livekit_tls_skip_verify', 'LIVEKIT_TLS_SKIP_VERIFY')):
     if key in request:
         env_vars[var] = '1' if request[key] else '0'
     else:
