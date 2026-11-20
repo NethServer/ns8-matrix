@@ -80,11 +80,15 @@ flowchart TB
 ```
 
 `matrix.service` creates the pod. Every container unit has `BindsTo=matrix.service` and
-`After=matrix.service`: starting a container starts the pod first, and stopping or restarting
-the pod stops or restarts the running containers. The pod does not start the containers, so
-restarting Synapse alone, for example on `ldap-changed`, leaves the pod and the other
-containers running. `80start_services` and `update-module.d/80restart_services` restart the
-pod, then start each enabled container.
+`After=matrix.service`: starting a container starts the pod first, and stopping the pod stops
+every container. Once the pod runs, its `ExecStartPost` starts each enabled container without
+waiting, so the containers come back after a pod crash. The pod has no `Requires=` on the
+containers, so restarting Synapse alone, for example on `ldap-changed`, leaves the pod and the
+other containers running.
+
+`80start_services` stops the disabled clients, restarts the pod, then starts PostgreSQL,
+Synapse and the enabled clients. `update-module.d/80restart_services` does the same when
+`synapse.service` is enabled, and does nothing otherwise.
 
 PostgreSQL counts as started only when its `ExecStartPost` loop can open the `synapse`
 database, so Synapse finds the database ready.
@@ -93,8 +97,9 @@ database, so Synapse finds the database ready.
 `element-web` and `cinny` when their domain name is set, and `matrix2acrobits` when
 `nethvoice_auth_url` is set. The others are disabled and stopped.
 
-The first update to the pod runs `update-module.d/06stop_before_pod`, after the PostgreSQL upgrade. It stops the old
-containers, which hold the ports the pod publishes, and the old oneshot `matrix.service`.
+The first update to the pod runs `update-module.d/06stop_before_pod`, after the PostgreSQL
+upgrade. It stops the old containers, which hold the ports the pod publishes, and the old
+oneshot `matrix.service`.
 
 Each unit runs scripts as `ExecStartPre`:
 
@@ -175,15 +180,18 @@ flowchart TB
     B --> C{"same major as POSTGRES_IMAGE?"}
     C -- yes --> X[skip]
     C -- no --> D["pull the old image<br/>abort if unknown or pull fails"]
-    D --> E["stop synapse, matrix2acrobits, postgresql"]
+    D --> E["stop every container and the pod"]
     E --> F["start the old PostgreSQL on the volume<br/>pg_dumpall to upgrade.pg_dump<br/>save row counts"]
     F --> G
     R --> G["remove the postgres-data volume"]
     G --> H["restore the dump with the new image"]
-    H --> I{"row counts match?"}
+    H --> I{"row counts match?<br/>read in a throwaway container"}
     I -- no --> K["fail, keep upgrade.pg_dump"]
-    I -- yes --> J["delete the dump, start enabled services"]
+    I -- yes --> J["delete the dump, start PostgreSQL,<br/>then Synapse and matrix2acrobits if enabled"]
 ```
+
+The row counts are read in a throwaway PostgreSQL container: starting `postgresql.service`
+would start the pod, which starts Synapse on a database not yet checked.
 
 The old images are listed in `old_images`. When bumping the PostgreSQL major version, add the
 image the module shipped before the bump. Up to PostgreSQL 17 the data sits at the volume root,
