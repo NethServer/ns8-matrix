@@ -248,20 +248,69 @@
                 :showCloseButton="false"
               />
             </div>
+              <NsToggle
+                value="turn_enabled"
+                :label="$t('settings.turn_enabled')"
+                v-model="turn_enabled"
+                :disabled="
+                  loading.getConfiguration || loading.configureModule
+                "
+                class="mg-bottom"
+                ref="turn_enabled"
+              >
+                <template #tooltip>
+                  {{ $t("settings.turn_enabled_tooltip") }}
+                </template>
+                <template slot="text-left">{{
+                  $t("settings.disabled")
+                }}</template>
+                <template slot="text-right">{{
+                  $t("settings.enabled")
+                }}</template>
+              </NsToggle>
+              <div
+                v-if="
+                  turn_enabled ||
+                  error.turn_uris ||
+                  error.turn_shared_secret
+                "
+                class="toggle-dependent"
+              >
+                <cv-text-area
+                  :label="$t('settings.turn_uris')"
+                  v-model.trim="turn_uris"
+                  :helper-text="$t('settings.turn_uris_helper')"
+                  :placeholder="$t('settings.turn_uris_placeholder')"
+                  :invalid-message="error.turn_uris"
+                  :disabled="
+                    loading.getConfiguration || loading.configureModule
+                  "
+                  class="mg-bottom"
+                  ref="turn_uris"
+                ></cv-text-area>
+                <NsTextInput
+                  type="password"
+                  :label="$t('settings.turn_shared_secret')"
+                  v-model="turn_shared_secret"
+                  :placeholder="
+                    turn_shared_secret_set
+                      ? $t('settings.turn_shared_secret_unchanged')
+                      : ''
+                  "
+                  :helper-text="$t('settings.turn_shared_secret_helper')"
+                  :invalid-message="error.turn_shared_secret"
+                  :disabled="
+                    loading.getConfiguration || loading.configureModule
+                  "
+                  autocomplete="new-password"
+                  ref="turn_shared_secret"
+                />
+              </div>
             <cv-accordion ref="accordion" class="mg-bottom">
               <cv-accordion-item :open="isAdvancedOpen">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
-                  <cv-text-input
-                    :label="$t('settings.mail_from')"
-                    v-model="mail_from"
-                    :placeholder="$t('settings.mail_from_placeholder')"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    :invalid-message="error.mail_from"
-                    ref="mail_from"
-                  ></cv-text-input>
+                  <h6 class="section-title">{{ $t("settings.section_federation") }}</h6>
                   <NsToggle
                     value="federation"
                     :label="$t('settings.federation')"
@@ -326,64 +375,7 @@
                       ref="remote_media_lifetime_days"
                     />
                   </div>
-                  <NsToggle
-                    value="turn_enabled"
-                    :label="$t('settings.turn_enabled')"
-                    v-model="turn_enabled"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    class="mg-bottom"
-                    ref="turn_enabled"
-                  >
-                    <template #tooltip>
-                      {{ $t("settings.turn_enabled_tooltip") }}
-                    </template>
-                    <template slot="text-left">{{
-                      $t("settings.disabled")
-                    }}</template>
-                    <template slot="text-right">{{
-                      $t("settings.enabled")
-                    }}</template>
-                  </NsToggle>
-                  <div
-                    v-if="
-                      turn_enabled ||
-                      error.turn_uris ||
-                      error.turn_shared_secret
-                    "
-                    class="toggle-dependent"
-                  >
-                    <cv-text-area
-                      :label="$t('settings.turn_uris')"
-                      v-model.trim="turn_uris"
-                      :helper-text="$t('settings.turn_uris_helper')"
-                      :placeholder="$t('settings.turn_uris_placeholder')"
-                      :invalid-message="error.turn_uris"
-                      :disabled="
-                        loading.getConfiguration || loading.configureModule
-                      "
-                      class="mg-bottom"
-                      ref="turn_uris"
-                    ></cv-text-area>
-                    <NsTextInput
-                      type="password"
-                      :label="$t('settings.turn_shared_secret')"
-                      v-model="turn_shared_secret"
-                      :placeholder="
-                        turn_shared_secret_set
-                          ? $t('settings.turn_shared_secret_unchanged')
-                          : ''
-                      "
-                      :helper-text="$t('settings.turn_shared_secret_helper')"
-                      :invalid-message="error.turn_shared_secret"
-                      :disabled="
-                        loading.getConfiguration || loading.configureModule
-                      "
-                      autocomplete="new-password"
-                      ref="turn_shared_secret"
-                    />
-                  </div>
+                  <h6 class="section-title">{{ $t("settings.section_media") }}</h6>
                   <NsTextInput
                     type="number"
                     min="1"
@@ -408,17 +400,7 @@
                     "
                     ref="local_media_lifetime_days"
                   />
-                  <NsComboBox
-                    v-model="log_level"
-                    :label="$t('settings.log_level')"
-                    :title="$t('settings.log_level')"
-                    :options="logLevelOptions"
-                    :invalid-message="error.log_level"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    ref="log_level"
-                  />
+                  <h6 class="section-title">{{ $t("settings.section_integrations") }}</h6>
                   <NsToggle
                     value="nethvoice_enabled"
                     :label="$t('settings.nethvoice_enabled')"
@@ -458,6 +440,28 @@
                       ref="nethvoice_auth_url"
                     ></cv-text-input>
                   </div>
+                  <h6 class="section-title">{{ $t("settings.section_system") }}</h6>
+                  <cv-text-input
+                    :label="$t('settings.mail_from')"
+                    v-model="mail_from"
+                    :placeholder="$t('settings.mail_from_placeholder')"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    :invalid-message="error.mail_from"
+                    ref="mail_from"
+                  ></cv-text-input>
+                  <NsComboBox
+                    v-model="log_level"
+                    :label="$t('settings.log_level')"
+                    :title="$t('settings.log_level')"
+                    :options="logLevelOptions"
+                    :invalid-message="error.log_level"
+                    :disabled="
+                      loading.getConfiguration || loading.configureModule
+                    "
+                    ref="log_level"
+                  />
                 </template>
               </cv-accordion-item>
             </cv-accordion>
@@ -972,6 +976,15 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.section-title {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-title:first-child {
+  margin-top: 0;
+}
+
 @import "../styles/carbon-utils";
 
 .toggle-dependent {
