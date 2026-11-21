@@ -39,5 +39,10 @@ elif config.get("livekit_turn_enabled") and in_use("3478/udp"):
           file=sys.stderr)
     config["livekit_turn_enabled"] = False
 
+# Kept, it may be a deliberate NAT setting, but it can belong to the old site
+if config.get("livekit_enabled") and config.get("livekit_public_address"):
+    print(agent.SD_WARNING + "LiveKit announces the stored public address " + config["livekit_public_address"]
+          + ", check it matches this node", file=sys.stderr)
+
 response = agent.tasks.run(agent_id=os.environ["AGENT_ID"], action="configure-module", data=config)
 agent.assert_exp(response["exit_code"] == 0, "configure-module failed: " + json.dumps(response["output"]))
