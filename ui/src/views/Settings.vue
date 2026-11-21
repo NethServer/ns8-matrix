@@ -63,44 +63,42 @@
               "
               :showCloseButton="false"
             />
-            <div v-if="isDelegated" class="mg-bottom">
-              <NsInlineNotification
-                kind="info"
-                :title="$t('settings.well_known_title')"
-                :description="
-                  $t('settings.well_known_description', {
-                    domain: matrix_server_name,
-                    host: synapse_domain_name,
-                  })
-                "
-                :showCloseButton="false"
-              />
-              <div
-                v-for="file in wellKnownFiles"
-                :key="file.name"
-                class="mg-bottom"
-              >
-                <div class="well-known-url">
-                  https://{{ matrix_server_name }}/.well-known/matrix/{{
-                    file.name
+            <NsInlineNotification
+              v-if="isDelegated"
+              kind="info"
+              :title="$t('settings.well_known_title')"
+              :showCloseButton="false"
+            >
+              <template #description>
+                <div>
+                  {{
+                    $t("settings.well_known_description", {
+                      domain: matrix_server_name,
+                      host: synapse_domain_name,
+                    })
                   }}
                 </div>
-                <NsCodeSnippet
-                  light
-                  copyTipPosition="left"
-                  copyTipAlignment="center"
-                  :copyTooltip="core.$t('common.copy_to_clipboard')"
-                  :copy-feedback="core.$t('common.copied_to_clipboard')"
-                  :feedback-aria-label="core.$t('common.copied_to_clipboard')"
-                  :wrap-text="true"
-                  :moreText="core.$t('common.show_more')"
-                  :lessText="core.$t('common.show_less')"
-                  expanded
-                  hideExpandButton
-                  >{{ file.content }}</NsCodeSnippet
-                >
-              </div>
-            </div>
+                <div class="well-known-buttons">
+                  <NsButton
+                    v-for="file in wellKnownFiles"
+                    :key="file.name"
+                    kind="tertiary"
+                    size="sm"
+                    type="button"
+                    :icon="copiedFile === file.name ? Checkmark16 : Copy16"
+                    @click="copyWellKnown(file)"
+                  >
+                    {{
+                      copiedFile === file.name
+                        ? core.$t("common.copied_to_clipboard")
+                        : $t("settings.well_known_copy", {
+                            path: `/.well-known/matrix/${file.name}`,
+                          })
+                    }}
+                  </NsButton>
+                </div>
+              </template>
+            </NsInlineNotification>
             <NsToggle
               value="element_enabled"
               :label="$t('settings.element_enabled')"
@@ -595,6 +593,8 @@ import {
   IconService,
   PageTitleService,
 } from "@nethserver/ns8-ui-lib";
+import Copy16 from "@carbon/icons-vue/es/copy/16";
+import Checkmark16 from "@carbon/icons-vue/es/checkmark/16";
 
 export default {
   name: "Settings",
@@ -619,6 +619,9 @@ export default {
       // the admin typed in the field: stop following the Matrix host
       matrix_server_name_edited: false,
       matrix_server_name_locked: false,
+      copiedFile: "",
+      Copy16,
+      Checkmark16,
       element_domain_name: "",
       cinny_domain_name: "",
       element_enabled: false,
@@ -793,6 +796,20 @@ export default {
         .split(/[\s,]+/)
         .map((item) => item.trim())
         .filter((item) => item);
+    },
+    async copyWellKnown(file) {
+      try {
+        await navigator.clipboard.writeText(file.content);
+      } catch (e) {
+        console.error("cannot copy to the clipboard", e);
+        return;
+      }
+      this.copiedFile = file.name;
+      setTimeout(() => {
+        if (this.copiedFile === file.name) {
+          this.copiedFile = "";
+        }
+      }, 2000);
     },
     goToCertificates() {
       this.core.$router.push("/settings/tls-certificates");
@@ -1158,9 +1175,10 @@ export default {
   margin-bottom: $spacing-06;
 }
 
-.well-known-url {
-  margin-bottom: $spacing-03;
-  font-weight: 600;
-  word-break: break-all;
+.well-known-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-03;
+  margin-top: $spacing-05;
 }
 </style>
