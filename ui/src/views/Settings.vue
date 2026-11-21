@@ -51,6 +51,7 @@
               ref="matrix_server_name"
             ></cv-text-input>
             <NsInlineNotification
+              v-if="!loading.getConfiguration"
               :kind="matrix_server_name_locked ? 'info' : 'warning'"
               :title="
                 matrix_server_name_locked
