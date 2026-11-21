@@ -64,7 +64,7 @@
         "federation_whitelist_placeholder": "e.g. matrix.example.org",
         "advanced": "Advanced",
         "turn_enabled": "External TURN server",
-        "turn_enabled_tooltip": "An external TURN server lets voice and video calls work when users are behind NAT. Turning it off also removes the stored shared secret.",
+        "turn_enabled_tooltip": "For legacy one to one calls, and clients without Element Call, when users are behind NAT. Element Call uses LiveKit and its own TURN relay. Turning it off also removes the stored shared secret.",
         "turn_uris": "TURN server URIs",
         "turn_uris_helper": "One URI per line.",
         "turn_uris_placeholder": "e.g. turn:turn.example.com:3478?transport=udp",
