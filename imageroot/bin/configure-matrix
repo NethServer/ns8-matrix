@@ -78,13 +78,17 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_SQL_LOG_LEVEL': 'WARNING' if log_level == 'WARNING' else 'INFO',
     }
 
-def write_private(path, content):
-    """Write an owner-only file atomically: synapse, livekit and lk-jwt run this script at the same time."""
+def write_atomic(path, content, mode=0o666):
+    """Write a file atomically: every unit runs this script at start, so a container may read a file while another start rewrites it."""
     tmp = path + '.tmp' + str(os.getpid())
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
     with os.fdopen(fd, 'w') as f:
         f.write(content)
     os.replace(tmp, path)
+
+
+def write_private(path, content):
+    write_atomic(path, content, 0o600)
 
 
 def generate_secret(length=32):
@@ -170,30 +174,27 @@ template_dir = '../templates'
 with open(f'{template_dir}/synapse-homeserver.yaml', 'r') as f:
     synapse_config = substitute_env_vars(f.read(), env_vars, SYNAPSE_QUOTED_KEYS)
  
-with open('synapse-config/homeserver.yaml', 'w') as f:
-    f.write(synapse_config)
+# If NETHVOICE_AUTH_URL is set, append the appservice lines to the generated homeserver.yaml
+if env_vars.get('NETHVOICE_AUTH_URL'):
+    synapse_config += '\napp_service_config_files:\n   - /data/config/matrix2acrobits.yaml\n'
 
-    # If NETHVOICE_AUTH_URL is set, append the appservice lines to the generated homeserver.yaml
-    if env_vars.get('NETHVOICE_AUTH_URL'):
-        f.write('\napp_service_config_files:\n   - /data/config/matrix2acrobits.yaml\n')
+if env_vars.get('LIVEKIT_ENABLED') == '1':
+    with open(f'{template_dir}/synapse-livekit.yaml', 'r') as lf:
+        synapse_config += substitute_env_vars(lf.read(), env_vars)
 
-    if env_vars.get('LIVEKIT_ENABLED') == '1':
-        with open(f'{template_dir}/synapse-livekit.yaml', 'r') as lf:
-            f.write(substitute_env_vars(lf.read(), env_vars))
+write_atomic('synapse-config/homeserver.yaml', synapse_config)
 
 # Expand matrix2acrobits.yaml into the synapse config directory
 with open(f'{template_dir}/matrix2acrobits.yaml', 'r') as f:
     matrix_a2a = substitute_env_vars(f.read(), env_vars)
 
-with open('synapse-config/matrix2acrobits.yaml', 'w') as f:
-    f.write(matrix_a2a)
+write_atomic('synapse-config/matrix2acrobits.yaml', matrix_a2a)
 
 # Render log config
 with open(f'{template_dir}/synapse-log.config', 'r') as f:
     log_config = substitute_env_vars(f.read(), env_vars)
 
-with open('synapse-config/log.config', 'w') as f:
-    f.write(log_config)
+write_atomic('synapse-config/log.config', log_config)
 
 # Process Element configuration
 with open(f'{template_dir}/element-config.json', 'r') as f:
@@ -205,8 +206,7 @@ if env_vars.get('LIVEKIT_ENABLED') == '1':
     element_json['element_call'] = {'use_exclusively': True}
     element_config = json.dumps(element_json, indent=4)
 
-with open('element-config/config.json', 'w') as f:
-    f.write(element_config)
+write_atomic('element-config/config.json', element_config)
 
 # LiveKit and lk-jwt-service hold the API secret: owner only
 livekit_env = agent.read_envfile("livekit.env") if os.path.exists("livekit.env") else {}
@@ -251,5 +251,4 @@ if env_vars.get('LIVEKIT_ENABLED') == '1' and livekit_env:
 with open(f'{template_dir}/cinny-config.json', 'r') as f:
     cinny_config = substitute_env_vars(f.read(), env_vars)
 
-with open('cinny-config/config.json', 'w') as f:
-    f.write(cinny_config)
+write_atomic('cinny-config/config.json', cinny_config)
