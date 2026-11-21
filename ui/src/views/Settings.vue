@@ -1090,4 +1090,8 @@ export default {
   padding-left: $spacing-07;
   margin-bottom: $spacing-06;
 }
+
+.cv-inline-notification {
+  max-width: 38rem;
+}
 </style>
