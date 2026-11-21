@@ -31,6 +31,76 @@
               :invalid-message="error.synapse_domain_name"
               ref="synapse_domain_name"
             ></cv-text-input>
+            <cv-text-input
+              :label="$t('settings.matrix_server_name')"
+              v-model.trim="matrix_server_name"
+              @input="matrix_server_name_edited = true"
+              :placeholder="$t('settings.matrix_server_name_placeholder')"
+              :helper-text="
+                $t('settings.matrix_server_name_helper', {
+                  id: '@user:' + (matrix_server_name || 'example.com'),
+                })
+              "
+              :disabled="
+                loading.getConfiguration ||
+                loading.configureModule ||
+                matrix_server_name_locked
+              "
+              :invalid-message="error.matrix_server_name"
+              ref="matrix_server_name"
+            ></cv-text-input>
+            <NsInlineNotification
+              :kind="matrix_server_name_locked ? 'info' : 'warning'"
+              :title="
+                matrix_server_name_locked
+                  ? $t('settings.matrix_server_name_locked_title')
+                  : $t('settings.matrix_server_name_warning_title')
+              "
+              :description="
+                matrix_server_name_locked
+                  ? $t('settings.matrix_server_name_locked_description')
+                  : $t('settings.matrix_server_name_warning_description')
+              "
+              :showCloseButton="false"
+            />
+            <div v-if="isDelegated" class="mg-bottom">
+              <NsInlineNotification
+                kind="info"
+                :title="$t('settings.well_known_title')"
+                :description="
+                  $t('settings.well_known_description', {
+                    domain: matrix_server_name,
+                    host: synapse_domain_name,
+                  })
+                "
+                :showCloseButton="false"
+              />
+              <div
+                v-for="file in wellKnownFiles"
+                :key="file.name"
+                class="mg-bottom"
+              >
+                <div class="well-known-url">
+                  https://{{ matrix_server_name }}/.well-known/matrix/{{
+                    file.name
+                  }}
+                </div>
+                <NsCodeSnippet
+                  light
+                  copyTipPosition="left"
+                  copyTipAlignment="center"
+                  :copyTooltip="core.$t('common.copy_to_clipboard')"
+                  :copy-feedback="core.$t('common.copied_to_clipboard')"
+                  :feedback-aria-label="core.$t('common.copied_to_clipboard')"
+                  :wrap-text="true"
+                  :moreText="core.$t('common.show_more')"
+                  :lessText="core.$t('common.show_less')"
+                  expanded
+                  hideExpandButton
+                  >{{ file.content }}</NsCodeSnippet
+                >
+              </div>
+            </div>
             <NsToggle
               value="element_enabled"
               :label="$t('settings.element_enabled')"
@@ -545,6 +615,10 @@ export default {
       },
       urlCheckInterval: null,
       synapse_domain_name: "",
+      matrix_server_name: "",
+      // the admin typed in the field: stop following the Matrix host
+      matrix_server_name_edited: false,
+      matrix_server_name_locked: false,
       element_domain_name: "",
       cinny_domain_name: "",
       element_enabled: false,
@@ -599,6 +673,7 @@ export default {
         getConfiguration: "",
         configureModule: "",
         synapse_domain_name: "",
+        matrix_server_name: "",
         element_domain_name: "",
         cinny_domain_name: "",
         ldap_domain: "",
@@ -628,6 +703,36 @@ export default {
       }
       return ports;
     },
+    isDelegated() {
+      return (
+        this.matrix_server_name !== "" &&
+        this.synapse_domain_name !== "" &&
+        this.matrix_server_name.toLowerCase() !==
+          this.synapse_domain_name.toLowerCase()
+      );
+    },
+    // built from the form, so the files follow the fields before saving
+    wellKnownFiles() {
+      const host = this.synapse_domain_name;
+      const files = [
+        {
+          name: "client",
+          content: JSON.stringify(
+            { "m.homeserver": { base_url: `https://${host}` } },
+            null,
+            4
+          ),
+        },
+      ];
+      // lk-jwt-service resolves the user domain through the server file too
+      if (this.federation || this.livekit_enabled) {
+        files.push({
+          name: "server",
+          content: JSON.stringify({ "m.server": `${host}:443` }, null, 4),
+        });
+      }
+      return files;
+    },
   },
   beforeRouteEnter(to, from, next) {
     next((vm) => {
@@ -640,6 +745,15 @@ export default {
     next();
   },
   watch: {
+    // suggest the parent domain: matrix.example.com gives example.com
+    synapse_domain_name(host) {
+      if (this.matrix_server_name_locked || this.matrix_server_name_edited) {
+        return;
+      }
+      const labels = host.trim().toLowerCase().split(".");
+      this.matrix_server_name =
+        labels.length > 2 ? labels.slice(1).join(".") : labels.join(".");
+    },
     // a hidden field must not keep the error that made it visible
     element_enabled(enabled) {
       if (!enabled) {
@@ -730,7 +844,11 @@ export default {
       const config = taskResult.output;
 
       // Set configuration fields
+      this.matrix_server_name_locked = config.matrix_server_name_locked;
+      // a stored value is a choice already made: the host watcher must not replace it
+      this.matrix_server_name_edited = !!config.matrix_server_name;
       this.synapse_domain_name = config.synapse_domain_name || "";
+      this.matrix_server_name = config.matrix_server_name || "";
       this.element_domain_name = config.element_domain_name || "";
       this.cinny_domain_name = config.cinny_domain_name || "";
       this.element_enabled = this.element_domain_name !== "";
@@ -788,6 +906,14 @@ export default {
         this.error.synapse_domain_name = this.$t("common.required");
         if (isValidationOk) {
           this.focusElement("synapse_domain_name");
+          isValidationOk = false;
+        }
+      }
+
+      if (!this.matrix_server_name) {
+        this.error.matrix_server_name = this.$t("common.required");
+        if (isValidationOk) {
+          this.focusElement("matrix_server_name");
           isValidationOk = false;
         }
       }
@@ -947,6 +1073,7 @@ export default {
           action: taskAction,
           data: {
             synapse_domain_name: this.synapse_domain_name,
+            matrix_server_name: this.matrix_server_name,
             element_domain_name: this.element_enabled
               ? this.element_domain_name
               : "",
@@ -1029,5 +1156,11 @@ export default {
 .toggle-dependent {
   padding-left: $spacing-07;
   margin-bottom: $spacing-06;
+}
+
+.well-known-url {
+  margin-bottom: $spacing-03;
+  font-weight: 600;
+  word-break: break-all;
 }
 </style>
