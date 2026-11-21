@@ -15,7 +15,10 @@ ${delegated_domain}    dom.test
 *** Keywords ***
 Install a delegated instance
     Set Suite Variable    ${main_module_id}    ${module_id}
-    ${output} =    Add module    ${IMAGE_URL}
+    # The module allows one instance per node
+    ${output}  ${rc} =    Execute Command    add-module --force ${IMAGE_URL} 1
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
     &{output} =    Evaluate    ${output}
     Set Suite Variable    ${delegated_id}    ${output.module_id}
     ${payload} =    Evaluate    json.dumps({"synapse_domain_name": $delegated_host, "matrix_server_name": $delegated_domain, "lets_encrypt": False, "ldap_domain": $user_domain})    modules=json
@@ -40,11 +43,14 @@ Configure the delegated instance with
     [Arguments]    ${extra}    ${rc_expected}=0
     ${payload} =    Evaluate    json.dumps({"synapse_domain_name": $delegated_host, "lets_encrypt": False, "ldap_domain": $user_domain, **json.loads('{' + $extra + '}')})    modules=json
     ${out} =    Run task    module/${delegated_id}/configure-module    ${payload}    rc_expected=${rc_expected}    decode_json=${FALSE}
+    # Synapse restarts after a configuration change
+    Wait Until Keyword Succeeds    30 times    5 seconds    Delegated Synapse answers
     RETURN    ${out}
 
 Well-known of the user domain
     [Arguments]    ${name}
-    ${out} =    Execute Command    curl -sk -H "Host: ${delegated_domain}" https://127.0.0.1/.well-known/matrix/${name}
+    ${out} =    Execute Command    curl -skf -H "Host: ${delegated_domain}" https://127.0.0.1/.well-known/matrix/${name}
+    Should Not Be Empty    ${out}
     ${response} =    Evaluate    json.loads($out)    modules=json
     RETURN    ${response}
 
@@ -83,7 +89,7 @@ Check a request without the user domain keeps it
     Configure the delegated instance with    "federation": true
     ${config} =    Delegated configuration
     Should Be Equal    ${config['matrix_server_name']}    ${delegated_domain}
-    ${response} =    Well-known of the user domain    server
+    ${response} =    Wait Until Keyword Succeeds    30 times    5 seconds    Well-known of the user domain    server
     Should Be Equal    ${response['m.server']}    ${delegated_domain}:443
 
 Check the main instance keeps its host as user domain
