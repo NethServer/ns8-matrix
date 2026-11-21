@@ -30,6 +30,9 @@ Check the configuration survives the update
     ${config} =    Run task    module/${module_id}/get-configuration    {}
     Should Be Equal    ${config['synapse_domain_name']}    ${synapse_host}
     Should Be Equal    ${config['ldap_domain']}    ${user_domain}
+    # Before the setting existed, the user domain was the Matrix host
+    Should Be Equal    ${config['matrix_server_name']}    ${synapse_host}
+    Should Be True    ${config['matrix_server_name_locked']}
 
 Check the user directory finds a room member after the update
     Wait Until Keyword Succeeds    10 minutes    10 seconds    Synapse background updates are done

@@ -1,9 +1,8 @@
 {
-    "default_server_name": "${SYNAPSE_DOMAIN_NAME}",
     "default_server_config": {
         "m.homeserver": {
             "base_url": "https://${SYNAPSE_DOMAIN_NAME}",
-            "server_name": "${SYNAPSE_DOMAIN_NAME}"
+            "server_name": "${MATRIX_SERVER_NAME}"
         }
     },
     "disable_custom_urls": false,

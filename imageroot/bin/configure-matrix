@@ -41,6 +41,7 @@ def synapse_derived_vars(env_vars):
     """Compute the values that the templates cannot express with a plain substitution"""
     federation = env_vars.get('FEDERATION', '0') == '1'
     livekit = env_vars.get('LIVEKIT_ENABLED', '0') == '1'
+    delegated = env_vars['MATRIX_SERVER_NAME'].lower() != env_vars['SYNAPSE_DOMAIN_NAME'].lower()
     whitelist = split_list(env_vars.get('FEDERATION_WHITELIST', ''))
     # null allows every server, an empty list also blocks the requests we send out
     if not federation:
@@ -63,6 +64,7 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_LISTENER_RESOURCES': 'client, federation' if federation else ('client, openid' if livekit else 'client'),
         # lk-jwt-service finds that endpoint through the server well-known, else it tries port 8448
         'SYNAPSE_SERVE_SERVER_WELLKNOWN': 'true' if federation or livekit else 'false',
+        'SYNAPSE_SERVE_CLIENT_WELLKNOWN': 'true' if delegated or livekit else 'false',
         'SYNAPSE_FEDERATION_WHITELIST': federation_whitelist,
         'ELEMENT_DEFAULT_FEDERATE': 'true' if federation else 'false',
         'SYNAPSE_SMTP_USER_VALUE': json.dumps(smtp_user, ensure_ascii=False) if smtp_user else 'null',
@@ -117,6 +119,8 @@ def substitute_env_vars(content, env_vars, quoted_keys=()):
 
 # Read environment variables from config
 env_vars = agent.read_envfile("config.env")
+# Older releases used the Matrix host as user domain
+env_vars['MATRIX_SERVER_NAME'] = env_vars.get('MATRIX_SERVER_NAME') or env_vars['SYNAPSE_DOMAIN_NAME']
 
 # Read LDAP environment if available
 ldap_env = agent.read_envfile("ldap.env")
@@ -239,7 +243,7 @@ if env_vars.get('LIVEKIT_ENABLED') == '1' and livekit_env:
         f"LIVEKIT_KEY={livekit_env['LIVEKIT_KEY']}\n",
         f"LIVEKIT_SECRET={livekit_env['LIVEKIT_SECRET']}\n",
         # Only local users may create a call room, remote ones can only join
-        f"LIVEKIT_FULL_ACCESS_HOMESERVERS={env_vars['SYNAPSE_DOMAIN_NAME']}\n",
+        f"LIVEKIT_FULL_ACCESS_HOMESERVERS={env_vars['MATRIX_SERVER_NAME']}\n",
         # Published traffic reaches the pod address, not its loopback
         f"LIVEKIT_JWT_BIND=0.0.0.0:{os.environ['LK_JWT_PORT']}\n",
         # Test labs with a self signed certificate only, it also trusts any federated server

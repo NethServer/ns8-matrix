@@ -1,4 +1,4 @@
-server_name: ${SYNAPSE_DOMAIN_NAME}
+server_name: ${MATRIX_SERVER_NAME}
 pid_file: /data/homeserver.pid
 public_baseurl: https://${SYNAPSE_DOMAIN_NAME}/
 
@@ -41,6 +41,8 @@ enable_registration: false
 # Federation is optional. When enabled, other servers find us through
 # /.well-known/matrix/server on port 443, so port 8448 is not needed.
 serve_server_wellknown: ${SYNAPSE_SERVE_SERVER_WELLKNOWN}
+# Clients find the Matrix host from the user domain through /.well-known/matrix/client
+serve_client_wellknown: ${SYNAPSE_SERVE_CLIENT_WELLKNOWN}
 federation_domain_whitelist: ${SYNAPSE_FEDERATION_WHITELIST}
 
 media_retention:
@@ -61,7 +63,7 @@ report_stats: false
 
 macaroon_secret_key: ${MACAROON_SECRET}
 form_secret: ${FORM_SECRET}
-signing_key_path: "/data/${SYNAPSE_DOMAIN_NAME}.signing.key"
+signing_key_path: "/data/${MATRIX_SERVER_NAME}.signing.key"
 
 # Email configuration for notifications
 email:

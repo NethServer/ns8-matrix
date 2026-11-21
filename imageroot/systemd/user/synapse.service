@@ -22,7 +22,7 @@ ExecStartPre=/bin/rm -f %t/synapse.pid %t/synapse.ctr-id
 ExecStartPre=-runagent discover-ldap
 ExecStartPre=-runagent discover-smarthost
 ExecStartPre=-runagent configure-matrix
-ExecStartPre=podman run --rm -e SYNAPSE_SERVER_NAME=${SYNAPSE_DOMAIN_NAME}\
+ExecStartPre=podman run --rm -e SYNAPSE_SERVER_NAME=${MATRIX_SERVER_NAME}\
  -e SYNAPSE_REPORT_STATS=no  --volume=synapse-data:/data:z --volume=synapse-config:/data/config:z \
  ${SYNAPSE_IMAGE} generate
 ExecStart=/usr/bin/podman run \
@@ -34,7 +34,7 @@ ExecStart=/usr/bin/podman run \
     --pod-id-file %t/matrix.pod-id \
     --volume=synapse-data:/data:z \
     --volume=%S/state/synapse-config:/data/config:z \
-    --env=SYNAPSE_SERVER_NAME=${SYNAPSE_DOMAIN_NAME} \
+    --env=SYNAPSE_SERVER_NAME=${MATRIX_SERVER_NAME} \
     --env=SYNAPSE_REPORT_STATS=no \
     --env=SYNAPSE_CONFIG_PATH=/data/config/homeserver.yaml \
     --env-file=smarthost.env \

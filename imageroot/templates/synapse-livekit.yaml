@@ -13,8 +13,7 @@ matrix_rtc:
 experimental_features:
   msc4143_enabled: true
 
-# Cinny reads the focus from the client well-known only
-serve_client_wellknown: true
+# Cinny reads the focus from the client well-known only, served when LiveKit is on
 extra_well_known_client_content:
   org.matrix.msc4143.rtc_foci:
     - type: livekit
