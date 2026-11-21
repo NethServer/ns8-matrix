@@ -77,7 +77,7 @@
         "livekit_ports_helper": "Open or forward these ports to this node: {ports}.",
         "livekit_public_address": "Public address announced to clients",
         "livekit_public_address_helper": "Leave empty to use the detected address: {address}.",
-        "livekit_public_address_none": "No public address detected, set one.",
+        "livekit_public_address_none": "The public address is detected when you save. Leave empty unless you are behind NAT and detection cannot find it.",
         "livekit_turn_enabled": "LiveKit TURN on port 3478",
         "livekit_turn_enabled_tooltip": "Relays calls for clients whose network blocks the LiveKit ports but allows 3478/udp.",
         "turn_port_in_use": "Port 3478 is already used by another application on this node",
