@@ -5,6 +5,9 @@ Resource    matrix.resource
 
 *** Test Cases ***
 Check LDAP users can log in
+    # A fresh Synapse builds its user directory in the background: users and rooms created
+    # meanwhile can be left out of it for good
+    Wait Until Keyword Succeeds    10 minutes    10 seconds    Synapse background updates are done
     # Synapse limits logins per account, so each user logs in once and keeps its token
     ${token} =    Get a token for    user1
     Set Global Variable    ${token1}    ${token}
@@ -39,7 +42,4 @@ Check registration is closed
     Should Be Equal    ${response['errcode']}    M_FORBIDDEN
 
 Check the user directory finds a room member
-    # The stable release often missed the member for minutes in CI, 22_update checks the image under test
-    Skip If    '${SCENARIO}' == 'update'    checked after the update
-    Wait Until Keyword Succeeds    10 minutes    10 seconds    Synapse background updates are done
     Wait Until Keyword Succeeds    2 minutes    2 seconds    user1 finds user2 in the directory
