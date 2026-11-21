@@ -94,8 +94,9 @@ An instance installed before LiveKit has 5 TCP ports and no UDP port. The core s
 demand on update but allocates nothing, so `bin/apply-livekit-ports` allocates the missing TCP
 port and the UDP range once, and stores them in the module environment. It runs from
 `update-module.d/02livekit_ports` and again on every `configure-module`. When the node has no
-1024 free UDP ports, it logs a warning, `configure-module` refuses to enable the TURN and
-`configure-matrix` keeps it off. A restore or a clone gets new ports from `add-module` on the
+1024 free UDP ports, it logs a warning and `configure-matrix` keeps the TURN off. A request
+that turns the TURN on tries the allocation again, and is refused with `turn_no_relay_ports`
+only if it still fails. A restore or a clone gets new ports from `add-module` on the
 target node.
 
 The LiveKit media ports are fixed, outside the NS8 allocator: 7881/tcp, 7882/udp, and
@@ -160,11 +161,12 @@ containers, so restarting Synapse alone, for example on `ldap-changed`, leaves t
 other containers running.
 
 `livekit.service` is not in the pod and is not bound to it, so a pod restart leaves it
-running. `80start_services` and `update-module.d/80restart_services` restart it, and
-`lk-jwt.service`, so they always load the new configuration.
+running. `80start_services` restarts it and `lk-jwt.service` once, after Synapse, so they
+always load the new configuration. `update-module.d/80restart_services` starts
+`lk-jwt.service` and restarts `livekit.service` for its new image.
 
 `80start_services` stops the disabled clients, restarts the pod, then starts PostgreSQL,
-Synapse and the enabled clients. `update-module.d/80restart_services` does the same when
+Synapse and the enabled clients, then LiveKit and lk-jwt. `update-module.d/80restart_services` does the same when
 `synapse.service` is enabled, and does nothing otherwise.
 
 PostgreSQL counts as started only when its `ExecStartPost` loop can open the `synapse`
@@ -209,6 +211,8 @@ flowchart LR
     CM --> EC[element-config/config.json]
     CM --> CC[cinny-config/config.json]
     DA[detect-addresses] --> DE["environment<br/>DETECTED_PUBLIC_IP"]
+    AP[apply-livekit-ports] --> UE["environment<br/>LIVEKIT_HTTP_PORT, LK_JWT_PORT,<br/>UDP_PORTS_RANGE"]
+    UE --> CM
     R --> LV[state/livekit.env]
     DE --> CM
     LV --> CM
@@ -220,12 +224,14 @@ flowchart LR
 the Traefik routes and writes `m2a.env` for matrix2acrobits. It does not render the service
 configuration. With LiveKit on, `30livekit` creates `livekit.env` with the API key and secret
 once, sets the LiveKit routes, and runs `detect-addresses` when `livekit_public_address` is
-empty. `detect-addresses` stores `DETECTED_PUBLIC_IP` in the module environment.
+empty. `detect-addresses` stores `DETECTED_PUBLIC_IP` in the module environment. When the
+lookup fails, it keeps the last address found.
 
 `configure-matrix` renders the files in `templates/` with the values of the env files. It
 creates `database.env` and `matrix-secrets.env` when they are missing. It runs before every
 service start, so the rendered files always match the templates of the current image. Manual
-changes to them are lost. With LiveKit on, it also appends `synapse-livekit.yaml` to
+changes to them are lost. Several units can start at once, so every file is written to a
+temporary file and renamed: a container never reads a half written file. With LiveKit on, it also appends `synapse-livekit.yaml` to
 `homeserver.yaml`, sets `element_call.use_exclusively` in the Element configuration and
 writes `livekit.yaml` and `lk-jwt.env`. LiveKit announces `livekit_public_address`, or
 `DETECTED_PUBLIC_IP` when it is empty.

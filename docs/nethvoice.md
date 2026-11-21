@@ -55,7 +55,6 @@ If the current stack is kept, NethVoice CTI integration needs:
 
 ### Future improvements
 
-- Group calls with [Element Call](https://github.com/element-hq/element-call)
 - WhatsApp bridge with [mautrix-whatsapp](https://github.com/mautrix/whatsapp)
 - Telegram bridge with [mautrix-telegram](https://github.com/mautrix/telegram)
 - A consolidated bridges image, see [container-matrix-bridges](https://github.com/nfrastack/container-matrix-bridges)

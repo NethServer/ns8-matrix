@@ -144,11 +144,11 @@ node.
 The TURN relay helps clients on networks that block the other ports but allow 3478/udp. It is
 refused if another application, for example BigBlueButton, already uses 3478 on the node.
 It relays through 1024 UDP ports that NS8 reserves for the instance. They stay closed, there
-is nothing to open or forward.
-Networks that only allow port 443 are not covered.
+is nothing to open or forward. Networks that only allow port 443 are not covered.
 
-LiveKit announces the public address found at the last save of the settings. Behind NAT, check it in the
-Settings page and set `livekit_public_address` if it is wrong.
+LiveKit announces the public address found at the last save of the settings. If the lookup
+fails, the previous address is kept. Behind NAT, check it in the Settings page and set
+`livekit_public_address` if it is wrong.
 
 LiveKit must reach `https://<synapse_domain_name>` from the node to check who joins a call.
 The certificate must be valid, a self signed one makes every call fail. In a test lab, send
@@ -217,7 +217,8 @@ secrets. The effect is the same as a rotation, see [Secrets](#secrets).
 A restore or a clone onto a node where another application already uses 7881/tcp or
 7882/udp turns Element Call off, and one where 3478/udp is used turns the LiveKit TURN off.
 The task logs a warning and the rest of the instance comes back. Free the port, then enable
-the option again.
+the option again. A `livekit_public_address` set by hand is restored as is, with a warning:
+check it matches the new node.
 
 ## Update
 
