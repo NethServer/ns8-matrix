@@ -14,7 +14,8 @@ Set them in the Settings page or with `configure-module`.
 
 | Parameter | Default | Description |
 |---|---|---|
-| `synapse_domain_name` | required | FQDN of the Matrix server, for example `matrix.example.com`. It becomes part of every user ID. |
+| `synapse_domain_name` | required | FQDN of the Matrix server, for example `matrix.example.com`. Clients connect to it. It can change later. |
+| `matrix_server_name` | see below | User domain, for example `example.com`. User IDs look like `@user:example.com`. It cannot change once a user has logged in, see [User domain](#user-domain). |
 | `lets_encrypt` | required | Request Let's Encrypt certificates for all the configured domains. A failed challenge refuses the request. |
 | `ldap_domain` | required | LDAP domain used for authentication. |
 | `element_domain_name` | empty | FQDN of the Element web client. Empty disables Element. |
@@ -93,20 +94,101 @@ Directory. Synapse turns it into the lowercase Matrix user ID. The display name 
 `displayName`. Synapse sets it only at the first login, so existing users keep their current
 name.
 
+## User domain
+
+`matrix_server_name` is the Synapse `server_name`: the part after the colon in `@user:example.com`.
+It is written in every user ID, room ID and signed event, so Matrix cannot rename it. Synapse
+refuses to start when it differs from the users already stored in the database. There is no
+migration tool: a new user domain needs a new empty database.
+
+So `configure-module` accepts a new `matrix_server_name` only while no user has logged in.
+After that, it answers `validation-failed` with `matrix_server_name_locked`, and the Settings
+page shows the field disabled. A request without `matrix_server_name` keeps the stored value.
+Without a stored value, it takes `synapse_domain_name`.
+
+`synapse_domain_name` stays free. It is only the address of the server.
+
+The Synapse documentation recommends the bare domain as user domain, like an email address:
+`@user:example.com` with the server at `matrix.example.com`. This is called delegation. The
+Settings page suggests it: it fills the user domain with the Matrix server domain minus its
+first label, until the field is edited.
+
+### How clients and servers find the Matrix server
+
+A client or server that knows only `@user:example.com` asks `https://example.com` where the
+Matrix server is. Two files answer:
+
+- `/.well-known/matrix/client`, for apps like Element X:
+
+  ```json
+  {"m.homeserver": {"base_url": "https://matrix.example.com"}}
+  ```
+
+- `/.well-known/matrix/server`, for other servers with federation, and for lk-jwt-service with
+  Element Call:
+
+  ```json
+  {"m.server": "matrix.example.com:443"}
+  ```
+
+The Settings page shows both files with a copy button when the two domains differ. The web
+clients of the module do not need them: they connect to `synapse_domain_name` directly.
+
+### DNS and web setup
+
+`matrix.example.com` needs an A or AAAA record to the node, as before. Nothing changes in the
+DNS for `example.com`. Like with email, it can point to a website hosted elsewhere. What
+matters is where `https://example.com` answers.
+
+If `example.com` points to a website elsewhere, publish the two files there:
+
+- at `https://example.com/.well-known/matrix/client` and `/.well-known/matrix/server`
+- with a valid certificate for `example.com`
+- with `Content-Type: application/json`
+- with `Access-Control-Allow-Origin: *` on the client file, so web clients can read it
+
+If `example.com` points to this node, there is nothing to publish. When the two domains differ,
+`configure-module` creates two Traefik routes on `example.com`: `/.well-known/matrix` and
+`/_matrix` to Synapse. Synapse answers the server file with `example.com:443`, so the federation
+traffic goes through the second route. Other paths of `example.com` stay free for another
+application. These routes follow `lets_encrypt`. When `example.com` points elsewhere they are
+never reached, and Let's Encrypt cannot validate them: Traefik logs the failure, the
+configuration still succeeds.
+
+A DNS SRV record `_matrix-fed._tcp.example.com` can replace the server file, for federation
+only. It is not recommended: other servers then expect a certificate for `example.com` on the
+node. Clients have no DNS equivalent of the client file.
+
+Check the result:
+
+```
+curl https://example.com/.well-known/matrix/client
+curl https://example.com/.well-known/matrix/server
+```
+
+With federation, use the [Matrix Federation Tester](https://federationtester.matrix.org/) on
+`example.com`.
+
+### Existing installations
+
+Before this setting existed, the user domain was `synapse_domain_name`. The update stores it as
+`matrix_server_name`, so user IDs do not change. From then on, `synapse_domain_name` can change
+like on a new installation.
+
 ## Federation
 
 Federation is disabled by default: users can only talk with accounts of this server.
 
 When `federation` is enabled, Synapse serves the federation API and answers
-`/.well-known/matrix/server` with `<synapse_domain_name>:443`. Other servers reach this one
-through the existing Traefik route on port 443. Port 8448 is not needed.
+`/.well-known/matrix/server` with `<matrix_server_name>:443`. Other servers reach this one
+through Traefik on port 443. Port 8448 is not needed.
 
 Requirements:
 
 - a public DNS record for `synapse_domain_name`
 - a valid certificate for it, other servers refuse self-signed certificates
-- do not change `synapse_domain_name` once federation is in use, it is part of every user ID
-  and of the server signing key
+- when the user domain differs, the server file on the user domain, see
+  [User domain](#user-domain)
 
 Use `federation_whitelist` to federate only with known partners. Check the setup with the
 [Matrix Federation Tester](https://federationtester.matrix.org/).

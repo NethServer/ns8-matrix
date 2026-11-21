@@ -116,12 +116,23 @@ flowchart LR
     T -- "synapse_domain_name/_matrix/push/v1/notify<br/>route matrix1-push" --> M
     T -- "synapse_domain_name/livekit/sfu<br/>route matrix1-livekit-sfu, prefix stripped" --> L["LiveKit<br/>LIVEKIT_HTTP_PORT"]
     T -- "synapse_domain_name/livekit/jwt<br/>route matrix1-livekit-jwt, prefix stripped" --> J["lk-jwt-service<br/>LK_JWT_PORT"]
+    T -- "matrix_server_name/.well-known/matrix<br/>route matrix1-wellknown" --> S
+    T -- "matrix_server_name/_matrix<br/>route matrix1-userdomain" --> S
 ```
 
 The Synapse route always exists. The Element and Cinny routes exist when their domain name is
 set. The two matrix2acrobits routes exist when `nethvoice_auth_url` is set. The two LiveKit
-routes exist when `livekit_enabled` is true. Otherwise
+routes exist when `livekit_enabled` is true. The `wellknown` and `userdomain` routes exist when
+`matrix_server_name` differs from `synapse_domain_name`, see
+[User domain](admin-guide.md#user-domain). Otherwise
 `configure-module` deletes them. All routes redirect HTTP to HTTPS and follow `lets_encrypt`.
+
+`MATRIX_SERVER_NAME` is the Synapse `server_name`, the signing key file name, the Element
+`m.homeserver.server_name`, the matrix2acrobits appservice user and the homeserver allowed by
+lk-jwt-service. `SYNAPSE_DOMAIN_NAME` is the address: `public_baseurl`, the routes, the client
+URLs. Synapse builds both well-known files itself: the client file from `public_baseurl`, the
+server file from `server_name`. It serves the client file when the two names differ or LiveKit
+is on.
 
 With federation, Synapse adds the `federation` listener resource and serves
 `/.well-known/matrix/server` on the same route. With LiveKit and no federation, it adds the
