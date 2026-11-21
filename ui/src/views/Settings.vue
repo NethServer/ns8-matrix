@@ -93,6 +93,30 @@
                 ref="cinny_domain_name"
               ></cv-text-input>
             </div>
+            <NsToggle
+              value="letsEncrypt"
+              :label="core.$t('apps_lets_encrypt.request_https_certificate')"
+              v-model="isLetsEncryptEnabled"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <template #tooltip>
+                <div class="mg-bottom-sm">
+                  {{ core.$t("apps_lets_encrypt.lets_encrypt_tips") }}
+                </div>
+                <div class="mg-bottom-sm">
+                  <cv-link @click="goToCertificates">
+                    {{ core.$t("apps_lets_encrypt.go_to_tls_certificates") }}
+                  </cv-link>
+                </div>
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
             <NsComboBox
               v-model.trim="ldap_domain"
               :autoFilter="true"
@@ -122,30 +146,6 @@
             >
               <template #tooltip>
                 {{ $t("settings.search_all_users_tooltip") }}
-              </template>
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </NsToggle>
-            <NsToggle
-              value="letsEncrypt"
-              :label="core.$t('apps_lets_encrypt.request_https_certificate')"
-              v-model="isLetsEncryptEnabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template #tooltip>
-                <div class="mg-bottom-sm">
-                  {{ core.$t("apps_lets_encrypt.lets_encrypt_tips") }}
-                </div>
-                <div class="mg-bottom-sm">
-                  <cv-link @click="goToCertificates">
-                    {{ core.$t("apps_lets_encrypt.go_to_tls_certificates") }}
-                  </cv-link>
-                </div>
               </template>
               <template slot="text-left">{{
                 $t("settings.disabled")
@@ -248,215 +248,227 @@
                 :showCloseButton="false"
               />
             </div>
+              <NsToggle
+                value="turn_enabled"
+                :label="$t('settings.turn_enabled')"
+                v-model="turn_enabled"
+                :disabled="
+                  loading.getConfiguration || loading.configureModule
+                "
+                class="mg-bottom"
+                ref="turn_enabled"
+              >
+                <template #tooltip>
+                  {{ $t("settings.turn_enabled_tooltip") }}
+                </template>
+                <template slot="text-left">{{
+                  $t("settings.disabled")
+                }}</template>
+                <template slot="text-right">{{
+                  $t("settings.enabled")
+                }}</template>
+              </NsToggle>
+              <div
+                v-if="
+                  turn_enabled ||
+                  error.turn_uris ||
+                  error.turn_shared_secret
+                "
+                class="toggle-dependent"
+              >
+                <cv-text-area
+                  :label="$t('settings.turn_uris')"
+                  v-model.trim="turn_uris"
+                  :helper-text="$t('settings.turn_uris_helper')"
+                  :placeholder="$t('settings.turn_uris_placeholder')"
+                  :invalid-message="error.turn_uris"
+                  :disabled="
+                    loading.getConfiguration || loading.configureModule
+                  "
+                  class="mg-bottom"
+                  ref="turn_uris"
+                ></cv-text-area>
+                <NsTextInput
+                  type="password"
+                  :label="$t('settings.turn_shared_secret')"
+                  v-model="turn_shared_secret"
+                  :placeholder="
+                    turn_shared_secret_set
+                      ? $t('settings.turn_shared_secret_unchanged')
+                      : ''
+                  "
+                  :helper-text="$t('settings.turn_shared_secret_helper')"
+                  :invalid-message="error.turn_shared_secret"
+                  :disabled="
+                    loading.getConfiguration || loading.configureModule
+                  "
+                  autocomplete="new-password"
+                  ref="turn_shared_secret"
+                />
+              </div>
             <cv-accordion ref="accordion" class="mg-bottom">
               <cv-accordion-item :open="isAdvancedOpen">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
-                  <cv-text-input
-                    :label="$t('settings.mail_from')"
-                    v-model="mail_from"
-                    :placeholder="$t('settings.mail_from_placeholder')"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    :invalid-message="error.mail_from"
-                    ref="mail_from"
-                  ></cv-text-input>
-                  <NsToggle
-                    value="federation"
-                    :label="$t('settings.federation')"
-                    v-model="federation"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    class="mg-bottom"
-                    ref="federation"
-                  >
-                    <template #tooltip>
-                      {{ $t("settings.federation_tooltip") }}
-                    </template>
-                    <template slot="text-left">{{
-                      $t("settings.disabled")
-                    }}</template>
-                    <template slot="text-right">{{
-                      $t("settings.enabled")
-                    }}</template>
-                  </NsToggle>
-                  <div
-                    v-if="
-                      federation ||
-                      error.federation_whitelist ||
-                      error.remote_media_lifetime_days
-                    "
-                    class="toggle-dependent"
-                  >
-                    <NsInlineNotification
-                      v-if="!isLetsEncryptEnabled"
-                      kind="warning"
-                      :title="$t('settings.federation_certificate_title')"
-                      :description="
-                        $t('settings.federation_certificate_description')
-                      "
-                      :showCloseButton="false"
-                    />
-                    <cv-text-area
-                      :label="$t('settings.federation_whitelist')"
-                      v-model.trim="federation_whitelist"
-                      :helper-text="$t('settings.federation_whitelist_helper')"
-                      :placeholder="
-                        $t('settings.federation_whitelist_placeholder')
-                      "
-                      :invalid-message="error.federation_whitelist"
+                  <h6 class="section-title">{{ $t("settings.section_federation") }}</h6>
+                  <div class="section-body">
+                    <NsToggle
+                      value="federation"
+                      :label="$t('settings.federation')"
+                      v-model="federation"
                       :disabled="
                         loading.getConfiguration || loading.configureModule
                       "
                       class="mg-bottom"
-                      ref="federation_whitelist"
-                    ></cv-text-area>
+                      ref="federation"
+                    >
+                      <template #tooltip>
+                        {{ $t("settings.federation_tooltip") }}
+                      </template>
+                      <template slot="text-left">{{
+                        $t("settings.disabled")
+                      }}</template>
+                      <template slot="text-right">{{
+                        $t("settings.enabled")
+                      }}</template>
+                    </NsToggle>
+                    <div
+                      v-if="
+                        federation ||
+                        error.federation_whitelist ||
+                        error.remote_media_lifetime_days
+                      "
+                      class="toggle-dependent"
+                    >
+                      <NsInlineNotification
+                        v-if="!isLetsEncryptEnabled"
+                        kind="warning"
+                        :title="$t('settings.federation_certificate_title')"
+                        :description="
+                          $t('settings.federation_certificate_description')
+                        "
+                        :showCloseButton="false"
+                      />
+                      <cv-text-area
+                        :label="$t('settings.federation_whitelist')"
+                        v-model.trim="federation_whitelist"
+                        :helper-text="$t('settings.federation_whitelist_helper')"
+                        :placeholder="
+                          $t('settings.federation_whitelist_placeholder')
+                        "
+                        :invalid-message="error.federation_whitelist"
+                        :disabled="
+                          loading.getConfiguration || loading.configureModule
+                        "
+                        class="mg-bottom"
+                        ref="federation_whitelist"
+                      ></cv-text-area>
+                      <NsTextInput
+                        type="number"
+                        min="0"
+                        :label="$t('settings.remote_media_lifetime_days')"
+                        v-model.number="remote_media_lifetime_days"
+                        :helper-text="$t('settings.media_lifetime_helper')"
+                        :invalid-message="error.remote_media_lifetime_days"
+                        :disabled="
+                          loading.getConfiguration || loading.configureModule
+                        "
+                        ref="remote_media_lifetime_days"
+                      />
+                    </div>
+                  </div>
+                  <h6 class="section-title">{{ $t("settings.section_media") }}</h6>
+                  <div class="section-body">
+                    <NsTextInput
+                      type="number"
+                      min="1"
+                      max="2048"
+                      :label="$t('settings.max_upload_size_mb')"
+                      v-model.number="max_upload_size_mb"
+                      :invalid-message="error.max_upload_size_mb"
+                      :disabled="
+                        loading.getConfiguration || loading.configureModule
+                      "
+                      ref="max_upload_size_mb"
+                    />
                     <NsTextInput
                       type="number"
                       min="0"
-                      :label="$t('settings.remote_media_lifetime_days')"
-                      v-model.number="remote_media_lifetime_days"
+                      :label="$t('settings.local_media_lifetime_days')"
+                      v-model.number="local_media_lifetime_days"
                       :helper-text="$t('settings.media_lifetime_helper')"
-                      :invalid-message="error.remote_media_lifetime_days"
+                      :invalid-message="error.local_media_lifetime_days"
                       :disabled="
                         loading.getConfiguration || loading.configureModule
                       "
-                      ref="remote_media_lifetime_days"
+                      ref="local_media_lifetime_days"
                     />
                   </div>
-                  <NsToggle
-                    value="turn_enabled"
-                    :label="$t('settings.turn_enabled')"
-                    v-model="turn_enabled"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    class="mg-bottom"
-                    ref="turn_enabled"
-                  >
-                    <template #tooltip>
-                      {{ $t("settings.turn_enabled_tooltip") }}
-                    </template>
-                    <template slot="text-left">{{
-                      $t("settings.disabled")
-                    }}</template>
-                    <template slot="text-right">{{
-                      $t("settings.enabled")
-                    }}</template>
-                  </NsToggle>
-                  <div
-                    v-if="
-                      turn_enabled ||
-                      error.turn_uris ||
-                      error.turn_shared_secret
-                    "
-                    class="toggle-dependent"
-                  >
-                    <cv-text-area
-                      :label="$t('settings.turn_uris')"
-                      v-model.trim="turn_uris"
-                      :helper-text="$t('settings.turn_uris_helper')"
-                      :placeholder="$t('settings.turn_uris_placeholder')"
-                      :invalid-message="error.turn_uris"
+                  <h6 class="section-title">{{ $t("settings.section_integrations") }}</h6>
+                  <div class="section-body">
+                    <NsToggle
+                      value="nethvoice_enabled"
+                      :label="$t('settings.nethvoice_enabled')"
+                      v-model="nethvoice_enabled"
                       :disabled="
                         loading.getConfiguration || loading.configureModule
                       "
                       class="mg-bottom"
-                      ref="turn_uris"
-                    ></cv-text-area>
-                    <NsTextInput
-                      type="password"
-                      :label="$t('settings.turn_shared_secret')"
-                      v-model="turn_shared_secret"
-                      :placeholder="
-                        turn_shared_secret_set
-                          ? $t('settings.turn_shared_secret_unchanged')
-                          : ''
-                      "
-                      :helper-text="$t('settings.turn_shared_secret_helper')"
-                      :invalid-message="error.turn_shared_secret"
-                      :disabled="
-                        loading.getConfiguration || loading.configureModule
-                      "
-                      autocomplete="new-password"
-                      ref="turn_shared_secret"
-                    />
+                      ref="nethvoice_enabled"
+                    >
+                      <template #tooltip>
+                        {{
+                          $t("settings.nethvoice_auth_url_placeholder_tooltip")
+                        }}
+                      </template>
+                      <template slot="text-left">{{
+                        $t("settings.disabled")
+                      }}</template>
+                      <template slot="text-right">{{
+                        $t("settings.enabled")
+                      }}</template>
+                    </NsToggle>
+                    <div
+                      v-if="nethvoice_enabled || error.nethvoice_auth_url"
+                      class="toggle-dependent"
+                    >
+                      <cv-text-input
+                        :label="$t('settings.nethvoice_auth_url')"
+                        v-model.trim="nethvoice_auth_url"
+                        :placeholder="
+                          $t('settings.nethvoice_auth_url_placeholder')
+                        "
+                        :disabled="
+                          loading.getConfiguration || loading.configureModule
+                        "
+                        :invalid-message="error.nethvoice_auth_url"
+                        ref="nethvoice_auth_url"
+                      ></cv-text-input>
+                    </div>
                   </div>
-                  <NsTextInput
-                    type="number"
-                    min="1"
-                    max="2048"
-                    :label="$t('settings.max_upload_size_mb')"
-                    v-model.number="max_upload_size_mb"
-                    :invalid-message="error.max_upload_size_mb"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    ref="max_upload_size_mb"
-                  />
-                  <NsTextInput
-                    type="number"
-                    min="0"
-                    :label="$t('settings.local_media_lifetime_days')"
-                    v-model.number="local_media_lifetime_days"
-                    :helper-text="$t('settings.media_lifetime_helper')"
-                    :invalid-message="error.local_media_lifetime_days"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    ref="local_media_lifetime_days"
-                  />
-                  <NsComboBox
-                    v-model="log_level"
-                    :label="$t('settings.log_level')"
-                    :title="$t('settings.log_level')"
-                    :options="logLevelOptions"
-                    :invalid-message="error.log_level"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    ref="log_level"
-                  />
-                  <NsToggle
-                    value="nethvoice_enabled"
-                    :label="$t('settings.nethvoice_enabled')"
-                    v-model="nethvoice_enabled"
-                    :disabled="
-                      loading.getConfiguration || loading.configureModule
-                    "
-                    class="mg-bottom"
-                    ref="nethvoice_enabled"
-                  >
-                    <template #tooltip>
-                      {{
-                        $t("settings.nethvoice_auth_url_placeholder_tooltip")
-                      }}
-                    </template>
-                    <template slot="text-left">{{
-                      $t("settings.disabled")
-                    }}</template>
-                    <template slot="text-right">{{
-                      $t("settings.enabled")
-                    }}</template>
-                  </NsToggle>
-                  <div
-                    v-if="nethvoice_enabled || error.nethvoice_auth_url"
-                    class="toggle-dependent"
-                  >
+                  <h6 class="section-title">{{ $t("settings.section_system") }}</h6>
+                  <div class="section-body">
                     <cv-text-input
-                      :label="$t('settings.nethvoice_auth_url')"
-                      v-model.trim="nethvoice_auth_url"
-                      :placeholder="
-                        $t('settings.nethvoice_auth_url_placeholder')
-                      "
+                      :label="$t('settings.mail_from')"
+                      v-model="mail_from"
+                      :placeholder="$t('settings.mail_from_placeholder')"
                       :disabled="
                         loading.getConfiguration || loading.configureModule
                       "
-                      :invalid-message="error.nethvoice_auth_url"
-                      ref="nethvoice_auth_url"
+                      :invalid-message="error.mail_from"
+                      ref="mail_from"
                     ></cv-text-input>
+                    <NsComboBox
+                      v-model="log_level"
+                      :label="$t('settings.log_level')"
+                      :title="$t('settings.log_level')"
+                      :options="logLevelOptions"
+                      :invalid-message="error.log_level"
+                      :disabled="
+                        loading.getConfiguration || loading.configureModule
+                      "
+                      ref="log_level"
+                    />
                   </div>
                 </template>
               </cv-accordion-item>
@@ -972,6 +984,19 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.section-title {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-title:first-child {
+  margin-top: 0;
+}
+
+.section-body {
+  padding-left: 1rem;
+}
+
 @import "../styles/carbon-utils";
 
 .toggle-dependent {

@@ -64,7 +64,7 @@
         "federation_whitelist_placeholder": "e.g. matrix.example.org",
         "advanced": "Advanced",
         "turn_enabled": "External TURN server",
-        "turn_enabled_tooltip": "An external TURN server lets voice and video calls work when users are behind NAT. Turning it off also removes the stored shared secret.",
+        "turn_enabled_tooltip": "For legacy one to one calls, and clients without Element Call, when users are behind NAT. Element Call uses LiveKit and its own TURN relay. Turning it off also removes the stored shared secret.",
         "turn_uris": "TURN server URIs",
         "turn_uris_helper": "One URI per line.",
         "turn_uris_placeholder": "e.g. turn:turn.example.com:3478?transport=udp",
@@ -77,7 +77,7 @@
         "livekit_ports_helper": "Open or forward these ports to this node: {ports}.",
         "livekit_public_address": "Public address announced to clients",
         "livekit_public_address_helper": "Leave empty to use the detected address: {address}.",
-        "livekit_public_address_none": "No public address detected, set one.",
+        "livekit_public_address_none": "The public address is detected when you save. Leave empty unless you are behind NAT and detection cannot find it.",
         "livekit_turn_enabled": "LiveKit TURN on port 3478",
         "livekit_turn_enabled_tooltip": "Relays calls for clients whose network blocks the LiveKit ports but allows 3478/udp.",
         "turn_port_in_use": "Port 3478 is already used by another application on this node",
@@ -94,7 +94,11 @@
         "number_min": "Must be a whole number, {min} or more",
         "number_range": "Must be a whole number between {min} and {max}",
         "search_all_users": "Search all users",
-        "search_all_users_tooltip": "When enabled, users can find every user who logged in at least once. When disabled, they only find people they already share a room with."
+        "search_all_users_tooltip": "When enabled, users can find every user who logged in at least once. When disabled, they only find people they already share a room with.",
+        "section_federation": "Federation",
+        "section_media": "Media",
+        "section_integrations": "Integrations",
+        "section_system": "System"
     },
     "about": {
         "title": "About"
