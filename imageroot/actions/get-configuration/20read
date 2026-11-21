@@ -88,4 +88,13 @@ def in_use(*ports):
 config['livekit_ports_in_use'] = not config['livekit_enabled'] and in_use('7881/tcp', '7882/udp')
 config['livekit_turn_port_in_use'] = not config['livekit_turn_enabled'] and in_use('3478/udp')
 
+# Older releases used the Matrix host as user domain
+config['matrix_server_name'] = env_vars.get('MATRIX_SERVER_NAME') or env_vars.get('SYNAPSE_DOMAIN_NAME', '')
+if env_vars:
+    # Same rule as configure-module: a database that cannot be checked counts as locked
+    users = subprocess.run(['matrix-users-domain'], capture_output=True, text=True)
+    config['matrix_server_name_locked'] = users.returncode != 0 or users.stdout.strip() != ''
+else:
+    config['matrix_server_name_locked'] = False
+
 json.dump(config, fp=sys.stdout)

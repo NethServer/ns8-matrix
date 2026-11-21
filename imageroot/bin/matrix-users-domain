@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Print the domain of the Matrix users stored in the database, nothing if there is none yet.
+# Synapse runs the same query at startup and refuses another server_name once a user exists.
+# Exit 1 if PostgreSQL does not answer.
+#
+
+user=$(podman exec postgresql psql -U postgres -d synapse -Atc \
+    "SELECT name FROM users LIMIT 1" 2>/dev/null)
+ec=$?
+if [[ ${ec} -ne 0 ]]; then
+    # The table does not exist before the first Synapse start
+    podman exec postgresql psql -U postgres -d synapse -Atc "SELECT 1" &>/dev/null || exit 1
+    exit 0
+fi
+[[ -n ${user} ]] && echo "${user#*:}"
+exit 0

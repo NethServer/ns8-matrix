@@ -133,6 +133,14 @@
         "livekit_turn_port_in_use": {
             "type": "boolean",
             "description": "True if another application holds 3478/udp. Only checked while the TURN relay is off"
+        },
+        "matrix_server_name": {
+            "type": "string",
+            "description": "User domain, the Synapse server_name"
+        },
+        "matrix_server_name_locked": {
+            "type": "boolean",
+            "description": "True once a user exists in the database, or if the database cannot be checked"
         }
     }
 }

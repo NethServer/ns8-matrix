@@ -43,6 +43,11 @@
             "format": "hostname",
             "minLength": 1
         },
+        "matrix_server_name": {
+            "type": "string",
+            "description": "User domain, the Synapse server_name in @user:domain. Locked once a user exists. Omitted, the stored value is kept, else synapse_domain_name",
+            "format": "hostname"
+        },
         "element_domain_name": {
             "oneOf": [
                 {
