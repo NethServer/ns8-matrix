@@ -143,6 +143,8 @@ node.
 
 The TURN relay helps clients on networks that block the other ports but allow 3478/udp. It is
 refused if another application, for example BigBlueButton, already uses 3478 on the node.
+It relays through 1024 UDP ports that NS8 reserves for the instance. They stay closed, there
+is nothing to open or forward.
 Networks that only allow port 443 are not covered.
 
 LiveKit announces the public address found at the last save of the settings. Behind NAT, check it in the

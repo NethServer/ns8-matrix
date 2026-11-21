@@ -211,13 +211,22 @@ with open('element-config/config.json', 'w') as f:
 # LiveKit and lk-jwt-service hold the API secret: owner only
 livekit_env = agent.read_envfile("livekit.env") if os.path.exists("livekit.env") else {}
 if env_vars.get('LIVEKIT_ENABLED') == '1' and livekit_env:
+    relay_range = os.environ.get('UDP_PORTS_RANGE', '')
+    turn_enabled = env_vars.get('LIVEKIT_TURN_ENABLED') == '1'
+    if turn_enabled and not relay_range:
+        # LiveKit would fall back to 30000-40000, ports NS8 gives to other modules
+        print(agent.SD_WARNING + "no UDP range for the LiveKit TURN relay, TURN stays off", file=sys.stderr)
+        turn_enabled = False
+    relay_min, _, relay_max = relay_range.partition('-')
     livekit_vars = dict(env_vars)
     livekit_vars.update(livekit_env)
     livekit_vars.update({
         'LIVEKIT_HTTP_PORT': os.environ['LIVEKIT_HTTP_PORT'],
         'LK_JWT_PORT': os.environ['LK_JWT_PORT'],
         'LIVEKIT_NODE_IP': env_vars.get('LIVEKIT_PUBLIC_ADDRESS') or os.environ.get('DETECTED_PUBLIC_IP', ''),
-        'LIVEKIT_TURN_ENABLED_BOOL': 'true' if env_vars.get('LIVEKIT_TURN_ENABLED') == '1' else 'false',
+        'LIVEKIT_TURN_ENABLED_BOOL': 'true' if turn_enabled else 'false',
+        'LIVEKIT_RELAY_MIN': relay_min or '0',
+        'LIVEKIT_RELAY_MAX': relay_max or '0',
         'LIVEKIT_LOG_LEVEL': {'DEBUG': 'debug', 'WARNING': 'warn'}.get(env_vars.get('LOG_LEVEL'), 'info'),
     })
     os.makedirs('livekit-config', exist_ok=True)

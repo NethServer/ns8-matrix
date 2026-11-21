@@ -49,10 +49,11 @@ buildah run \
 # Add imageroot directory to the container image
 buildah add "${container}" imageroot /imageroot
 buildah add "${container}" ui/dist /ui
-# Setup the entrypoint, ask to reserve three TCP ports and set a rootless container
+# Setup the entrypoint, reserve the TCP ports and the LiveKit TURN relay range, rootless container
 buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm cluster:accountconsumer node:fwadm,portsadm" \
     --label="org.nethserver.tcp-ports-demand=6" \
+    --label="org.nethserver.udp-ports-demand=1024" \
     --label="org.nethserver.rootfull=0" \
     --label="org.nethserver.max-per-node=1" \
     --label="org.nethserver.images=${postgres_image} ${synapse_image} ${element_image} ${cinny_image} ${m2a_image} ${livekit_image} ${lk_jwt_image}" \

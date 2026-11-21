@@ -24,6 +24,9 @@ room:
 turn:
   enabled: ${LIVEKIT_TURN_ENABLED_BOOL}
   udp_port: 3478
+  # From the NS8 allocator, bound on the host but not public: the relay only reaches the SFU
+  relay_range_start: ${LIVEKIT_RELAY_MIN}
+  relay_range_end: ${LIVEKIT_RELAY_MAX}
 
 webhook:
   api_key: ${LIVEKIT_KEY}

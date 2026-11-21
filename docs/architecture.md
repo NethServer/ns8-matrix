@@ -40,6 +40,7 @@ on the node:
 | 7881/tcp, media when UDP is blocked | every address | open while `livekit_enabled` is true |
 | 7882/udp, media | every address | open while `livekit_enabled` is true |
 | 3478/udp, TURN relay | every address | open while `livekit_turn_enabled` is true |
+| `UDP_PORTS_RANGE`, TURN relay to the SFU | every address | closed |
 
 The media ports are opened through `add_public_service`.
 
@@ -82,9 +83,20 @@ them in this order:
 | 4 | `M2A_PROXY_PORT` | matrix2acrobits |
 | 5 | `LK_JWT_PORT` | lk-jwt-service |
 
-An instance installed before LiveKit has 5 TCP ports. The core does not allocate new ports on
-update, so `bin/apply-livekit-ports` allocates the missing one once and stores it in the
-module environment.
+NS8 also allocates 1024 UDP ports (`org.nethserver.udp-ports-demand=1024`), in
+`UDP_PORTS_RANGE`. They are the LiveKit TURN relay range, `turn.relay_range_start/end` in
+`livekit.yaml`. Each client that goes through the TURN relay holds about two of them during a
+call. The relay only talks to the local SFU, so the range stays closed in the firewall.
+Without it LiveKit binds 30000-40000/udp on the host, inside the range NS8 gives to other
+modules such as NethVoice or BigBlueButton. The range is reserved even with TURN off.
+
+An instance installed before LiveKit has 5 TCP ports and no UDP port. The core stores the new
+demand on update but allocates nothing, so `bin/apply-livekit-ports` allocates the missing TCP
+port and the UDP range once, and stores them in the module environment. It runs from
+`update-module.d/02livekit_ports` and again on every `configure-module`. When the node has no
+1024 free UDP ports, it logs a warning, `configure-module` refuses to enable the TURN and
+`configure-matrix` keeps it off. A restore or a clone gets new ports from `add-module` on the
+target node.
 
 The LiveKit media ports are fixed, outside the NS8 allocator: 7881/tcp, 7882/udp, and
 3478/udp with TURN. The router forward then survives a restore, a clone or a move to another
