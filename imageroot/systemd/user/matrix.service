@@ -28,11 +28,12 @@ ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/matrix.pid \
     --publish 127.0.0.1:${ELEMENT_WEB_PORT}:8080 \
     --publish 127.0.0.1:${CINNY_PORT}:80 \
     --publish 127.0.0.1:${M2A_PROXY_PORT}:${M2A_PROXY_PORT} \
+    --publish 127.0.0.1:${LK_JWT_PORT}:${LK_JWT_PORT} \
     --replace
 ExecStart=/usr/bin/podman pod start --pod-id-file %t/matrix.pod-id
 # After a pod crash systemd restarts the pod only, so bring the enabled containers back.
 # Without --no-block this would wait for the containers, which wait for the pod.
-ExecStartPost=/usr/bin/bash -c 'for unit in postgresql synapse element-web cinny matrix2acrobits; do systemctl --user is-enabled -q $unit.service && systemctl --user start --no-block $unit.service; done; exit 0'
+ExecStartPost=/usr/bin/bash -c 'for unit in postgresql synapse element-web cinny matrix2acrobits lk-jwt; do systemctl --user is-enabled -q $unit.service && systemctl --user start --no-block $unit.service; done; exit 0'
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/matrix.pod-id -t 10
 ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file %t/matrix.pod-id
 PIDFile=%t/matrix.pid

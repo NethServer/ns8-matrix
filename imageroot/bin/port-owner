@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Usage: port-owner 7881/tcp 7882/udp ...
+# Print the sockets of other users on these fixed ports, outside the NS8 allocator,
+# and exit 1 if any. Ours are matched by uid, so a restarting LiveKit counts as ours.
+#
+
+import getpass
+import os
+import re
+import subprocess
+import sys
+
+
+def our_uids():
+    uid = os.getuid()
+    ranges = [(uid, uid)]
+    user = getpass.getuser()
+    try:
+        with open("/etc/subuid") as fp:
+            for line in fp:
+                name, start, count = line.strip().split(":")
+                if name in (user, str(uid)):
+                    ranges.append((int(start), int(start) + int(count) - 1))
+    except (OSError, ValueError):
+        pass
+    return ranges
+
+
+ours = our_uids()
+
+
+def ours_line(line):
+    m = re.search(r"\buid:(\d+)", line)
+    owner = int(m.group(1)) if m else 0
+    return any(lo <= owner <= hi for lo, hi in ours)
+
+
+foreign = []
+for arg in sys.argv[1:]:
+    port, proto = arg.split("/")
+    flag = "-Hlnte" if proto == "tcp" else "-Hlnue"
+    ss = subprocess.run(["ss", flag, f"sport = :{port}"], capture_output=True, text=True)
+    if ss.returncode != 0:
+        # Unknown is not "in use": LiveKit itself fails loudly if the port is taken
+        print(f"cannot check port {arg}: {ss.stderr.strip()}", file=sys.stderr)
+        continue
+    foreign += [line for line in ss.stdout.splitlines() if not ours_line(line)]
+
+if foreign:
+    print("\n".join(foreign))
+    sys.exit(1)

@@ -32,3 +32,9 @@ fi
 if [[ -n ${NETHVOICE_AUTH_URL} ]]; then
   systemctl --user start matrix2acrobits.service
 fi
+
+if [[ ${LIVEKIT_ENABLED} == 1 ]]; then
+  # LiveKit is outside the pod: restart it for its new image
+  systemctl --user start lk-jwt.service
+  systemctl --user restart livekit.service
+fi

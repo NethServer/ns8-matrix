@@ -8,6 +8,7 @@
 import json
 import sys
 import os
+import subprocess
 import agent
 from agent.ldapproxy import Ldapproxy
 
@@ -67,5 +68,24 @@ else:
     config['log_level'] = 'INFO'
 
 config['turn_shared_secret_set'] = os.path.exists('turn.env')
+
+env_vars = agent.read_envfile("config.env") if os.path.exists("config.env") else {}
+config['livekit_enabled'] = env_vars.get('LIVEKIT_ENABLED', '0') == '1'
+config['livekit_turn_enabled'] = env_vars.get('LIVEKIT_TURN_ENABLED', '0') == '1'
+config['livekit_public_address'] = env_vars.get('LIVEKIT_PUBLIC_ADDRESS', '')
+config['livekit_tls_skip_verify'] = env_vars.get('LIVEKIT_TLS_SKIP_VERIFY', '0') == '1'
+config['livekit_detected_address'] = os.environ.get('DETECTED_PUBLIC_IP', '')
+config['livekit_ports'] = ['7881/tcp', '7882/udp']
+if config['livekit_turn_enabled']:
+    config['livekit_ports'].append('3478/udp')
+
+
+def in_use(*ports):
+    return subprocess.run(['port-owner', *ports], stdout=subprocess.DEVNULL).returncode != 0
+
+
+# Checked only while off: once on, the ports belong to this module and must stay switchable off
+config['livekit_ports_in_use'] = not config['livekit_enabled'] and in_use('7881/tcp', '7882/udp')
+config['livekit_turn_port_in_use'] = not config['livekit_turn_enabled'] and in_use('3478/udp')
 
 json.dump(config, fp=sys.stdout)

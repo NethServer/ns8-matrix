@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Give LiveKit its loopback ports, then open or close its media ports in the firewall.
+#
+# LiveKit HTTP takes index 3, free since PostgreSQL moved into the pod. A new
+# instance gets 6 TCP ports from the image labels. An instance updated from an
+# older release still has 5: the core stores the new demand on update but
+# allocates nothing, so the lk-jwt-service port is allocated here, once, and kept
+# in the module environment.
+#
+# The 1024 UDP ports are the LiveKit TURN relay range. Without it LiveKit binds
+# 30000-40000 on the host, inside the range NS8 gives to other modules. Older
+# instances get it here too, once.
+#
+
+import os
+import sys
+
+import agent
+
+# Fixed, so the router forward survives a restore, a clone or a move to another node
+MEDIA_PORTS = ["7881/tcp", "7882/udp"]
+TURN_PORT = "3478/udp"
+RELAY_PORTS = 1024
+
+# agent.set_env() does not update os.environ: read the file back
+env = agent.read_envfile(os.path.join(os.environ["AGENT_STATE_DIR"], "environment"))
+config = agent.read_envfile("config.env") if os.path.exists("config.env") else {}
+
+tcp_ports = [p for p in env.get("TCP_PORTS", "").split(",") if p]
+agent.set_env("LIVEKIT_HTTP_PORT", tcp_ports[3])
+if len(tcp_ports) >= 6:
+    agent.set_env("LK_JWT_PORT", tcp_ports[5])
+elif not env.get("LK_JWT_PORT"):
+    start, _ = agent.allocate_ports(1, "tcp", keep_existing=True)
+    # Stored at once: a second allocation would exceed the demand
+    agent.set_env("LK_JWT_PORT", str(start))
+    print(f"allocated TCP port {start} for lk-jwt-service", file=sys.stderr)
+
+# Checked on the environment only: allocating again would move the range
+if not env.get("UDP_PORTS_RANGE"):
+    try:
+        start, end = agent.allocate_ports(RELAY_PORTS, "udp")
+        agent.set_env("UDP_PORT", str(start))
+        agent.set_env("UDP_PORTS_RANGE", f"{start}-{end}")
+        print(f"allocated UDP ports {start}-{end} for the LiveKit TURN relay", file=sys.stderr)
+    except Exception as ex:
+        # Not fatal: the LiveKit TURN stays off, the next configure-module retries
+        print(agent.SD_WARNING + f"cannot allocate {RELAY_PORTS} UDP ports for the LiveKit TURN relay: {ex}",
+              file=sys.stderr)
+
+module_id = os.environ["MODULE_ID"]
+if config.get("LIVEKIT_ENABLED") == "1":
+    ports = list(MEDIA_PORTS)
+    if config.get("LIVEKIT_TURN_ENABLED") == "1":
+        ports.append(TURN_PORT)
+    agent.assert_exp(agent.add_public_service(module_id, ports, replace_ports=True))
+    print(f"public ports: {' '.join(ports)}", file=sys.stderr)
+else:
+    agent.remove_public_service(module_id)

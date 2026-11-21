@@ -19,6 +19,8 @@ synapse_image="ghcr.io/element-hq/synapse:v1.165.0"
 element_image="ghcr.io/element-hq/element-web:v1.12.35"
 cinny_image="ghcr.io/cinnyapp/cinny:v4.12.8"
 m2a_image="ghcr.io/nethesis/matrix2acrobits:0.0.4"
+livekit_image="docker.io/livekit/livekit-server:v1.13.11"
+lk_jwt_image="ghcr.io/element-hq/lk-jwt-service:0.10.0"
 
 # Create a new empty container image
 container=$(buildah from scratch)
@@ -47,13 +49,14 @@ buildah run \
 # Add imageroot directory to the container image
 buildah add "${container}" imageroot /imageroot
 buildah add "${container}" ui/dist /ui
-# Setup the entrypoint, ask to reserve three TCP ports and set a rootless container
+# Setup the entrypoint, reserve the TCP ports and the LiveKit TURN relay range, rootless container
 buildah config --entrypoint=/ \
-    --label="org.nethserver.authorizations=traefik@node:routeadm cluster:accountconsumer" \
-    --label="org.nethserver.tcp-ports-demand=5" \
+    --label="org.nethserver.authorizations=traefik@node:routeadm cluster:accountconsumer node:fwadm,portsadm" \
+    --label="org.nethserver.tcp-ports-demand=6" \
+    --label="org.nethserver.udp-ports-demand=1024" \
     --label="org.nethserver.rootfull=0" \
     --label="org.nethserver.max-per-node=1" \
-    --label="org.nethserver.images=${postgres_image} ${synapse_image} ${element_image} ${cinny_image} ${m2a_image}" \
+    --label="org.nethserver.images=${postgres_image} ${synapse_image} ${element_image} ${cinny_image} ${m2a_image} ${livekit_image} ${lk_jwt_image}" \
     --label="org.nethserver.min-core=3.20.1" \
     "${container}"
 # Commit the image

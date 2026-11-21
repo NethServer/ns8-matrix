@@ -1,0 +1,38 @@
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# LiveKit SFU for MatrixRTC calls. Host network, outside the pod: media must
+# leave from the node's real address, the pasta translation would rewrite it.
+#
+
+[Unit]
+Description=LiveKit SFU for Matrix calls
+After=synapse.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/livekit.pid %t/livekit.ctr-id
+ExecStartPre=-runagent configure-matrix
+ExecStart=/usr/bin/podman run \
+    --detach \
+    --conmon-pidfile=%t/livekit.pid \
+    --cidfile=%t/livekit.ctr-id \
+    --cgroups=no-conmon \
+    --replace --name=livekit \
+    --network=host \
+    --volume=%S/state/livekit-config/livekit.yaml:/etc/livekit.yaml:ro,Z \
+    ${LIVEKIT_SERVER_IMAGE} --config /etc/livekit.yaml
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/livekit.ctr-id -t 10
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/livekit.ctr-id
+PIDFile=%t/livekit.pid
+Type=forking
+
+[Install]
+WantedBy=default.target

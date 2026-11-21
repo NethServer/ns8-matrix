@@ -40,6 +40,7 @@ def days_or_null(value):
 def synapse_derived_vars(env_vars):
     """Compute the values that the templates cannot express with a plain substitution"""
     federation = env_vars.get('FEDERATION', '0') == '1'
+    livekit = env_vars.get('LIVEKIT_ENABLED', '0') == '1'
     whitelist = split_list(env_vars.get('FEDERATION_WHITELIST', ''))
     # null allows every server, an empty list also blocks the requests we send out
     if not federation:
@@ -57,8 +58,11 @@ def synapse_derived_vars(env_vars):
     if log_level not in ('INFO', 'WARNING', 'DEBUG'):
         log_level = 'INFO'
     return {
-        'SYNAPSE_LISTENER_RESOURCES': 'client, federation' if federation else 'client',
-        'SYNAPSE_SERVE_SERVER_WELLKNOWN': 'true' if federation else 'false',
+        # lk-jwt-service checks who a caller is through the OpenID userinfo endpoint,
+        # which lives under /_matrix/federation even when federation is off
+        'SYNAPSE_LISTENER_RESOURCES': 'client, federation' if federation else ('client, openid' if livekit else 'client'),
+        # lk-jwt-service finds that endpoint through the server well-known, else it tries port 8448
+        'SYNAPSE_SERVE_SERVER_WELLKNOWN': 'true' if federation or livekit else 'false',
         'SYNAPSE_FEDERATION_WHITELIST': federation_whitelist,
         'ELEMENT_DEFAULT_FEDERATE': 'true' if federation else 'false',
         'SYNAPSE_SMTP_USER_VALUE': json.dumps(smtp_user, ensure_ascii=False) if smtp_user else 'null',
@@ -73,6 +77,19 @@ def synapse_derived_vars(env_vars):
         # DEBUG on the SQL logger prints access tokens, never go below INFO there
         'SYNAPSE_SQL_LOG_LEVEL': 'WARNING' if log_level == 'WARNING' else 'INFO',
     }
+
+def write_atomic(path, content, mode=0o666):
+    """Write a file atomically: every unit runs this script at start, so a container may read a file while another start rewrites it."""
+    tmp = path + '.tmp' + str(os.getpid())
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+    with os.fdopen(fd, 'w') as f:
+        f.write(content)
+    os.replace(tmp, path)
+
+
+def write_private(path, content):
+    write_atomic(path, content, 0o600)
+
 
 def generate_secret(length=32):
     """Generate a random secret string"""
@@ -157,37 +174,81 @@ template_dir = '../templates'
 with open(f'{template_dir}/synapse-homeserver.yaml', 'r') as f:
     synapse_config = substitute_env_vars(f.read(), env_vars, SYNAPSE_QUOTED_KEYS)
  
-with open('synapse-config/homeserver.yaml', 'w') as f:
-    f.write(synapse_config)
+# If NETHVOICE_AUTH_URL is set, append the appservice lines to the generated homeserver.yaml
+if env_vars.get('NETHVOICE_AUTH_URL'):
+    synapse_config += '\napp_service_config_files:\n   - /data/config/matrix2acrobits.yaml\n'
 
-    # If NETHVOICE_AUTH_URL is set, append the appservice lines to the generated homeserver.yaml
-    if env_vars.get('NETHVOICE_AUTH_URL'):
-        f.write('\napp_service_config_files:\n   - /data/config/matrix2acrobits.yaml\n')
+if env_vars.get('LIVEKIT_ENABLED') == '1':
+    with open(f'{template_dir}/synapse-livekit.yaml', 'r') as lf:
+        synapse_config += substitute_env_vars(lf.read(), env_vars)
+
+write_atomic('synapse-config/homeserver.yaml', synapse_config)
 
 # Expand matrix2acrobits.yaml into the synapse config directory
 with open(f'{template_dir}/matrix2acrobits.yaml', 'r') as f:
     matrix_a2a = substitute_env_vars(f.read(), env_vars)
 
-with open('synapse-config/matrix2acrobits.yaml', 'w') as f:
-    f.write(matrix_a2a)
+write_atomic('synapse-config/matrix2acrobits.yaml', matrix_a2a)
 
 # Render log config
 with open(f'{template_dir}/synapse-log.config', 'r') as f:
     log_config = substitute_env_vars(f.read(), env_vars)
 
-with open('synapse-config/log.config', 'w') as f:
-    f.write(log_config)
+write_atomic('synapse-config/log.config', log_config)
 
 # Process Element configuration
 with open(f'{template_dir}/element-config.json', 'r') as f:
     element_config = substitute_env_vars(f.read(), env_vars)
 
-with open('element-config/config.json', 'w') as f:
-    f.write(element_config)
+# With LiveKit every call goes through Element Call, so Element Web and Element X can call each other
+if env_vars.get('LIVEKIT_ENABLED') == '1':
+    element_json = json.loads(element_config)
+    element_json['element_call'] = {'use_exclusively': True}
+    element_config = json.dumps(element_json, indent=4)
+
+write_atomic('element-config/config.json', element_config)
+
+# LiveKit and lk-jwt-service hold the API secret: owner only
+livekit_env = agent.read_envfile("livekit.env") if os.path.exists("livekit.env") else {}
+if env_vars.get('LIVEKIT_ENABLED') == '1' and livekit_env:
+    relay_range = os.environ.get('UDP_PORTS_RANGE', '')
+    turn_enabled = env_vars.get('LIVEKIT_TURN_ENABLED') == '1'
+    if turn_enabled and not relay_range:
+        # LiveKit would fall back to 30000-40000, ports NS8 gives to other modules
+        print(agent.SD_WARNING + "no UDP range for the LiveKit TURN relay, TURN stays off", file=sys.stderr)
+        turn_enabled = False
+    relay_min, _, relay_max = relay_range.partition('-')
+    livekit_vars = dict(env_vars)
+    livekit_vars.update(livekit_env)
+    livekit_vars.update({
+        'LIVEKIT_HTTP_PORT': os.environ['LIVEKIT_HTTP_PORT'],
+        'LK_JWT_PORT': os.environ['LK_JWT_PORT'],
+        'LIVEKIT_NODE_IP': env_vars.get('LIVEKIT_PUBLIC_ADDRESS') or os.environ.get('DETECTED_PUBLIC_IP', ''),
+        'LIVEKIT_TURN_ENABLED_BOOL': 'true' if turn_enabled else 'false',
+        'LIVEKIT_RELAY_MIN': relay_min or '0',
+        'LIVEKIT_RELAY_MAX': relay_max or '0',
+        'LIVEKIT_LOG_LEVEL': {'DEBUG': 'debug', 'WARNING': 'warn'}.get(env_vars.get('LOG_LEVEL'), 'info'),
+    })
+    os.makedirs('livekit-config', exist_ok=True)
+    with open(f'{template_dir}/livekit.yaml', 'r') as f:
+        livekit_config = substitute_env_vars(f.read(), livekit_vars)
+    write_private('livekit-config/livekit.yaml', livekit_config)
+
+    write_private('lk-jwt.env', ''.join([
+        f"LIVEKIT_URL=wss://{env_vars['SYNAPSE_DOMAIN_NAME']}/livekit/sfu\n",
+        f"LIVEKIT_KEY={livekit_env['LIVEKIT_KEY']}\n",
+        f"LIVEKIT_SECRET={livekit_env['LIVEKIT_SECRET']}\n",
+        # Only local users may create a call room, remote ones can only join
+        f"LIVEKIT_FULL_ACCESS_HOMESERVERS={env_vars['SYNAPSE_DOMAIN_NAME']}\n",
+        # Published traffic reaches the pod address, not its loopback
+        f"LIVEKIT_JWT_BIND=0.0.0.0:{os.environ['LK_JWT_PORT']}\n",
+        # Test labs with a self signed certificate only, it also trusts any federated server
+        'LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING\n'
+        if env_vars.get('LIVEKIT_TLS_SKIP_VERIFY') == '1' else '',
+    ]))
 
 # Process Cinny configuration
 with open(f'{template_dir}/cinny-config.json', 'r') as f:
     cinny_config = substitute_env_vars(f.read(), env_vars)
 
-with open('cinny-config/config.json', 'w') as f:
-    f.write(cinny_config)
+write_atomic('cinny-config/config.json', cinny_config)

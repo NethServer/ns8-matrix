@@ -26,6 +26,10 @@ Set them in the Settings page or with `configure-module`.
 | `turn_uris` | `[]` | External TURN server URIs, see [Voice and video calls](#voice-and-video-calls). |
 | `turn_shared_secret` | empty | TURN shared secret. Empty keeps the stored secret. |
 | `turn_clear_secret` | `false` | Delete the stored TURN secret. |
+| `livekit_enabled` | `false` | Run LiveKit for Element Call, see [Element Call with LiveKit](#element-call-with-livekit). |
+| `livekit_turn_enabled` | `false` | Start the LiveKit TURN relay on 3478/udp. Needs `livekit_enabled`. |
+| `livekit_public_address` | empty | Address announced to call clients. Empty uses the detected public address. |
+| `livekit_tls_skip_verify` | `false` | Test labs only, not in the UI. lk-jwt-service accepts a self signed certificate. |
 | `max_upload_size_mb` | `50` | Largest file a user can upload, in megabytes. |
 | `local_media_lifetime_days` | `0` | Delete uploaded files not viewed for this many days. `0` keeps them forever. |
 | `remote_media_lifetime_days` | `0` | Delete cached files from other servers not viewed for this many days. `0` keeps them forever. |
@@ -73,6 +77,7 @@ to that file are lost.
 ### Cinny
 
 Cinny is a lightweight alternative client. It is preconfigured for the local Synapse.
+Its calls need [Element Call with LiveKit](#element-call-with-livekit).
 
 ## LDAP
 
@@ -117,7 +122,52 @@ The secret is stored in `state/turn.env`. It is never returned by `get-configura
 included in the backup. With `api-cli`, clearing `turn_uris` keeps the secret, send
 `"turn_clear_secret": true` to delete it. In the UI, turning the TURN switch off deletes it.
 
-Group calls with Element Call use a different technology (LiveKit) and are not covered.
+These legacy calls work only between two people, and Element X does not support them.
+
+### Element Call with LiveKit
+
+With `livekit_enabled`, the module runs a LiveKit media server and lk-jwt-service. Element
+Web, Element X and Cinny then make one to one and group calls through Element Call. Element
+Web uses Element Call for every call, so it can call Element X users. Clients that only know
+legacy calls, like Nheko, can no longer call Element Web users.
+
+Signaling goes through Traefik on the Synapse domain, under `/livekit/sfu` and `/livekit/jwt`.
+Media does not. Open or forward these ports to the node:
+
+- 7882/udp, shared by every participant
+- 7881/tcp, used when UDP is blocked
+- 3478/udp, only with `livekit_turn_enabled`
+
+Enabling LiveKit is refused if another application already uses 7881/tcp or 7882/udp on the
+node.
+
+The TURN relay helps clients on networks that block the other ports but allow 3478/udp. It is
+refused if another application, for example BigBlueButton, already uses 3478 on the node.
+It relays through 1024 UDP ports that NS8 reserves for the instance. They stay closed, there
+is nothing to open or forward. Networks that only allow port 443 are not covered.
+
+LiveKit announces the public address found at the last save of the settings. If the lookup
+fails, the previous address is kept. Behind NAT, check it in the Settings page and set
+`livekit_public_address` if it is wrong.
+
+LiveKit must reach `https://<synapse_domain_name>` from the node to check who joins a call.
+The certificate must be valid, a self signed one makes every call fail. In a test lab, send
+`"livekit_tls_skip_verify": true` with `api-cli`. Never in production: lk-jwt-service then
+also trusts any federated server without checking its certificate. For the same check,
+Synapse serves `/.well-known/matrix/server` even with federation off. Other servers then try
+to federate and get an error, nothing else is exposed.
+
+For rooms with many participants, raise the kernel UDP buffers on the node, as LiveKit
+recommends:
+
+```
+sysctl -w net.core.rmem_max=5000000 net.core.wmem_max=5000000
+```
+
+As a rough guide, a 50 person call with every camera on needs about 150 Mbit/s of upload.
+Audio only calls need far less.
+
+The API key and secret are generated once in `state/livekit.env` and included in the backup.
 
 ## Mail
 
@@ -156,12 +206,19 @@ The backup contains:
 - `state/database.env`, the PostgreSQL password
 - `state/config.json`, the last `configure-module` request, without the TURN secret
 - `state/turn.env`, the TURN secret
+- `state/livekit.env`, the LiveKit API key and secret
 - the `synapse-data` volume, with the server signing key and the media
 - the `matrix2acrobits-data` volume
 
 The restore loads the dump into a new database, then runs `configure-module` with
 `config.json`. `matrix-secrets.env` is not in the backup, so the restore generates new internal
 secrets. The effect is the same as a rotation, see [Secrets](#secrets).
+
+A restore or a clone onto a node where another application already uses 7881/tcp or
+7882/udp turns Element Call off, and one where 3478/udp is used turns the LiveKit TURN off.
+The task logs a warning and the rest of the instance comes back. Free the port, then enable
+the option again. A `livekit_public_address` set by hand is restored as is, with a warning:
+check it matches the new node.
 
 ## Update
 

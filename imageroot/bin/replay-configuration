@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Replay config.json into configure-module, for restore and clone.
+#
+# The target node may already use the fixed LiveKit ports, for example with
+# BigBlueButton. Then LiveKit or its TURN is turned off with a warning, so the
+# rest of the instance still comes back.
+#
+
+import json
+import os
+import subprocess
+import sys
+
+import agent
+import agent.tasks
+
+
+def in_use(*ports):
+    return subprocess.run(["port-owner", *ports], stdout=subprocess.DEVNULL).returncode != 0
+
+
+with open("config.json", "r") as cf:
+    config = json.load(cf)
+
+if config.get("livekit_enabled") and in_use("7881/tcp", "7882/udp"):
+    print(agent.SD_WARNING + "7881/tcp or 7882/udp is used on this node: Element Call is turned off",
+          file=sys.stderr)
+    config["livekit_enabled"] = False
+    config["livekit_turn_enabled"] = False
+elif config.get("livekit_turn_enabled") and in_use("3478/udp"):
+    print(agent.SD_WARNING + "3478/udp is used on this node: the LiveKit TURN relay is turned off",
+          file=sys.stderr)
+    config["livekit_turn_enabled"] = False
+
+# Kept, it may be a deliberate NAT setting, but it can belong to the old site
+if config.get("livekit_enabled") and config.get("livekit_public_address"):
+    print(agent.SD_WARNING + "LiveKit announces the stored public address " + config["livekit_public_address"]
+          + ", check it matches this node", file=sys.stderr)
+
+response = agent.tasks.run(agent_id=os.environ["AGENT_ID"], action="configure-module", data=config)
+agent.assert_exp(response["exit_code"] == 0, "configure-module failed: " + json.dumps(response["output"]))

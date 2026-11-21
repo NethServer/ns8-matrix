@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Ports, firewall, API key and Traefik routes for LiveKit and lk-jwt-service.
+#
+
+import os
+import secrets
+import string
+import subprocess
+import sys
+
+import agent
+import agent.tasks
+
+config = agent.read_envfile("config.env")
+enabled = config.get("LIVEKIT_ENABLED") == "1"
+module_id = os.environ["MODULE_ID"]
+
+agent.run_helper("apply-livekit-ports").check_returncode()
+
+if enabled:
+    # Kept across restarts and disables, so a running call is never cut by a new key
+    if not os.path.exists("livekit.env"):
+        alphabet = string.ascii_letters + string.digits
+        fd = os.open("livekit.env", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as fp:
+            fp.write("LIVEKIT_KEY=" + "API" + "".join(secrets.choice(alphabet) for _ in range(12)) + "\n")
+            fp.write("LIVEKIT_SECRET=" + "".join(secrets.choice(alphabet) for _ in range(48)) + "\n")
+
+    if not config.get("LIVEKIT_PUBLIC_ADDRESS"):
+        # Not fatal: an empty address shows in the UI and LiveKit falls back to the local one
+        subprocess.run(["detect-addresses"], stdout=subprocess.DEVNULL)
+
+# agent.set_env() does not update os.environ: read the file back
+env = agent.read_envfile(os.path.join(os.environ["AGENT_STATE_DIR"], "environment"))
+
+routes = {
+    "-livekit-sfu": ("/livekit/sfu", env["LIVEKIT_HTTP_PORT"]),
+    "-livekit-jwt": ("/livekit/jwt", env["LK_JWT_PORT"]),
+}
+for suffix, (path, port) in routes.items():
+    if enabled:
+        response = agent.tasks.run(
+            agent_id=agent.resolve_agent_id("traefik@node"),
+            action="set-route",
+            data={
+                "instance": module_id + suffix,
+                "host": config["SYNAPSE_DOMAIN_NAME"],
+                "path": path,
+                "url": "http://127.0.0.1:" + port,
+                "http2https": True,
+                "lets_encrypt": config.get("LETS_ENCRYPT") == "1",
+                "strip_prefix": True,
+            },
+        )
+        agent.assert_exp(response["exit_code"] == 0)
+    else:
+        agent.tasks.run(
+            agent_id=agent.resolve_agent_id("traefik@node"),
+            action="delete-route",
+            data={"instance": module_id + suffix},
+        )
+
+print("LiveKit " + ("enabled" if enabled else "disabled"), file=sys.stderr)

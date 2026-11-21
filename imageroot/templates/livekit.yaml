@@ -1,0 +1,37 @@
+# Signaling and API stay on loopback, Traefik publishes them under /livekit/sfu
+port: ${LIVEKIT_HTTP_PORT}
+bind_addresses:
+  - 127.0.0.1
+
+rtc:
+  # Fixed ports, opened in the firewall and forwarded by the router
+  tcp_port: 7881
+  # One UDP socket for every participant, so the firewall opens a single port
+  udp_port: 7882
+  # The address comes from detect-addresses or the UI, never from a STUN lookup at startup
+  use_external_ip: false
+  node_ip: ${LIVEKIT_NODE_IP}
+  # Also offer the LAN address, so clients on the same network skip the router
+  advertise_internal_ip: true
+
+keys:
+  ${LIVEKIT_KEY}: ${LIVEKIT_SECRET}
+
+room:
+  # Only lk-jwt-service creates rooms, for users of this homeserver
+  auto_create: false
+
+turn:
+  enabled: ${LIVEKIT_TURN_ENABLED_BOOL}
+  udp_port: 3478
+  # From the NS8 allocator, bound on the host but not public: the relay only reaches the SFU
+  relay_range_start: ${LIVEKIT_RELAY_MIN}
+  relay_range_end: ${LIVEKIT_RELAY_MAX}
+
+webhook:
+  api_key: ${LIVEKIT_KEY}
+  urls:
+    - http://127.0.0.1:${LK_JWT_PORT}/sfu_webhook
+
+logging:
+  level: ${LIVEKIT_LOG_LEVEL}

@@ -1,0 +1,39 @@
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# lk-jwt-service hands LiveKit tokens to Matrix users who prove their identity
+# with an OpenID token from Synapse.
+#
+
+[Unit]
+Description=LiveKit token service for Matrix calls
+BindsTo=matrix.service
+After=matrix.service synapse.service
+Wants=synapse.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+Restart=always
+ExecStartPre=/bin/rm -f %t/lk-jwt.pid %t/lk-jwt.ctr-id
+ExecStartPre=-runagent configure-matrix
+ExecStart=/usr/bin/podman run \
+    --detach \
+    --conmon-pidfile=%t/lk-jwt.pid \
+    --cidfile=%t/lk-jwt.ctr-id \
+    --cgroups=no-conmon \
+    --replace --name=lk-jwt \
+    --pod-id-file %t/matrix.pod-id \
+    --env-file=%S/state/lk-jwt.env \
+    ${LK_JWT_SERVICE_IMAGE}
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/lk-jwt.ctr-id -t 10
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/lk-jwt.ctr-id
+PIDFile=%t/lk-jwt.pid
+Type=forking
+
+[Install]
+WantedBy=default.target

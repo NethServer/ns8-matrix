@@ -102,6 +102,37 @@
         "search_all_users": {
             "type": "boolean",
             "description": "Let users find every user who logged in at least once, not only people they share a room with"
+        },
+        "livekit_enabled": {
+            "type": "boolean"
+        },
+        "livekit_turn_enabled": {
+            "type": "boolean"
+        },
+        "livekit_public_address": {
+            "type": "string"
+        },
+        "livekit_detected_address": {
+            "type": "string",
+            "description": "Public address found by the last detection, empty if none"
+        },
+        "livekit_ports": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Ports to open or forward to this node, like 7881/tcp"
+        },
+        "livekit_tls_skip_verify": {
+            "type": "boolean"
+        },
+        "livekit_ports_in_use": {
+            "type": "boolean",
+            "description": "True if another application holds 7881/tcp or 7882/udp. Only checked while LiveKit is off"
+        },
+        "livekit_turn_port_in_use": {
+            "type": "boolean",
+            "description": "True if another application holds 3478/udp. Only checked while the TURN relay is off"
         }
     }
 }

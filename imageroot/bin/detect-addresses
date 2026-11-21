@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Store the node addresses as DETECTED_PRIVATE_IP and DETECTED_PUBLIC_IP. LiveKit
+# announces the public one unless the administrator sets livekit_public_address.
+#
+# Nothing here is fatal: an unprobeable node installs with the fields empty.
+#
+
+import ipaddress
+import json
+import os
+import subprocess
+import sys
+import urllib.request
+
+import agent
+
+# Contacted only behind NAT. All return a bare address; ns8-ddclient uses them too.
+ECHO_SERVICES = {
+    4: ("https://api.ipify.org", "https://ipv4.icanhazip.com"),
+    6: ("https://api6.ipify.org", "https://ipv6.icanhazip.com"),
+}
+ECHO_TIMEOUT = 5
+
+
+PROBES = {4: ("-4", "1.1.1.1"), 6: ("-6", "2606:4700:4700::1111")}
+
+
+def local_address(family):
+    """Source address the kernel would use to reach the internet.
+
+    The routing table, not the interface list: what matters is the default path.
+    """
+    flag, target = PROBES[family]
+    try:
+        out = subprocess.run(
+            ["ip", flag, "route", "get", target],
+            capture_output=True, text=True, timeout=5, check=True,
+        ).stdout.split()
+        candidate = out[out.index("src") + 1]
+    except Exception as ex:
+        print(f"no IPv{family} path to the internet: {ex}", file=sys.stderr)
+        return ""
+
+    # A link-local source cannot be announced to anyone.
+    if ipaddress.ip_address(candidate).is_link_local:
+        return ""
+    return candidate
+
+
+def is_public(addr):
+    try:
+        return ipaddress.ip_address(addr).is_global
+    except ValueError:
+        return False
+
+
+def public_address(local, family):
+    """The address clients will reach.
+
+    Only a node behind NAT needs an outside opinion.
+    """
+    if is_public(local):
+        print(f"{local} is globally routable, no external lookup needed", file=sys.stderr)
+        return local
+
+    for url in ECHO_SERVICES[family]:
+        try:
+            # Logged by name: this tells a third party the node exists.
+            print(f"node is behind NAT, asking {url} for the public address", file=sys.stderr)
+            with urllib.request.urlopen(url, timeout=ECHO_TIMEOUT) as resp:
+                candidate = resp.read().decode().strip()
+            if is_public(candidate):
+                return candidate
+            print(agent.SD_WARNING + f"{url} returned {candidate!r}, ignoring", file=sys.stderr)
+        except Exception as ex:
+            print(agent.SD_WARNING + f"{url} failed: {ex}", file=sys.stderr)
+
+    print(agent.SD_WARNING + "could not determine the public address; it must be set by hand",
+          file=sys.stderr)
+    return ""
+
+
+# IPv4 first, since that is what nearly every deployment announces. IPv6 is a
+# fallback for a node that has no IPv4 path at all: the module announces one address,
+# so proposing both would only force a choice on the administrator.
+local = local_address(4)
+public = public_address(local, 4) if local else ""
+
+if not public:
+    local6 = local_address(6)
+    public6 = public_address(local6, 6) if local6 else ""
+    if public6:
+        print("no IPv4 address found, falling back to IPv6", file=sys.stderr)
+        local, public = local6, public6
+
+# A failed lookup keeps the last good address: LiveKit would announce none
+if local or not os.environ.get("DETECTED_PRIVATE_IP"):
+    agent.set_env("DETECTED_PRIVATE_IP", local)
+if public or not os.environ.get("DETECTED_PUBLIC_IP"):
+    agent.set_env("DETECTED_PUBLIC_IP", public)
+
+print(f"detected local={local or '(none)'} public={public or '(none)'}", file=sys.stderr)
+
+json.dump({"private_address": local, "public_address": public}, fp=sys.stdout)

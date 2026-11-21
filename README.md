@@ -6,7 +6,7 @@ It is in early development and meant for testing only. Do not use it in producti
 
 A NethServer 8 module for [Matrix](https://matrix.org/) chat, with LDAP authentication.
 It runs the Synapse homeserver, the Element and Cinny web clients, and optionally
-matrix2acrobits for NethVoice.
+matrix2acrobits for NethVoice and LiveKit for Element Call.
 
 ```mermaid
 flowchart LR
@@ -17,28 +17,36 @@ flowchart LR
         T -- "element_domain_name" --> E
         T -- "cinny_domain_name" --> C
         T -- "/m2a, /_matrix/push/v1/notify" --> M
+        T -- "/livekit/jwt" --> J
+        T -- "/livekit/sfu" --> LK
         subgraph POD["matrix pod, pasta, ports on 127.0.0.1 only"]
             S[Synapse]
             E[Element web]
             C[Cinny]
             M[matrix2acrobits]
+            J[lk-jwt-service]
             P[(PostgreSQL 18<br/>not published)]
             S --> P
         end
+        LK["LiveKit<br/>host network"]
+        J -- "OpenID check" --> T
+        LK -- "webhook" --> J
         S -- "10.0.2.2, node loopback" --> L[LDAP proxy]
         S --> SM[Cluster smarthost]
     end
+    U -. "call media<br/>7882/udp, 7881/tcp, 3478/udp" .-> LK
 ```
 
-Every container runs in one rootless pod. Call media goes directly between clients or through
-the TURN server, never through the pod.
+Every container runs in one rootless pod, except LiveKit. LiveKit runs in the node network,
+because call media must leave from the node address. Its media ports bypass Traefik. Legacy
+one to one calls go directly between clients or through the external TURN server.
 
 ## Documentation
 
 - [Admin guide](docs/admin-guide.md): all the parameters, web clients, LDAP, federation,
-  TURN, mail, secrets, backup and restore, update, uninstall.
-- [Architecture](docs/architecture.md): Traefik routes, systemd units, configuration
-  rendering, module state, PostgreSQL migration.
+  TURN, Element Call with LiveKit, mail, secrets, backup and restore, update, uninstall.
+- [Architecture](docs/architecture.md): network and ports, Traefik routes, systemd units,
+  configuration rendering, module state, PostgreSQL migration.
 - [NethVoice integration](docs/nethvoice.md): matrix2acrobits, push notifications and the
   roadmap.
 
