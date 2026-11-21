@@ -14,6 +14,7 @@
 
 import ipaddress
 import json
+import os
 import subprocess
 import sys
 import urllib.request
@@ -99,8 +100,11 @@ if not public:
         print("no IPv4 address found, falling back to IPv6", file=sys.stderr)
         local, public = local6, public6
 
-agent.set_env("DETECTED_PRIVATE_IP", local)
-agent.set_env("DETECTED_PUBLIC_IP", public)
+# A failed lookup keeps the last good address: LiveKit would announce none
+if local or not os.environ.get("DETECTED_PRIVATE_IP"):
+    agent.set_env("DETECTED_PRIVATE_IP", local)
+if public or not os.environ.get("DETECTED_PUBLIC_IP"):
+    agent.set_env("DETECTED_PUBLIC_IP", public)
 
 print(f"detected local={local or '(none)'} public={public or '(none)'}", file=sys.stderr)
 
