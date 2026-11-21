@@ -15,7 +15,7 @@ Set them in the Settings page or with `configure-module`.
 | Parameter | Default | Description |
 |---|---|---|
 | `synapse_domain_name` | required | FQDN of the Matrix server, for example `matrix.example.com`. It becomes part of every user ID. |
-| `lets_encrypt` | required | Request Let's Encrypt certificates for all the configured domains. |
+| `lets_encrypt` | required | Request Let's Encrypt certificates for all the configured domains. A failed challenge refuses the request. |
 | `ldap_domain` | required | LDAP domain used for authentication. |
 | `element_domain_name` | empty | FQDN of the Element web client. Empty disables Element. |
 | `cinny_domain_name` | empty | FQDN of the Cinny web client. Empty disables Cinny. |
@@ -219,6 +219,9 @@ A restore or a clone onto a node where another application already uses 7881/tcp
 The task logs a warning and the rest of the instance comes back. Free the port, then enable
 the option again. A `livekit_public_address` set by hand is restored as is, with a warning:
 check it matches the new node.
+
+A restore, a clone or a move turns Let's Encrypt off, because the DNS may still point to the
+old node. Enable it again in Settings once the DNS points to the new one.
 
 ## Update
 
