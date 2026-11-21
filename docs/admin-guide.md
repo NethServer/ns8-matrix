@@ -131,8 +131,8 @@ Matrix server is. Two files answer:
   {"m.server": "matrix.example.com:443"}
   ```
 
-The Settings page shows both files with a copy button when the two domains differ. The web
-clients of the module do not need them: they connect to `synapse_domain_name` directly.
+Replace `matrix.example.com` and `example.com` with your own domains. The web clients of the
+module do not need these files: they connect to `synapse_domain_name` directly.
 
 ### DNS and web setup
 
