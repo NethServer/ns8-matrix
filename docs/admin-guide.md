@@ -153,7 +153,9 @@ If `example.com` points to this node, there is nothing to publish. When the two 
 traffic goes through the second route. Other paths of `example.com` stay free for another
 application. These routes follow `lets_encrypt`. When `example.com` points elsewhere they are
 never reached, and Let's Encrypt cannot validate them: Traefik logs the failure, the
-configuration still succeeds.
+configuration still succeeds. Each new configuration or Traefik restart retries the request.
+After 5 failures in one hour, Let's Encrypt refuses `example.com` for an hour, and that also
+delays a certificate for a website on `example.com` hosted on this node.
 
 A DNS SRV record `_matrix-fed._tcp.example.com` can replace the server file, for federation
 only. It is not recommended: other servers then expect a certificate for `example.com` on the
