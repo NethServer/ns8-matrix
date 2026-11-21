@@ -53,6 +53,10 @@ if livekit and not livekit_was_on and in_use("7881/tcp", "7882/udp"):
 if livekit and turn and not turn_was_on and in_use("3478/udp"):
     refuse("livekit_turn_enabled", "turn_port_in_use")
 
-# Set by add-module, or by apply-livekit-ports on update when the node had room
+# Set by add-module, or by apply-livekit-ports on update. Retried here, since a refusal
+# would stop the action before 30livekit runs the helper again.
 if livekit and turn and not turn_was_on and not os.environ.get("UDP_PORTS_RANGE"):
-    refuse("livekit_turn_enabled", "turn_no_relay_ports")
+    agent.run_helper("apply-livekit-ports")
+    env = agent.read_envfile(os.path.join(os.environ["AGENT_STATE_DIR"], "environment"))
+    if not env.get("UDP_PORTS_RANGE"):
+        refuse("livekit_turn_enabled", "turn_no_relay_ports")
