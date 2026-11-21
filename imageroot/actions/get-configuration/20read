@@ -91,9 +91,9 @@ config['livekit_turn_port_in_use'] = not config['livekit_turn_enabled'] and in_u
 # Older releases used the Matrix host as user domain
 config['matrix_server_name'] = env_vars.get('MATRIX_SERVER_NAME') or env_vars.get('SYNAPSE_DOMAIN_NAME', '')
 if env_vars:
-    # Same rule as configure-module: a database that cannot be checked counts as locked
+    # Locked only when a user is found: configure-module still refuses a change while the database is down
     users = subprocess.run(['matrix-users-domain'], capture_output=True, text=True)
-    config['matrix_server_name_locked'] = users.returncode != 0 or users.stdout.strip() != ''
+    config['matrix_server_name_locked'] = users.returncode == 0 and users.stdout.strip() != ''
 else:
     config['matrix_server_name_locked'] = False
 

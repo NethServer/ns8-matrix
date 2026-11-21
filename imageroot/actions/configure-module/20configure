@@ -56,8 +56,9 @@ else:
 # The user domain is the Synapse server_name. Before it had its own setting, it was the Matrix host.
 # A request without it keeps the stored value, so old backups and API callers keep working.
 stored_server_name = env_vars.get('MATRIX_SERVER_NAME') or env_vars.get('SYNAPSE_DOMAIN_NAME', '')
-matrix_server_name = request.get('matrix_server_name') or stored_server_name or synapse_domain_name
-if stored_server_name and matrix_server_name != stored_server_name:
+# Lowercase, as user IDs are case sensitive and DNS names are not
+matrix_server_name = (request.get('matrix_server_name') or stored_server_name or synapse_domain_name).lower()
+if stored_server_name and matrix_server_name != stored_server_name.lower():
     # Synapse refuses to start with another server_name once a user exists in the database
     users = subprocess.run(['matrix-users-domain'], capture_output=True, text=True)
     if users.returncode != 0 or users.stdout.strip() not in ('', matrix_server_name):

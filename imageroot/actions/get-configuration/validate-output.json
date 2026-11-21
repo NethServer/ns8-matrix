@@ -140,7 +140,7 @@
         },
         "matrix_server_name_locked": {
             "type": "boolean",
-            "description": "True once a user exists in the database, or if the database cannot be checked"
+            "description": "True once a user exists in the database"
         }
     }
 }
