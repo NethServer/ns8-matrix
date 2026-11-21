@@ -473,6 +473,24 @@
                 </template>
               </cv-accordion-item>
             </cv-accordion>
+            <cv-row v-if="validationErrorDetails.length">
+              <cv-column>
+                <NsInlineNotification
+                  kind="error"
+                  :title="core.$t('apps_lets_encrypt.cannot_obtain_certificate')"
+                  :showCloseButton="false"
+                >
+                  <template #description>
+                    <div
+                      v-for="(detail, index) in validationErrorDetails"
+                      :key="index"
+                    >
+                      {{ detail }}
+                    </div>
+                  </template>
+                </NsInlineNotification>
+              </cv-column>
+            </cv-row>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -576,6 +594,7 @@ export default {
         getConfiguration: false,
         configureModule: false,
       },
+      validationErrorDetails: [],
       error: {
         getConfiguration: "",
         configureModule: "",
@@ -861,6 +880,13 @@ export default {
       let focusAlreadySet = false;
 
       for (const validationError of validationErrors) {
+        // Traefik returns the ACME error of a failed Let's Encrypt challenge in details
+        if (validationError.details) {
+          this.validationErrorDetails = validationError.details
+            .split("\n")
+            .filter((detail) => detail.trim() !== "");
+          continue;
+        }
         // array items are reported as "turn_uris.0", the error belongs to the whole list
         const field = validationError.field.split(".")[0];
         if (this.advancedFields.includes(field)) {
@@ -888,6 +914,7 @@ export default {
       }
     },
     async configureModule() {
+      this.validationErrorDetails = [];
       const isValidationOk = this.validateConfigureModule();
       if (!isValidationOk) {
         return;

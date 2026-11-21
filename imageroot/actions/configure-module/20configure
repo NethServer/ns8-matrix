@@ -94,6 +94,29 @@ env_vars['ELEMENT_WEB_PORT'] = tcp_ports[1]
 env_vars['CINNY_PORT'] = tcp_ports[2]
 env_vars['M2A_PROXY_PORT'] = tcp_ports[4]
 
+# Routes first, so a failed Let's Encrypt challenge stops the request before anything is written.
+# agent.set_route() then returns the ACME error to the UI as a validation error.
+web_routes = {
+    '-synapse': (synapse_domain_name, env_vars['SYNAPSE_PORT']),
+    '-element': (element_domain_name, env_vars['ELEMENT_WEB_PORT']),
+    '-cinny': (cinny_domain_name, env_vars['CINNY_PORT']),
+}
+for suffix, (host, port) in web_routes.items():
+    if host:
+        agent.set_route({
+            'instance': os.environ['MODULE_ID'] + suffix,
+            'url': 'http://127.0.0.1:' + port,
+            'host': host,
+            'http2https': True,
+            'lets_encrypt': lets_encrypt,
+        })
+    else:
+        agent.tasks.run(
+            agent_id=agent.resolve_agent_id('traefik@node'),
+            action='delete-route',
+            data={'instance': os.environ['MODULE_ID'] + suffix},
+        )
+
 # Write updated configuration
 agent.write_envfile("config.env", env_vars)
 
@@ -111,66 +134,6 @@ elif turn_clear_secret and os.path.exists('turn.env'):
 # For later use and backup. The TURN secret was popped from the request, turn.env is backed up instead
 with open('config.json', 'w') as cfp:
     cfp.write(json.dumps(request))
-
-# Configure Traefik routes for Synapse Matrix server
-response = agent.tasks.run(
-    agent_id=agent.resolve_agent_id('traefik@node'),
-    action='set-route',
-    data={
-        'instance': os.environ['MODULE_ID'] + '-synapse',
-        'url': 'http://127.0.0.1:' + env_vars['SYNAPSE_PORT'],
-        'host': synapse_domain_name,
-        'http2https': True,
-        'lets_encrypt': lets_encrypt,
-    },
-)
-agent.assert_exp(response['exit_code'] == 0)
-
-# Configure Traefik routes for Element Web client
-if element_domain_name:
-    response = agent.tasks.run(
-        agent_id=agent.resolve_agent_id('traefik@node'),
-        action='set-route',
-        data={
-            'instance': os.environ['MODULE_ID'] + '-element',
-            'url': 'http://127.0.0.1:' + env_vars['ELEMENT_WEB_PORT'],
-            'host': element_domain_name,
-            'http2https': True,
-            'lets_encrypt': lets_encrypt,
-        },
-    )
-    agent.assert_exp(response['exit_code'] == 0)
-else:
-    response = agent.tasks.run(
-        agent_id=agent.resolve_agent_id('traefik@node'),
-        action='delete-route',
-        data={
-            'instance': os.environ['MODULE_ID'] + '-element'
-        },
-    )
-
-# Configure Traefik routes for Cinny client
-if cinny_domain_name:
-    response = agent.tasks.run(
-        agent_id=agent.resolve_agent_id('traefik@node'),
-        action='set-route',
-        data={
-            'instance': os.environ['MODULE_ID'] + '-cinny',
-            'url': 'http://127.0.0.1:' + env_vars['CINNY_PORT'],
-            'host': cinny_domain_name,
-            'http2https': True,
-            'lets_encrypt': lets_encrypt,
-        },
-    )
-    agent.assert_exp(response['exit_code'] == 0)
-else:
-    response = agent.tasks.run(
-        agent_id=agent.resolve_agent_id('traefik@node'),
-        action='delete-route',
-        data={
-            'instance': os.environ['MODULE_ID'] + '-cinny'
-        },
-    )
 
 # Bind the new domain, overriding previous values (unbind)
 agent.bind_user_domains([ldap_domain])

@@ -8,6 +8,8 @@
 #
 # Replay config.json into configure-module, for restore and clone.
 #
+# Let's Encrypt is turned off: the DNS may still point to the old node.
+#
 # The target node may already use the fixed LiveKit ports, for example with
 # BigBlueButton. Then LiveKit or its TURN is turned off with a warning, so the
 # rest of the instance still comes back.
@@ -38,6 +40,13 @@ elif config.get("livekit_turn_enabled") and in_use("3478/udp"):
     print(agent.SD_WARNING + "3478/udp is used on this node: the LiveKit TURN relay is turned off",
           file=sys.stderr)
     config["livekit_turn_enabled"] = False
+
+# The DNS may not point to the new node yet: a failed challenge would fail the whole task.
+# The admin enables Let's Encrypt again once the DNS is in place.
+if config.get("lets_encrypt"):
+    print(agent.SD_WARNING + "Let's Encrypt is turned off, enable it again once the DNS points to this node",
+          file=sys.stderr)
+    config["lets_encrypt"] = False
 
 # Kept, it may be a deliberate NAT setting, but it can belong to the old site
 if config.get("livekit_enabled") and config.get("livekit_public_address"):
