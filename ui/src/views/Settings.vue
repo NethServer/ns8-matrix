@@ -32,6 +32,30 @@
               ref="synapse_domain_name"
             ></cv-text-input>
             <NsToggle
+              value="letsEncrypt"
+              :label="core.$t('apps_lets_encrypt.request_https_certificate')"
+              v-model="isLetsEncryptEnabled"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <template #tooltip>
+                <div class="mg-bottom-sm">
+                  {{ core.$t("apps_lets_encrypt.lets_encrypt_tips") }}
+                </div>
+                <div class="mg-bottom-sm">
+                  <cv-link @click="goToCertificates">
+                    {{ core.$t("apps_lets_encrypt.go_to_tls_certificates") }}
+                  </cv-link>
+                </div>
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
+            <NsToggle
               value="element_enabled"
               :label="$t('settings.element_enabled')"
               v-model="element_enabled"
@@ -122,30 +146,6 @@
             >
               <template #tooltip>
                 {{ $t("settings.search_all_users_tooltip") }}
-              </template>
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </NsToggle>
-            <NsToggle
-              value="letsEncrypt"
-              :label="core.$t('apps_lets_encrypt.request_https_certificate')"
-              v-model="isLetsEncryptEnabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template #tooltip>
-                <div class="mg-bottom-sm">
-                  {{ core.$t("apps_lets_encrypt.lets_encrypt_tips") }}
-                </div>
-                <div class="mg-bottom-sm">
-                  <cv-link @click="goToCertificates">
-                    {{ core.$t("apps_lets_encrypt.go_to_tls_certificates") }}
-                  </cv-link>
-                </div>
               </template>
               <template slot="text-left">{{
                 $t("settings.disabled")
