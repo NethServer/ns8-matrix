@@ -126,6 +126,9 @@
         "livekit_tls_skip_verify": {
             "type": "boolean"
         },
+        "encryption_disabled": {
+            "type": "boolean"
+        },
         "livekit_ports_in_use": {
             "type": "boolean",
             "description": "True if another application holds 7881/tcp or 7882/udp. Only checked while LiveKit is off"

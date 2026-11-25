@@ -26,6 +26,7 @@
             "log_level": "INFO",
             "search_all_users": true,
             "livekit_enabled": true,
+            "encryption_disabled": false,
             "livekit_turn_enabled": false,
             "livekit_public_address": ""
         }
@@ -195,6 +196,10 @@
         "livekit_tls_skip_verify": {
             "type": "boolean",
             "description": "Test labs only: let lk-jwt-service accept a self signed Synapse certificate"
+        },
+        "encryption_disabled": {
+            "type": "boolean",
+            "description": "Ask Element to create rooms and direct chats without end-to-end encryption"
         }
     }
 }

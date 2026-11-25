@@ -35,6 +35,7 @@ Set them in the Settings page or with `configure-module`.
 | `local_media_lifetime_days` | `0` | Delete uploaded files not viewed for this many days. `0` keeps them forever. |
 | `remote_media_lifetime_days` | `0` | Delete cached files from other servers not viewed for this many days. `0` keeps them forever. |
 | `search_all_users` | see below | Let users find every user of the LDAP domain, not only people they share a room with. |
+| `encryption_disabled` | `false` | Ask Element to create rooms without end-to-end encryption, see [Encryption](#encryption). Missing keeps the stored value. |
 | `log_level` | `INFO` | `INFO`, `WARNING` or `DEBUG`. |
 
 ### A missing key resets to the default
@@ -194,6 +195,28 @@ Requirements:
 
 Use `federation_whitelist` to federate only with known partners. Check the setup with the
 [Matrix Federation Tester](https://federationtester.matrix.org/).
+
+## Encryption
+
+Matrix clients encrypt direct chats and private rooms by default. Each user then has to keep a
+recovery key, or loses the history on a new device. With `encryption_disabled`, Synapse
+publishes this policy in `/.well-known/matrix/client`:
+
+```json
+{"io.element.e2ee": {"default": false, "force_disable": true}}
+```
+
+Element Web and the classic Element apps read it. They create new rooms and direct chats
+without encryption, and hide the option to turn it on. Other clients may ignore it: check
+Element X and Cinny before you rely on it. Synapse does not refuse encrypted rooms.
+
+Rooms already encrypted stay encrypted, the Matrix protocol cannot turn encryption off. Create
+a new room to replace them. Rooms created on other servers with federation follow the rules of
+their server.
+
+Clients read the file on the user domain. When the user domain differs from
+`synapse_domain_name` and points to a website elsewhere, add the `io.element.e2ee` key to the
+client file you publish there, see [DNS and web setup](#dns-and-web-setup).
 
 ## Voice and video calls
 

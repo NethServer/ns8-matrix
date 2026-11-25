@@ -189,6 +189,24 @@
               }}</template>
             </NsToggle>
             <NsToggle
+              value="encryption_disabled"
+              :label="$t('settings.encryption_disabled')"
+              v-model="encryption_disabled"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+              ref="encryption_disabled"
+            >
+              <template #tooltip>
+                {{ $t("settings.encryption_disabled_tooltip") }}
+              </template>
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </NsToggle>
+            <NsToggle
               value="livekit_enabled"
               :label="$t('settings.livekit_enabled')"
               v-model="livekit_enabled"
@@ -610,6 +628,7 @@ export default {
       local_media_lifetime_days: 0,
       remote_media_lifetime_days: 0,
       search_all_users: false,
+      encryption_disabled: false,
       log_level: "INFO",
       isAdvancedOpen: false,
       advancedFields: [
@@ -804,6 +823,7 @@ export default {
       this.local_media_lifetime_days = config.local_media_lifetime_days || 0;
       this.remote_media_lifetime_days = config.remote_media_lifetime_days || 0;
       this.search_all_users = config.search_all_users || false;
+      this.encryption_disabled = config.encryption_disabled || false;
       this.livekit_enabled = config.livekit_enabled || false;
       this.livekit_turn_enabled = config.livekit_turn_enabled || false;
       this.livekit_public_address = config.livekit_public_address || "";
@@ -1032,6 +1052,7 @@ export default {
             remote_media_lifetime_days: this.remote_media_lifetime_days,
             log_level: this.log_level,
             search_all_users: this.search_all_users,
+            encryption_disabled: this.encryption_disabled,
             livekit_enabled: this.livekit_enabled,
             livekit_turn_enabled:
               this.livekit_enabled && this.livekit_turn_enabled,
