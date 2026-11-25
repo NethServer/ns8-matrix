@@ -50,13 +50,15 @@ sends the full configuration, so this only matters with `api-cli`. Start from th
 api-cli run module/matrix1/get-configuration
 ```
 
-Two keys behave differently:
+These keys behave differently:
 
 - `turn_shared_secret`: missing or empty keeps the stored secret.
 - `search_all_users`: missing keeps the stored value. An instance without a stored value gets
   `false`. The UI shows `true` for a new instance, so a module configured from the UI gets
   `true`. Only users who logged in at least once can be found, Synapse does not search the
   LDAP directory itself.
+- `encryption_enabled`: missing keeps the stored value. An instance without a stored value gets
+  `true`.
 
 ### Validation errors
 
@@ -208,13 +210,14 @@ Synapse publishes this policy in `/.well-known/matrix/client`:
 
 Element Web and the classic Element apps read it. They create new rooms and direct chats
 without encryption, and hide the option to turn it on. Element X and Cinny ignore it, so
-Synapse also enforces the policy for local users. It removes encryption from room creation
-requests, so the room is created in clear text. It refuses to turn encryption on in an
-existing room.
+Synapse also enforces the policy in rooms created on this server, whoever the sender is,
+including users of other servers. It removes encryption from room creation requests, so the
+room is created in clear text. It refuses to turn encryption on in an existing room. Upgrading
+a room that is already encrypted still works and keeps the encryption.
 
 Rooms already encrypted stay encrypted, the Matrix protocol cannot turn encryption off. Create
 a new room to replace them. Rooms created on other servers with federation follow the rules of
-their server.
+their server, local users can encrypt them.
 
 Clients read the file on the user domain. When the user domain differs from
 `synapse_domain_name` and points to a website elsewhere, add the `io.element.e2ee` key to the
