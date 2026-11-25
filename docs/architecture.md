@@ -295,7 +295,7 @@ flowchart TB
     G --> H["restore the dump with the new image"]
     H --> I{"row counts match?<br/>read in a throwaway container"}
     I -- no --> K["fail, keep upgrade.pg_dump"]
-    I -- yes --> J["delete the dump, start PostgreSQL,<br/>then Synapse and matrix2acrobits if enabled"]
+    I -- yes --> J["delete the dump<br/>80restart_services starts the services"]
 ```
 
 The row counts are read in a throwaway PostgreSQL container: starting `postgresql.service`
