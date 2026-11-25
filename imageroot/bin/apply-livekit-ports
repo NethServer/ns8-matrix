@@ -61,6 +61,12 @@ if config.get("LIVEKIT_ENABLED") == "1":
     if config.get("LIVEKIT_TURN_ENABLED") == "1":
         ports.append(TURN_PORT)
     agent.assert_exp(agent.add_public_service(module_id, ports, replace_ports=True))
+    agent.set_env("LIVEKIT_PORTS_OPEN", "1")
     print(f"public ports: {' '.join(ports)}", file=sys.stderr)
 else:
-    agent.remove_public_service(module_id)
+    # The node fails and logs a traceback when it removes a service that does not exist.
+    # Unknown on instances that ran LiveKit before this flag existed: remove once to be sure.
+    ports_open = env.get("LIVEKIT_PORTS_OPEN")
+    if ports_open == "1" or (ports_open is None and env.get("LK_JWT_PORT")):
+        agent.remove_public_service(module_id)
+    agent.set_env("LIVEKIT_PORTS_OPEN", "0")

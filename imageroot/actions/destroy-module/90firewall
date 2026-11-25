@@ -11,4 +11,6 @@ import os
 
 import agent
 
-agent.remove_public_service(os.environ["MODULE_ID"])
+# The node fails and logs a traceback when the service does not exist
+if os.environ.get("LIVEKIT_PORTS_OPEN") != "0":
+    agent.remove_public_service(os.environ["MODULE_ID"])
