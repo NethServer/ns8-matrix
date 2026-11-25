@@ -207,8 +207,10 @@ publishes this policy in `/.well-known/matrix/client`:
 ```
 
 Element Web and the classic Element apps read it. They create new rooms and direct chats
-without encryption, and hide the option to turn it on. Other clients may ignore it: check
-Element X and Cinny before you rely on it. Synapse does not refuse encrypted rooms.
+without encryption, and hide the option to turn it on. Element X and Cinny ignore it, so
+Synapse also enforces the policy for local users. It removes encryption from room creation
+requests, so the room is created in clear text. It refuses to turn encryption on in an
+existing room.
 
 Rooms already encrypted stay encrypted, the Matrix protocol cannot turn encryption off. Create
 a new room to replace them. Rooms created on other servers with federation follow the rules of

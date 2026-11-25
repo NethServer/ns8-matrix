@@ -104,7 +104,7 @@
         "search_all_users": "Search all users",
         "search_all_users_tooltip": "When enabled, users can find every user who logged in at least once. When disabled, they only find people they already share a room with.",
         "encryption_disabled": "Disable end-to-end encryption",
-        "encryption_disabled_tooltip": "When enabled, Element creates new rooms and direct chats without encryption and hides the option. Rooms already encrypted stay encrypted. Other clients may ignore this setting.",
+        "encryption_disabled_tooltip": "When enabled, new rooms and direct chats are created without encryption, and users cannot turn it on. Rooms already encrypted stay encrypted.",
         "section_federation": "Federation",
         "section_media": "Media",
         "section_integrations": "Integrations",

@@ -77,6 +77,8 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_LOCAL_MEDIA_LIFETIME': days_or_null(env_vars.get('LOCAL_MEDIA_LIFETIME_DAYS')),
         'SYNAPSE_REMOTE_MEDIA_LIFETIME': days_or_null(env_vars.get('REMOTE_MEDIA_LIFETIME_DAYS')),
         'SYNAPSE_LOG_LEVEL': log_level,
+        # Element X and Cinny ignore the well-known policy, this module enforces it
+        'SYNAPSE_ENCRYPTION_POLICY_MODULE': '  - module: "ns8_encryption_policy.EncryptionPolicy"\n    config: {}' if encryption_disabled else '',
         'SYNAPSE_SEARCH_ALL_USERS': 'true' if env_vars.get('SEARCH_ALL_USERS', '0') == '1' else 'false',
         # DEBUG on the SQL logger prints access tokens, never go below INFO there
         'SYNAPSE_SQL_LOG_LEVEL': 'WARNING' if log_level == 'WARNING' else 'INFO',
