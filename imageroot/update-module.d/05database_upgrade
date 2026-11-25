@@ -115,9 +115,5 @@ if [[ "${restored_counts}" != "$(cat "${upgrade_counts}")" ]]; then
 fi
 
 rm -f "${upgrade_dump}" "${upgrade_counts}"
-for unit in postgresql.service synapse.service matrix2acrobits.service; do
-    if systemctl --user is-enabled -q "${unit}"; then
-        systemctl --user start "${unit}"
-    fi
-done
+# 80restart_services starts the pod. Starting Synapse here gets it killed by that restart mid-startup.
 echo "PostgreSQL data upgraded, row counts match: ${restored_counts}"
