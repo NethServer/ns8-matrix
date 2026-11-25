@@ -5,7 +5,7 @@
 
 """Synapse module that keeps the rooms of local users unencrypted.
 
-Loaded only when encryption_disabled is set. Clients like Element X and Cinny
+Loaded only when encryption_enabled is false. Clients like Element X and Cinny
 ignore the io.element.e2ee well-known policy, so the server enforces it.
 """
 

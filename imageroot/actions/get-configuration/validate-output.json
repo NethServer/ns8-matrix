@@ -126,7 +126,7 @@
         "livekit_tls_skip_verify": {
             "type": "boolean"
         },
-        "encryption_disabled": {
+        "encryption_enabled": {
             "type": "boolean"
         },
         "livekit_ports_in_use": {

@@ -35,7 +35,7 @@ Set them in the Settings page or with `configure-module`.
 | `local_media_lifetime_days` | `0` | Delete uploaded files not viewed for this many days. `0` keeps them forever. |
 | `remote_media_lifetime_days` | `0` | Delete cached files from other servers not viewed for this many days. `0` keeps them forever. |
 | `search_all_users` | see below | Let users find every user of the LDAP domain, not only people they share a room with. |
-| `encryption_disabled` | `false` | Ask Element to create rooms without end-to-end encryption, see [Encryption](#encryption). Missing keeps the stored value. |
+| `encryption_enabled` | `true` | Let users create end-to-end encrypted rooms, see [Encryption](#encryption). Missing keeps the stored value. |
 | `log_level` | `INFO` | `INFO`, `WARNING` or `DEBUG`. |
 
 ### A missing key resets to the default
@@ -199,8 +199,8 @@ Use `federation_whitelist` to federate only with known partners. Check the setup
 ## Encryption
 
 Matrix clients encrypt direct chats and private rooms by default. Each user then has to keep a
-recovery key, or loses the history on a new device. With `encryption_disabled`, Synapse
-publishes this policy in `/.well-known/matrix/client`:
+recovery key, or loses the history on a new device. With `encryption_enabled` set to `false`,
+Synapse publishes this policy in `/.well-known/matrix/client`:
 
 ```json
 {"io.element.e2ee": {"default": false, "force_disable": true}}

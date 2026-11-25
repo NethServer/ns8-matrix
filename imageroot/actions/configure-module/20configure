@@ -94,13 +94,18 @@ request['search_all_users'] = env_vars['SEARCH_ALL_USERS'] == '1'
 
 # Omitted keys keep the stored value. Saved in config.json, so a restore replays them.
 for key, var in (('livekit_enabled', 'LIVEKIT_ENABLED'), ('livekit_turn_enabled', 'LIVEKIT_TURN_ENABLED'),
-                 ('livekit_tls_skip_verify', 'LIVEKIT_TLS_SKIP_VERIFY'),
-                 ('encryption_disabled', 'ENCRYPTION_DISABLED')):
+                 ('livekit_tls_skip_verify', 'LIVEKIT_TLS_SKIP_VERIFY')):
     if key in request:
         env_vars[var] = '1' if request[key] else '0'
     else:
         env_vars[var] = env_vars.get(var, '0')
     request[key] = env_vars[var] == '1'
+# Same rule, but encryption stays allowed when nothing is stored
+if 'encryption_enabled' in request:
+    env_vars['ENCRYPTION_ENABLED'] = '1' if request['encryption_enabled'] else '0'
+else:
+    env_vars['ENCRYPTION_ENABLED'] = env_vars.get('ENCRYPTION_ENABLED', '1')
+request['encryption_enabled'] = env_vars['ENCRYPTION_ENABLED'] == '1'
 if env_vars['LIVEKIT_ENABLED'] == '0':
     env_vars['LIVEKIT_TURN_ENABLED'] = '0'
     request['livekit_turn_enabled'] = False

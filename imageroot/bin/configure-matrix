@@ -41,7 +41,7 @@ def synapse_derived_vars(env_vars):
     """Compute the values that the templates cannot express with a plain substitution"""
     federation = env_vars.get('FEDERATION', '0') == '1'
     livekit = env_vars.get('LIVEKIT_ENABLED', '0') == '1'
-    encryption_disabled = env_vars.get('ENCRYPTION_DISABLED', '0') == '1'
+    encryption_disabled = env_vars.get('ENCRYPTION_ENABLED', '1') == '0'
     delegated = env_vars['MATRIX_SERVER_NAME'].lower() != env_vars['SYNAPSE_DOMAIN_NAME'].lower()
     whitelist = split_list(env_vars.get('FEDERATION_WHITELIST', ''))
     # null allows every server, an empty list also blocks the requests we send out
@@ -197,7 +197,7 @@ if env_vars.get('LIVEKIT_ENABLED') == '1':
     well_known_client['org.matrix.msc4143.rtc_foci'] = [
         {'type': 'livekit', 'livekit_service_url': f"https://{env_vars['SYNAPSE_DOMAIN_NAME']}/livekit/jwt"},
     ]
-if env_vars.get('ENCRYPTION_DISABLED') == '1':
+if env_vars.get('ENCRYPTION_ENABLED', '1') == '0':
     # Element creates rooms and direct chats without encryption and hides the option.
     # Rooms already encrypted stay encrypted, the Matrix spec cannot turn it off.
     well_known_client['io.element.e2ee'] = {'default': False, 'force_disable': True}
