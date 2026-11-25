@@ -9,6 +9,8 @@ Loaded only when encryption_disabled is set. Clients like Element X and Cinny
 ignore the io.element.e2ee well-known policy, so the server enforces it.
 """
 
+from synapse.module_api.errors import Codes, SynapseError
+
 ENCRYPTION_EVENT = "m.room.encryption"
 
 
@@ -36,5 +38,6 @@ class EncryptionPolicy:
     async def check_event_allowed(self, event, state_events):
         # Rooms of other servers follow their own rules
         if event.type == ENCRYPTION_EVENT and event.is_state() and self._api.is_mine(event.sender):
-            return False, None
+            # Synapse forwards the message of a SynapseError to the client, a plain refusal says nothing
+            raise SynapseError(403, "End-to-end encryption is disabled on this server", Codes.FORBIDDEN)
         return True, None
