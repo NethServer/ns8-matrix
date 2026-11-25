@@ -295,11 +295,15 @@ flowchart TB
     G --> H["restore the dump with the new image"]
     H --> I{"row counts match?<br/>read in a throwaway container"}
     I -- no --> K["fail, keep upgrade.pg_dump"]
-    I -- yes --> J["delete the dump<br/>80restart_services starts the services"]
+    I -- yes --> J["delete the dump<br/>80restart_services starts the services<br/>if synapse.service is enabled"]
 ```
 
 The row counts are read in a throwaway PostgreSQL container: starting `postgresql.service`
 would start the pod, which starts Synapse on a database not yet checked.
+
+The script leaves every service stopped. `06stop_before_pod` then finds no pod and stops the
+units again and enables `matrix.service`, which does nothing new. `80restart_services` starts
+the pod and the services once, and fails the update if one of them does not start.
 
 The old images are listed in `old_images`. When bumping the PostgreSQL major version, add the
 image the module shipped before the bump. Up to PostgreSQL 17 the data sits at the volume root,

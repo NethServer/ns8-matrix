@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+set -e
 exec 1>&2
 
 # Do not start a module that is not configured or was stopped on purpose
