@@ -41,6 +41,7 @@ def synapse_derived_vars(env_vars):
     """Compute the values that the templates cannot express with a plain substitution"""
     federation = env_vars.get('FEDERATION', '0') == '1'
     livekit = env_vars.get('LIVEKIT_ENABLED', '0') == '1'
+    encryption_disabled = env_vars.get('ENCRYPTION_ENABLED', '1') == '0'
     delegated = env_vars['MATRIX_SERVER_NAME'].lower() != env_vars['SYNAPSE_DOMAIN_NAME'].lower()
     whitelist = split_list(env_vars.get('FEDERATION_WHITELIST', ''))
     # null allows every server, an empty list also blocks the requests we send out
@@ -64,7 +65,8 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_LISTENER_RESOURCES': 'client, federation' if federation else ('client, openid' if livekit else 'client'),
         # lk-jwt-service finds that endpoint through the server well-known, else it tries port 8448
         'SYNAPSE_SERVE_SERVER_WELLKNOWN': 'true' if federation or livekit else 'false',
-        'SYNAPSE_SERVE_CLIENT_WELLKNOWN': 'true' if delegated or livekit else 'false',
+        # Element reads the encryption policy from the client well-known only
+        'SYNAPSE_SERVE_CLIENT_WELLKNOWN': 'true' if delegated or livekit or encryption_disabled else 'false',
         'SYNAPSE_FEDERATION_WHITELIST': federation_whitelist,
         'ELEMENT_DEFAULT_FEDERATE': 'true' if federation else 'false',
         'SYNAPSE_SMTP_USER_VALUE': json.dumps(smtp_user, ensure_ascii=False) if smtp_user else 'null',
@@ -75,6 +77,8 @@ def synapse_derived_vars(env_vars):
         'SYNAPSE_LOCAL_MEDIA_LIFETIME': days_or_null(env_vars.get('LOCAL_MEDIA_LIFETIME_DAYS')),
         'SYNAPSE_REMOTE_MEDIA_LIFETIME': days_or_null(env_vars.get('REMOTE_MEDIA_LIFETIME_DAYS')),
         'SYNAPSE_LOG_LEVEL': log_level,
+        # Element X and Cinny ignore the well-known policy, this module enforces it
+        'SYNAPSE_ENCRYPTION_POLICY_MODULE': '  - module: "ns8_encryption_policy.EncryptionPolicy"\n    config: {}' if encryption_disabled else '',
         'SYNAPSE_SEARCH_ALL_USERS': 'true' if env_vars.get('SEARCH_ALL_USERS', '0') == '1' else 'false',
         # DEBUG on the SQL logger prints access tokens, never go below INFO there
         'SYNAPSE_SQL_LOG_LEVEL': 'WARNING' if log_level == 'WARNING' else 'INFO',
@@ -185,6 +189,20 @@ if env_vars.get('NETHVOICE_AUTH_URL'):
 if env_vars.get('LIVEKIT_ENABLED') == '1':
     with open(f'{template_dir}/synapse-livekit.yaml', 'r') as lf:
         synapse_config += substitute_env_vars(lf.read(), env_vars)
+
+# Built here because LiveKit and the encryption policy share this one key
+well_known_client = {}
+if env_vars.get('LIVEKIT_ENABLED') == '1':
+    # Cinny reads the focus from the client well-known only
+    well_known_client['org.matrix.msc4143.rtc_foci'] = [
+        {'type': 'livekit', 'livekit_service_url': f"https://{env_vars['SYNAPSE_DOMAIN_NAME']}/livekit/jwt"},
+    ]
+if env_vars.get('ENCRYPTION_ENABLED', '1') == '0':
+    # Element creates rooms and direct chats without encryption and hides the option.
+    # Rooms already encrypted stay encrypted, the Matrix spec cannot turn it off.
+    well_known_client['io.element.e2ee'] = {'default': False, 'force_disable': True}
+if well_known_client:
+    synapse_config += '\nextra_well_known_client_content: ' + json.dumps(well_known_client) + '\n'
 
 write_atomic('synapse-config/homeserver.yaml', synapse_config)
 

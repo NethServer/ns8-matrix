@@ -74,6 +74,7 @@ config['livekit_enabled'] = env_vars.get('LIVEKIT_ENABLED', '0') == '1'
 config['livekit_turn_enabled'] = env_vars.get('LIVEKIT_TURN_ENABLED', '0') == '1'
 config['livekit_public_address'] = env_vars.get('LIVEKIT_PUBLIC_ADDRESS', '')
 config['livekit_tls_skip_verify'] = env_vars.get('LIVEKIT_TLS_SKIP_VERIFY', '0') == '1'
+config['encryption_enabled'] = env_vars.get('ENCRYPTION_ENABLED', '1') == '1'
 config['livekit_detected_address'] = os.environ.get('DETECTED_PUBLIC_IP', '')
 config['livekit_ports'] = ['7881/tcp', '7882/udp']
 if config['livekit_turn_enabled']:

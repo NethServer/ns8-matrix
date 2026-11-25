@@ -34,6 +34,8 @@ ExecStart=/usr/bin/podman run \
     --pod-id-file %t/matrix.pod-id \
     --volume=synapse-data:/data:z \
     --volume=%S/state/synapse-config:/data/config:z \
+    --volume=%S/synapse-modules:/modules:ro,z \
+    --env=PYTHONPATH=/modules \
     --env=SYNAPSE_SERVER_NAME=${MATRIX_SERVER_NAME} \
     --env=SYNAPSE_REPORT_STATS=no \
     --env=SYNAPSE_CONFIG_PATH=/data/config/homeserver.yaml \

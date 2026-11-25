@@ -92,5 +92,6 @@ modules:
         uid: "${LDAP_USERNAME}"
         mail: "${LDAP_EMAIL_ATTR}"
         name: "${LDAP_NAME_ATTR}"
+${SYNAPSE_ENCRYPTION_POLICY_MODULE}
 
 suppress_key_server_warning: true

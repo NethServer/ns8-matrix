@@ -344,6 +344,28 @@
               <cv-accordion-item :open="isAdvancedOpen">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
+                  <h6 class="section-title">{{ $t("settings.section_security") }}</h6>
+                  <div class="section-body">
+                    <NsToggle
+                      value="encryption_enabled"
+                      :label="$t('settings.encryption_enabled')"
+                      v-model="encryption_enabled"
+                      :disabled="
+                        loading.getConfiguration || loading.configureModule
+                      "
+                      ref="encryption_enabled"
+                    >
+                      <template slot="text-left">{{
+                        $t("settings.disabled")
+                      }}</template>
+                      <template slot="text-right">{{
+                        $t("settings.enabled")
+                      }}</template>
+                    </NsToggle>
+                    <p class="mg-bottom bx--form__helper-text">
+                      {{ $t("settings.encryption_enabled_helper") }}
+                    </p>
+                  </div>
                   <h6 class="section-title">{{ $t("settings.section_federation") }}</h6>
                   <div class="section-body">
                     <NsToggle
@@ -610,6 +632,7 @@ export default {
       local_media_lifetime_days: 0,
       remote_media_lifetime_days: 0,
       search_all_users: false,
+      encryption_enabled: true,
       log_level: "INFO",
       isAdvancedOpen: false,
       advancedFields: [
@@ -804,6 +827,8 @@ export default {
       this.local_media_lifetime_days = config.local_media_lifetime_days || 0;
       this.remote_media_lifetime_days = config.remote_media_lifetime_days || 0;
       this.search_all_users = config.search_all_users || false;
+      // An older backend sends nothing: encryption was always allowed there
+      this.encryption_enabled = config.encryption_enabled !== false;
       this.livekit_enabled = config.livekit_enabled || false;
       this.livekit_turn_enabled = config.livekit_turn_enabled || false;
       this.livekit_public_address = config.livekit_public_address || "";
@@ -1032,6 +1057,7 @@ export default {
             remote_media_lifetime_days: this.remote_media_lifetime_days,
             log_level: this.log_level,
             search_all_users: this.search_all_users,
+            encryption_enabled: this.encryption_enabled,
             livekit_enabled: this.livekit_enabled,
             livekit_turn_enabled:
               this.livekit_enabled && this.livekit_turn_enabled,

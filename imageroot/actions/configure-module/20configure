@@ -100,6 +100,12 @@ for key, var in (('livekit_enabled', 'LIVEKIT_ENABLED'), ('livekit_turn_enabled'
     else:
         env_vars[var] = env_vars.get(var, '0')
     request[key] = env_vars[var] == '1'
+# Same rule, but encryption stays allowed when nothing is stored
+if 'encryption_enabled' in request:
+    env_vars['ENCRYPTION_ENABLED'] = '1' if request['encryption_enabled'] else '0'
+else:
+    env_vars['ENCRYPTION_ENABLED'] = env_vars.get('ENCRYPTION_ENABLED', '1')
+request['encryption_enabled'] = env_vars['ENCRYPTION_ENABLED'] == '1'
 if env_vars['LIVEKIT_ENABLED'] == '0':
     env_vars['LIVEKIT_TURN_ENABLED'] = '0'
     request['livekit_turn_enabled'] = False
