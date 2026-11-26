@@ -132,8 +132,8 @@ HTTPS, except the two matrix2acrobits ones.
 `m.homeserver.server_name`, the matrix2acrobits appservice user and the homeserver allowed by
 lk-jwt-service. `SYNAPSE_DOMAIN_NAME` is the address: `public_baseurl`, the routes, the client
 URLs. Synapse builds both well-known files itself: the client file from `public_baseurl`, the
-server file from `server_name`. It serves the client file when the two names differ or LiveKit
-is on.
+server file from `server_name`. It serves the client file when the two names differ, LiveKit
+is on or encryption is disabled. Element reads the encryption policy from that file.
 
 With federation, Synapse adds the `federation` listener resource and serves
 `/.well-known/matrix/server` on the same route. With LiveKit and no federation, it adds the
