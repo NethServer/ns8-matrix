@@ -70,6 +70,21 @@ These keys behave differently:
 no secret in the request and none stored, or the request has `turn_clear_secret: true` without
 a new secret. The module is left untouched.
 
+`turn_needs_livekit`: the request has `livekit_turn_enabled: true` with `livekit_enabled` off.
+
+`livekit_port_in_use`: LiveKit is switched on, but another application holds 7881/tcp or
+7882/udp on the node.
+
+`turn_port_in_use`: the TURN relay is switched on, but another application holds 3478/udp.
+
+`turn_no_relay_ports`: the TURN relay is switched on, but no UDP port range could be allocated
+for it.
+
+The port checks run only when the setting is switched on. The task log names the application
+that holds the port.
+
+`matrix_server_name_locked`: see [User domain](#user-domain).
+
 ## Web clients
 
 A client is enabled when its domain name is set. An empty domain name stops it and removes its
