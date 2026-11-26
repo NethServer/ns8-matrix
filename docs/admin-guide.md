@@ -31,7 +31,7 @@ Set them in the Settings page or with `configure-module`.
 | `livekit_turn_enabled` | `false` | Start the LiveKit TURN relay on 3478/udp. Needs `livekit_enabled`. Turning LiveKit off also turns it off. |
 | `livekit_public_address` | empty | Address announced to call clients. Empty uses the detected public address. |
 | `livekit_tls_skip_verify` | `false` | Test labs only, not in the UI. lk-jwt-service accepts a self signed certificate. |
-| `max_upload_size_mb` | `50` | Largest file a user can upload, in megabytes. |
+| `max_upload_size_mb` | `50` | Largest file a user can upload, in megabytes, from 1 to 2048. |
 | `local_media_lifetime_days` | `0` | Delete uploaded files not viewed for this many days. `0` keeps them forever. |
 | `remote_media_lifetime_days` | `0` | Delete cached files from other servers not viewed for this many days. `0` keeps them forever. |
 | `search_all_users` | see below | Let users find every user of the LDAP domain, not only people they share a room with. |
