@@ -7,7 +7,7 @@ that bridges the Acrobits softphone messaging API to Synapse. It runs when `neth
 is set.
 
 - Synapse loads it from `synapse-config/matrix2acrobits.yaml`. The appservice claims no
-  exclusive namespace and acts as `@_acrobits_proxy:<synapse_domain_name>`.
+  exclusive namespace and acts as `@_acrobits_proxy:<matrix_server_name>`.
 - It authenticates users against `nethvoice_auth_url`, the NethVoice external auth endpoint,
   for example `https://nethvoice.example.com/freepbx/rest/testextauth`.
 - Its settings are in `state/m2a.env`. Its tokens come from `state/matrix-secrets.env`.
