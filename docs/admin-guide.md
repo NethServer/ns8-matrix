@@ -28,10 +28,10 @@ Set them in the Settings page or with `configure-module`.
 | `turn_shared_secret` | empty | TURN shared secret. Empty keeps the stored secret. |
 | `turn_clear_secret` | `false` | Delete the stored TURN secret. |
 | `livekit_enabled` | `false` | Run LiveKit for Element Call, see [Element Call with LiveKit](#element-call-with-livekit). |
-| `livekit_turn_enabled` | `false` | Start the LiveKit TURN relay on 3478/udp. Needs `livekit_enabled`. |
+| `livekit_turn_enabled` | `false` | Start the LiveKit TURN relay on 3478/udp. Needs `livekit_enabled`. Turning LiveKit off also turns it off. |
 | `livekit_public_address` | empty | Address announced to call clients. Empty uses the detected public address. |
 | `livekit_tls_skip_verify` | `false` | Test labs only, not in the UI. lk-jwt-service accepts a self signed certificate. |
-| `max_upload_size_mb` | `50` | Largest file a user can upload, in megabytes. |
+| `max_upload_size_mb` | `50` | Largest file a user can upload, in megabytes, from 1 to 2048. |
 | `local_media_lifetime_days` | `0` | Delete uploaded files not viewed for this many days. `0` keeps them forever. |
 | `remote_media_lifetime_days` | `0` | Delete cached files from other servers not viewed for this many days. `0` keeps them forever. |
 | `search_all_users` | see below | Let users find every user of the LDAP domain, not only people they share a room with. |
@@ -59,12 +59,31 @@ These keys behave differently:
   LDAP directory itself.
 - `encryption_enabled`: missing keeps the stored value. An instance without a stored value gets
   `true`.
+- `livekit_enabled`, `livekit_turn_enabled`, `livekit_tls_skip_verify` and
+  `livekit_public_address`: missing keeps the stored value. An instance without a stored value
+  gets the default.
+- `matrix_server_name`: missing keeps the stored value, see [User domain](#user-domain).
 
 ### Validation errors
 
 `turn_shared_secret_required`: `turn_uris` is set but no secret would remain. Either there is
 no secret in the request and none stored, or the request has `turn_clear_secret: true` without
 a new secret. The module is left untouched.
+
+`turn_needs_livekit`: the request has `livekit_turn_enabled: true` with `livekit_enabled` off.
+
+`livekit_port_in_use`: LiveKit is switched on, but another application holds 7881/tcp or
+7882/udp on the node.
+
+`turn_port_in_use`: the TURN relay is switched on, but another application holds 3478/udp.
+
+`turn_no_relay_ports`: the TURN relay is switched on, but no UDP port range could be allocated
+for it.
+
+The port checks run only when the setting is switched on. The task log names the application
+that holds the port.
+
+`matrix_server_name_locked`: see [User domain](#user-domain).
 
 ## Web clients
 
@@ -106,8 +125,10 @@ migration tool: a new user domain needs a new empty database.
 
 So `configure-module` accepts a new `matrix_server_name` only while no user has logged in.
 After that, it answers `validation-failed` with `matrix_server_name_locked`, and the Settings
-page shows the field disabled. A request without `matrix_server_name` keeps the stored value.
-Without a stored value, it takes `synapse_domain_name`.
+page shows the field disabled. It also refuses the change when the database does not answer,
+because it cannot check for users. The value is stored in lower case. A request without
+`matrix_server_name` keeps the stored value. Without a stored value, it takes
+`synapse_domain_name`.
 
 `synapse_domain_name` stays free. It is only the address of the server.
 
@@ -139,9 +160,9 @@ module do not need these files: they connect to `synapse_domain_name` directly.
 
 ### DNS and web setup
 
-`matrix.example.com` needs an A or AAAA record to the node, as before. Nothing changes in the
-DNS for `example.com`. Like with email, it can point to a website hosted elsewhere. What
-matters is where `https://example.com` answers.
+`matrix.example.com` needs an A or AAAA record to the node, as before. So do the Element and
+Cinny domains, when set. Nothing changes in the DNS for `example.com`. Like with email, it can
+point to a website hosted elsewhere. What matters is where `https://example.com` answers.
 
 If `example.com` points to a website elsewhere, publish the two files there:
 
@@ -305,6 +326,7 @@ missing.
 | `MACAROON_SECRET` | Signs short lived tokens: login tokens, guest tokens, unsubscribe links. Access tokens are stored in the database and do not depend on it. |
 | `FORM_SECRET` | Signs the HTML forms served by Synapse. Not used by this setup. |
 | `M2A_AS_TOKEN`, `M2A_HS_TOKEN` | Authenticate matrix2acrobits and Synapse to each other. |
+| `MATRIX_AS_TOKEN` | Copy of `M2A_AS_TOKEN`, under the name the matrix2acrobits container reads. |
 | `REGISTRATION_SECRET`, `SYNAPSE_SECRET` | Generated but not used. |
 
 To rotate them, remove the file and run `configure-module` again. Pending short lived tokens
@@ -339,8 +361,8 @@ old node. Enable it again in Settings once the DNS points to the new one.
 
 An update to a PostgreSQL major version migrates the data automatically. The module dumps the
 old database with the previous PostgreSQL image, restores it into the new version and compares
-the row counts of `users`, `events` and `rooms`. Synapse and matrix2acrobits are stopped
-during the migration.
+the row counts of `users`, `events` and `rooms`. The pod and all its containers are stopped
+during the migration. LiveKit runs outside the pod and keeps running.
 
 If the counts differ, the update fails and keeps the dump in `state/upgrade.pg_dump`. Run the
 update again to retry, it resumes from the dump. See

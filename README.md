@@ -63,15 +63,29 @@ The output returns the instance name, for example `matrix1`.
 Fill in the Settings page, or:
 
 ```sh
-api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "lets_encrypt": true, "ldap_domain": "users.example.com"}'
+api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "matrix.example.com", "element_domain_name": "chat.example.com", "cinny_domain_name": "cinny.example.com", "matrix_server_name": "example.com", "lets_encrypt": true, "ldap_domain": "users.example.com"}'
 ```
 
 `synapse_domain_name`, `lets_encrypt` and `ldap_domain` are required. A missing key falls
-back to its default, not to the stored value, except `search_all_users` and
-`turn_shared_secret`. Send the full configuration each time, see
-[Parameters](docs/admin-guide.md#parameters).
+back to its default, not to the stored value, except `search_all_users`,
+`turn_shared_secret`, `matrix_server_name`, `encryption_enabled` and the `livekit_*` keys.
+Send the full configuration each time, see [Parameters](docs/admin-guide.md#parameters).
 
 Users log in with their LDAP account name and password.
+
+`matrix_server_name` is the user domain, as in `@user:example.com`. It cannot change once a
+user has logged in. Choose it before the first login, see
+[User domain](docs/admin-guide.md#user-domain). Leave it out on later runs: the stored value
+stays.
+
+## DNS
+
+Create an A or AAAA record to the node for `synapse_domain_name` and for each web client
+domain you set. Clients need these records to connect. Let's Encrypt also needs them to issue
+the certificates.
+
+When `matrix_server_name` differs from `synapse_domain_name`, `https://<matrix_server_name>`
+must also answer the Matrix delegation files. See [DNS and web setup](docs/admin-guide.md#dns-and-web-setup).
 
 ## Uninstall
 

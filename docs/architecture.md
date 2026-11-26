@@ -125,14 +125,15 @@ set. The two matrix2acrobits routes exist when `nethvoice_auth_url` is set. The 
 routes exist when `livekit_enabled` is true. The `wellknown` and `userdomain` routes exist when
 `matrix_server_name` differs from `synapse_domain_name`, see
 [User domain](admin-guide.md#user-domain). Otherwise
-`configure-module` deletes them. All routes redirect HTTP to HTTPS and follow `lets_encrypt`.
+`configure-module` deletes them. All routes follow `lets_encrypt`. All routes redirect HTTP to
+HTTPS, except the two matrix2acrobits ones.
 
 `MATRIX_SERVER_NAME` is the Synapse `server_name`, the signing key file name, the Element
 `m.homeserver.server_name`, the matrix2acrobits appservice user and the homeserver allowed by
 lk-jwt-service. `SYNAPSE_DOMAIN_NAME` is the address: `public_baseurl`, the routes, the client
 URLs. Synapse builds both well-known files itself: the client file from `public_baseurl`, the
-server file from `server_name`. It serves the client file when the two names differ or LiveKit
-is on.
+server file from `server_name`. It serves the client file when the two names differ, LiveKit
+is on or encryption is disabled. Element reads the encryption policy from that file.
 
 With federation, Synapse adds the `federation` listener resource and serves
 `/.well-known/matrix/server` on the same route. With LiveKit and no federation, it adds the
@@ -159,6 +160,9 @@ flowchart TB
     CI -- "BindsTo, After" --> MX
     MA -- "BindsTo, After" --> MX
     LJ -- "BindsTo, After" --> MX
+    EW -- "After, Wants" --> SY
+    CI -- "After, Wants" --> SY
+    MA -- "After, Wants" --> SY
     LJ -- "After, Wants" --> SY
     SY -- "Before" --> LK
     PG -- "Before" --> SY
@@ -288,7 +292,7 @@ flowchart TB
     B --> C{"same major as POSTGRES_IMAGE?"}
     C -- yes --> X[skip]
     C -- no --> D["pull the old image<br/>abort if unknown or pull fails"]
-    D --> E["stop every container and the pod"]
+    D --> E["stop the pod and its containers<br/>LiveKit keeps running"]
     E --> F["start the old PostgreSQL on the volume<br/>pg_dumpall to upgrade.pg_dump<br/>save row counts"]
     F --> G
     R --> G["remove the postgres-data volume"]
