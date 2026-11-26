@@ -125,7 +125,8 @@ set. The two matrix2acrobits routes exist when `nethvoice_auth_url` is set. The 
 routes exist when `livekit_enabled` is true. The `wellknown` and `userdomain` routes exist when
 `matrix_server_name` differs from `synapse_domain_name`, see
 [User domain](admin-guide.md#user-domain). Otherwise
-`configure-module` deletes them. All routes redirect HTTP to HTTPS and follow `lets_encrypt`.
+`configure-module` deletes them. All routes follow `lets_encrypt`. All routes redirect HTTP to
+HTTPS, except the two matrix2acrobits ones.
 
 `MATRIX_SERVER_NAME` is the Synapse `server_name`, the signing key file name, the Element
 `m.homeserver.server_name`, the matrix2acrobits appservice user and the homeserver allowed by
