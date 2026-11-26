@@ -288,7 +288,7 @@ flowchart TB
     B --> C{"same major as POSTGRES_IMAGE?"}
     C -- yes --> X[skip]
     C -- no --> D["pull the old image<br/>abort if unknown or pull fails"]
-    D --> E["stop every container and the pod"]
+    D --> E["stop the pod and its containers<br/>LiveKit keeps running"]
     E --> F["start the old PostgreSQL on the volume<br/>pg_dumpall to upgrade.pg_dump<br/>save row counts"]
     F --> G
     R --> G["remove the postgres-data volume"]

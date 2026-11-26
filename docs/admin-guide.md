@@ -358,8 +358,8 @@ old node. Enable it again in Settings once the DNS points to the new one.
 
 An update to a PostgreSQL major version migrates the data automatically. The module dumps the
 old database with the previous PostgreSQL image, restores it into the new version and compares
-the row counts of `users`, `events` and `rooms`. Synapse and matrix2acrobits are stopped
-during the migration.
+the row counts of `users`, `events` and `rooms`. The pod and all its containers are stopped
+during the migration. LiveKit runs outside the pod and keeps running.
 
 If the counts differ, the update fails and keeps the dump in `state/upgrade.pg_dump`. Run the
 update again to retry, it resumes from the dump. See
