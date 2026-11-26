@@ -67,21 +67,23 @@ api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "mat
 ```
 
 `synapse_domain_name`, `lets_encrypt` and `ldap_domain` are required. A missing key falls
-back to its default, not to the stored value, except `search_all_users` and
-`turn_shared_secret`. Send the full configuration each time, see
+back to its default, not to the stored value, except `search_all_users`,
+`turn_shared_secret`, `matrix_server_name` and `encryption_enabled`. Send the full
+configuration each time, see
 [Parameters](docs/admin-guide.md#parameters).
 
 Users log in with their LDAP account name and password.
 
 `matrix_server_name` is the user domain, as in `@user:example.com`. It cannot change once a
 user has logged in. Choose it before the first login, see
-[User domain](docs/admin-guide.md#user-domain).
+[User domain](docs/admin-guide.md#user-domain). Leave it out on later runs: the stored value
+stays.
 
 ## DNS
 
-Before you enable `lets_encrypt`, create an A or AAAA record to the node for
-`synapse_domain_name` and for each web client domain you set. Let's Encrypt cannot issue a
-certificate without it.
+Create an A or AAAA record to the node for `synapse_domain_name` and for each web client
+domain you set. Clients need these records to connect. Let's Encrypt also needs them to issue
+the certificates.
 
 When `matrix_server_name` differs from `synapse_domain_name`, `https://<matrix_server_name>`
 must also answer the Matrix delegation files. See [DNS and web setup](docs/admin-guide.md#dns-and-web-setup).
