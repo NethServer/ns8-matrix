@@ -28,7 +28,7 @@ Set them in the Settings page or with `configure-module`.
 | `turn_shared_secret` | empty | TURN shared secret. Empty keeps the stored secret. |
 | `turn_clear_secret` | `false` | Delete the stored TURN secret. |
 | `livekit_enabled` | `false` | Run LiveKit for Element Call, see [Element Call with LiveKit](#element-call-with-livekit). |
-| `livekit_turn_enabled` | `false` | Start the LiveKit TURN relay on 3478/udp. Needs `livekit_enabled`. |
+| `livekit_turn_enabled` | `false` | Start the LiveKit TURN relay on 3478/udp. Needs `livekit_enabled`. Turning LiveKit off also turns it off. |
 | `livekit_public_address` | empty | Address announced to call clients. Empty uses the detected public address. |
 | `livekit_tls_skip_verify` | `false` | Test labs only, not in the UI. lk-jwt-service accepts a self signed certificate. |
 | `max_upload_size_mb` | `50` | Largest file a user can upload, in megabytes. |
