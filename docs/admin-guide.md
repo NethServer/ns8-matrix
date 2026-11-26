@@ -125,8 +125,10 @@ migration tool: a new user domain needs a new empty database.
 
 So `configure-module` accepts a new `matrix_server_name` only while no user has logged in.
 After that, it answers `validation-failed` with `matrix_server_name_locked`, and the Settings
-page shows the field disabled. A request without `matrix_server_name` keeps the stored value.
-Without a stored value, it takes `synapse_domain_name`.
+page shows the field disabled. It also refuses the change when the database does not answer,
+because it cannot check for users. The value is stored in lower case. A request without
+`matrix_server_name` keeps the stored value. Without a stored value, it takes
+`synapse_domain_name`.
 
 `synapse_domain_name` stays free. It is only the address of the server.
 
