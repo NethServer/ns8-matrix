@@ -326,6 +326,7 @@ missing.
 | `MACAROON_SECRET` | Signs short lived tokens: login tokens, guest tokens, unsubscribe links. Access tokens are stored in the database and do not depend on it. |
 | `FORM_SECRET` | Signs the HTML forms served by Synapse. Not used by this setup. |
 | `M2A_AS_TOKEN`, `M2A_HS_TOKEN` | Authenticate matrix2acrobits and Synapse to each other. |
+| `MATRIX_AS_TOKEN` | Copy of `M2A_AS_TOKEN`, under the name the matrix2acrobits container reads. |
 | `REGISTRATION_SECRET`, `SYNAPSE_SECRET` | Generated but not used. |
 
 To rotate them, remove the file and run `configure-module` again. Pending short lived tokens
