@@ -160,6 +160,9 @@ flowchart TB
     CI -- "BindsTo, After" --> MX
     MA -- "BindsTo, After" --> MX
     LJ -- "BindsTo, After" --> MX
+    EW -- "After, Wants" --> SY
+    CI -- "After, Wants" --> SY
+    MA -- "After, Wants" --> SY
     LJ -- "After, Wants" --> SY
     SY -- "Before" --> LK
     PG -- "Before" --> SY
