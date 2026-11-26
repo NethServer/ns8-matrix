@@ -139,9 +139,9 @@ module do not need these files: they connect to `synapse_domain_name` directly.
 
 ### DNS and web setup
 
-`matrix.example.com` needs an A or AAAA record to the node, as before. Nothing changes in the
-DNS for `example.com`. Like with email, it can point to a website hosted elsewhere. What
-matters is where `https://example.com` answers.
+`matrix.example.com` needs an A or AAAA record to the node, as before. So do the Element and
+Cinny domains, when set. Nothing changes in the DNS for `example.com`. Like with email, it can
+point to a website hosted elsewhere. What matters is where `https://example.com` answers.
 
 If `example.com` points to a website elsewhere, publish the two files there:
 
