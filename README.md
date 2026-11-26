@@ -68,9 +68,8 @@ api-cli run module/matrix1/configure-module --data '{"synapse_domain_name": "mat
 
 `synapse_domain_name`, `lets_encrypt` and `ldap_domain` are required. A missing key falls
 back to its default, not to the stored value, except `search_all_users`,
-`turn_shared_secret`, `matrix_server_name` and `encryption_enabled`. Send the full
-configuration each time, see
-[Parameters](docs/admin-guide.md#parameters).
+`turn_shared_secret`, `matrix_server_name`, `encryption_enabled` and the `livekit_*` keys.
+Send the full configuration each time, see [Parameters](docs/admin-guide.md#parameters).
 
 Users log in with their LDAP account name and password.
 

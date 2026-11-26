@@ -59,6 +59,10 @@ These keys behave differently:
   LDAP directory itself.
 - `encryption_enabled`: missing keeps the stored value. An instance without a stored value gets
   `true`.
+- `livekit_enabled`, `livekit_turn_enabled`, `livekit_tls_skip_verify` and
+  `livekit_public_address`: missing keeps the stored value. An instance without a stored value
+  gets the default.
+- `matrix_server_name`: missing keeps the stored value, see [User domain](#user-domain).
 
 ### Validation errors
 
